@@ -161,3 +161,10 @@ XS_SHARING_ALLOWED_METHODS = ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE']
 BOT_TOKEN = os.getenv('BOT_TOKEN', '')
 BOT_USERNAME = os.getenv('BOT_USERNAME', 'vpn_livedev_bot')
 TELEGRAM_WEBAPP_URL = os.getenv('TELEGRAM_WEBAPP_URL', f'{SITE_URL}/miniapp/')
+
+# bePaid Payment Settings (Belarus / Belkart / ERIP / CIS)
+BEPAID_SHOP_ID = os.getenv('BEPAID_SHOP_ID', '4225')
+BEPAID_SECRET_KEY = os.getenv('BEPAID_SECRET_KEY', '3834fbef1fe6ea024ef77f5c79ec7ff1ba710ea6241c08c2f341afda8af4c1c4')
+BEPAID_TEST_MODE = os.getenv('BEPAID_TEST_MODE', 'True').lower() in ('true', '1')
+BEPAID_CHECKOUT_URL = os.getenv('BEPAID_CHECKOUT_URL', 'https://checkout.bepaid.by/ctp/api/checkouts')
+

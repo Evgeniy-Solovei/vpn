@@ -132,6 +132,20 @@ def seed():
     demo_key, _ = VPNKey.objects.get_or_create(user=demo_user, server=server)
     print(f"✅ Демо-пользователь: логин 'demo' | пароль 'demo123' (Баланс 105 ₽)")
 
+    # 5. Promo Codes (3, 5, 10 days)
+    from apps.billing.models import PromoCode
+    promos = [
+        {"code": "WELCOME3", "days": 3, "max_uses": 5000},
+        {"code": "SORRY5", "days": 5, "max_uses": 1000},
+        {"code": "TURBO10", "days": 10, "max_uses": 500},
+    ]
+    for p_data in promos:
+        p, _ = PromoCode.objects.get_or_create(
+            code=p_data["code"],
+            defaults={"days": p_data["days"], "max_uses": p_data["max_uses"], "is_active": True}
+        )
+        print(f"✅ Промокод: {p.code} (+{p.days} дней)")
+
     print("\n🎉 Готово! Все демо-данные успешно загружены.")
 
 if __name__ == '__main__':

@@ -86,7 +86,7 @@
         </div>
       </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.4rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.4rem; margin-bottom: 0.85rem;">
         <div>
           <div style="font-size: 0.88rem; font-weight: 600; color: #fff;">Автопродление баланса</div>
           <div style="font-size: 0.75rem; color: var(--text-dim);">Списание без прерывания связи</div>
@@ -96,6 +96,22 @@
           <span class="toggle-switch"></span>
         </label>
       </div>
+
+      <!-- Promo Code Activation Input -->
+      <div style="padding-top: 0.85rem; border-top: 1px solid var(--border-subtle); margin-bottom: 0.75rem;">
+        <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.4rem;">Активация промокода (3, 5, 10 дней):</div>
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="text" id="promo-code-input" class="form-input" placeholder="Промокод (напр. WELCOME3)" style="font-size: 0.8rem; text-transform: uppercase; font-family: var(--font-mono);">
+          <button type="button" id="btn-activate-promo" class="btn btn-secondary" style="font-size: 0.8rem; white-space: nowrap; padding: 0.5rem 0.85rem;">
+            Применить
+          </button>
+        </div>
+      </div>
+
+      <!-- bePaid Belarus Payment Button -->
+      <button type="button" id="btn-bepaid-pay" class="btn btn-secondary btn-block" style="font-size: 0.8rem; border-color: rgba(16, 185, 129, 0.35); color: #34d399; justify-content: center;">
+        🇧🇾 Оплата в РБ (bePaid • Белкарт / ЕРИП / МИР)
+      </button>
     </div>
 
     <!-- Card 2: 1-Click Connect & Key Management (Cyan / Violet Ribbon) -->

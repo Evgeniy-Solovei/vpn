@@ -14,9 +14,9 @@ class CustomUser(AbstractUser):
     telegram_id = models.CharField(max_length=64, blank=True, null=True, unique=True, verbose_name="Telegram ID")
     telegram_username = models.CharField(max_length=128, blank=True, null=True, verbose_name="Telegram Username")
     
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('15.00'), verbose_name="Баланс (₽)")
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('10.50'), verbose_name="Баланс (₽) [3 дня теста]")
     daily_deduction = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('3.50'), verbose_name="Ежедневное списание (₽)")
-    autopay = models.BooleanField(default=False, verbose_name="Автоплатеж")
+    autopay = models.BooleanField(default=True, verbose_name="Автоплатеж (автоматическое списание)")
     
     referral_code = models.CharField(max_length=16, unique=True, blank=True, verbose_name="Реферальный код")
     referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals', verbose_name="Кто пригласил")

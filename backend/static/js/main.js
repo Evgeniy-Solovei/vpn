@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initServerSwitcher();
   initBuyTraffic();
   initCustomWhitelist();
+  initPromoCode();
+  initBePaid();
   initModals();
 });
 
@@ -481,6 +483,95 @@ function initCustomWhitelist() {
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = oldText;
+    }
+  });
+}
+
+// ==========================================
+// 8.6. PROMO CODE ACTIVATION
+// ==========================================
+function initPromoCode() {
+  const btn = document.getElementById('btn-activate-promo');
+  const input = document.getElementById('promo-code-input');
+  if (!btn || !input) return;
+
+  btn.addEventListener('click', async () => {
+    const code = input.value.trim();
+    if (!code) {
+      showToast('Введите промокод');
+      return;
+    }
+
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = '...';
+
+    try {
+      const res = await fetch('/billing/promo/activate/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ code: code })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message);
+        input.value = '';
+        const balEl = document.querySelector('.balance-value');
+        if (balEl && data.new_balance !== undefined) {
+          balEl.innerHTML = `${data.new_balance.toFixed(2)} <span class="balance-currency">₽</span>`;
+        }
+      } else {
+        showToast(data.error || 'Ошибка активации');
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('Ошибка сети');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
+  });
+}
+
+// ==========================================
+// 8.7. BEPAID CHECKOUT (BELARUS)
+// ==========================================
+function initBePaid() {
+  const btn = document.getElementById('btn-bepaid-pay');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = 'Подключение к bePaid...';
+
+    try {
+      const res = await fetch('/billing/bepaid/checkout/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      if (data.success && data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        showToast(data.error || 'Ошибка создания платежа bePaid');
+        btn.disabled = false;
+        btn.textContent = oldText;
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('Ошибка соединения');
+      btn.disabled = false;
+      btn.textContent = oldText;
     }
   });
 }

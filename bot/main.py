@@ -186,8 +186,8 @@ async def cb_view_referrals(call: CallbackQuery):
     ref_url = user_info.get('referral_url', '')
 
     text = (
-        f"👥 <b>Реферальная программа VPN Live Dev</b>\n\n"
-        f"Приглашайте друзей и получайте <b>+10 ₽</b> на баланс за каждого нового пользователя!\n\n"
+        f"👥 <b>Реферальная программа VPN live-dev</b>\n\n"
+        f"🎁 Приглашайте друзей и получайте <b>+5 дней бесплатно</b> за каждого приглашенного друга при его первой оплате!\n\n"
         f"Ваша персональная ссылка:\n"
         f"<code>{ref_url}</code>\n\n"
         f"Приглашено друзей: <b>{user_info.get('referrals_count', 0)}</b>"
@@ -199,7 +199,7 @@ async def cb_view_referrals(call: CallbackQuery):
 @dp.callback_query(F.data == "support")
 async def cb_support(call: CallbackQuery):
     text = (
-        f"💬 <b>Служба поддержки VPN Live Dev</b>\n\n"
+        f"💬 <b>Служба поддержки VPN live-dev</b>\n\n"
         f"Если у вас возникли сложности с подключением или оплатой, напишите нам:\n"
         f"• Официальный канал новостей: @live_dev_news\n"
         f"• Чат поддержки: @live_dev_support\n\n"
@@ -207,6 +207,34 @@ async def cb_support(call: CallbackQuery):
     )
     await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_back_menu())
     await call.answer()
+
+
+@dp.message(F.text.startswith('/promo'))
+async def cmd_promo(message: Message):
+    parts = message.text.strip().split(maxsplit=1)
+    if len(parts) < 2:
+        await message.answer("ℹ️ Использование: <code>/promo КОД</code>\nНапример: <code>/promo WELCOME3</code>", parse_mode="HTML")
+        return
+
+    code_str = parts[1].strip()
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/billing/activate-promo/",
+                json={"telegram_id": str(message.from_user.id), "code": code_str}
+            )
+            data = resp.json()
+            if data.get('success'):
+                await message.answer(
+                    f"🎉 <b>Промокод активирован!</b>\n{data.get('message')}\n\n"
+                    f"Баланс: <b>{data.get('new_balance')} ₽</b> (хватит на {data.get('days_left')} дн.)",
+                    parse_mode="HTML"
+                )
+            else:
+                await message.answer(f"⚠️ {data.get('error', 'Не удалось активировать промокод')}", parse_mode="HTML")
+        except Exception as e:
+            logger.error(f"Error activating promo in bot: {e}")
+            await message.answer("⚠️ Ошибка при активации промокода. Попробуйте позже.")
 
 
 async def main():
