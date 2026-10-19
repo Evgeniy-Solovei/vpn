@@ -4,12 +4,87 @@ from decimal import Decimal
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from django.contrib.auth import login as auth_login
 from apps.accounts.models import CustomUser
 from apps.vpn.models import VPNServer, VPNKey
 from apps.vpn.services import get_or_create_default_server
 from apps.billing.models import TariffPlan, Transaction
 
 logger = logging.getLogger(__name__)
+
+
+def build_user_response(user, is_new=False):
+    server = get_or_create_default_server()
+    key, _ = VPNKey.objects.get_or_create(user=user, server=server)
+    site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by')
+    referral_url = f"{site_url}/auth/register/?ref={user.referral_code}"
+
+    return {
+        'success': True,
+        'is_new': is_new,
+        'user': {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'telegram_id': user.telegram_id,
+            'balance': float(user.balance),
+            'daily_deduction': float(user.daily_deduction),
+            'days_left': user.days_left,
+            'autopay': user.autopay,
+            'referral_code': user.referral_code,
+            'referral_url': referral_url,
+            'referrals_count': user.referrals.count(),
+        },
+        'vpn': {
+            'server_name': server.name,
+            'country_code': server.country_code,
+            'country_name': server.country_name,
+            'ping_ms': server.ping_ms,
+            'vless_url': key.get_vless_url(),
+            'sub_url': key.get_sub_url(),
+            'incy_url': key.get_incy_url(),
+            'connect_url': key.get_connect_url(),
+            'whitelist_enabled': key.whitelist_enabled,
+            'qr_url': f"{site_url}/vpn/qr/{key.sub_token}/",
+            'pac_url': f"{site_url}/vpn/pac/{key.sub_token}/",
+        }
+    }
+
+
+def user_profile_api(request):
+    """
+    Get profile and VPN details of currently authenticated web session user.
+    Used by web frontend and Telegram Mini App browser preview.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'authenticated': False, 'message': 'Не авторизован'}, status=200)
+
+    data = build_user_response(request.user)
+    data['authenticated'] = True
+    return JsonResponse(data)
+
+
+@csrf_exempt
+def demo_login_api(request):
+    """
+    One-click authentication as Demo user for testing and local preview.
+    """
+    demo_user = CustomUser.objects.filter(username='demo').first()
+    if not demo_user:
+        server = get_or_create_default_server()
+        demo_user = CustomUser.objects.create_user(
+            username='demo',
+            email='demo@live-dev.by',
+            password='demo123',
+            balance=Decimal('105.00'),
+            daily_deduction=Decimal('3.50')
+        )
+        VPNKey.objects.get_or_create(user=demo_user, server=server)
+
+    auth_login(request, demo_user)
+    data = build_user_response(demo_user)
+    data['authenticated'] = True
+    return JsonResponse(data)
 
 
 @csrf_exempt
@@ -23,12 +98,15 @@ def tg_sync_view(request):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
     try:
-        data = json.loads(request.body.decode('utf-8'))
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
         telegram_id = str(data.get('telegram_id', '')).strip()
         telegram_username = data.get('telegram_username', '')
         ref_code = data.get('ref_code')
 
         if not telegram_id:
+            # If no telegram_id was supplied but user is logged in via web session, use active user
+            if request.user.is_authenticated:
+                return JsonResponse(build_user_response(request.user))
             return JsonResponse({'error': 'telegram_id is required'}, status=400)
 
         user = CustomUser.objects.filter(telegram_id=telegram_id).first()
@@ -36,7 +114,6 @@ def tg_sync_view(request):
         if not user:
             # Create user linked to telegram
             username = telegram_username or f"tg_{telegram_id}"
-            # Ensure unique username
             base_username = username
             counter = 1
             while CustomUser.objects.filter(username=username).exists():
@@ -64,42 +141,7 @@ def tg_sync_view(request):
                 except CustomUser.DoesNotExist:
                     pass
 
-        server = get_or_create_default_server()
-        key, _ = VPNKey.objects.get_or_create(user=user, server=server)
-
-        site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by')
-        referral_url = f"{site_url}/auth/register/?ref={user.referral_code}"
-
-        return JsonResponse({
-            'success': True,
-            'is_new': created,
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'telegram_id': user.telegram_id,
-                'balance': float(user.balance),
-                'daily_deduction': float(user.daily_deduction),
-                'days_left': user.days_left,
-                'autopay': user.autopay,
-                'referral_code': user.referral_code,
-                'referral_url': referral_url,
-                'referrals_count': user.referrals.count(),
-            },
-            'vpn': {
-                'server_name': server.name,
-                'country_code': server.country_code,
-                'country_name': server.country_name,
-                'ping_ms': server.ping_ms,
-                'vless_url': key.get_vless_url(),
-                'sub_url': key.get_sub_url(),
-                'incy_url': key.get_incy_url(),
-                'connect_url': key.get_connect_url(),
-                'whitelist_enabled': key.whitelist_enabled,
-                'qr_url': f"{site_url}/vpn/qr/{key.sub_token}/",
-                'pac_url': f"{site_url}/vpn/pac/{key.sub_token}/",
-            }
-        })
+        return JsonResponse(build_user_response(user, is_new=created))
     except Exception as e:
         logger.error(f"Error in tg_sync_view: {e}")
         return JsonResponse({'error': str(e)}, status=500)
@@ -110,7 +152,7 @@ def toggle_whitelist_api(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     try:
-        data = json.loads(request.body.decode('utf-8'))
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
         telegram_id = data.get('telegram_id')
         user_id = data.get('user_id')
 
@@ -119,6 +161,8 @@ def toggle_whitelist_api(request):
             user = CustomUser.objects.filter(telegram_id=str(telegram_id)).first()
         elif user_id:
             user = CustomUser.objects.filter(id=user_id).first()
+        elif request.user.is_authenticated:
+            user = request.user
 
         if not user:
             return JsonResponse({'error': 'User not found'}, status=404)

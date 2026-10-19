@@ -13,9 +13,9 @@ else:
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-change-in-production-1234567890')
 
-DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
+DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'vpn.live-dev.by,localhost,127.0.0.1,web').split(',')
+ALLOWED_HOSTS = ['*'] if DEBUG else [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'vpn.live-dev.by,localhost,127.0.0.1,web').split(',') if h.strip()]
 
 DOMAIN = os.getenv('DOMAIN', 'vpn.live-dev.by')
 SITE_URL = os.getenv('SITE_URL', 'http://vpn.live-dev.by')

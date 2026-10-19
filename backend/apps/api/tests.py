@@ -100,3 +100,35 @@ class ApiTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertIn('plans', data)
+
+    def test_user_profile_unauthenticated(self):
+        """User profile returns authenticated: False when no session."""
+        resp = self.client.get(reverse('api_user_profile'))
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertFalse(data.get('authenticated'))
+
+    def test_user_profile_authenticated(self):
+        """User profile returns real user and VPN config when logged in."""
+        user = User.objects.create_user(
+            username='authuser',
+            email='authuser@test.com',
+            password='password123',
+            balance=Decimal('80.00')
+        )
+        self.client.force_login(user)
+        resp = self.client.get(reverse('api_user_profile'))
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data.get('authenticated'))
+        self.assertEqual(data['user']['username'], 'authuser')
+        self.assertEqual(data['user']['balance'], 80.0)
+
+    def test_demo_login_api(self):
+        """Demo login endpoint authenticates the demo user."""
+        resp = self.client.post(reverse('api_demo_login'))
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data.get('authenticated'))
+        self.assertEqual(data['user']['username'], 'demo')
+

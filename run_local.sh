@@ -22,6 +22,11 @@ python3 backend/manage.py migrate
 echo "🌱 Загрузка демо-аккаунтов и серверов..."
 python3 backend/seed_demo.py
 
+# 3. Сборка статических файлов
+echo "🎨 Синхронизация статических файлов..."
+python3 backend/manage.py collectstatic --noinput
+
+
 echo ""
 echo "=========================================================="
 echo "🎉 Проект готов к просмотру!"
