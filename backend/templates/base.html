@@ -97,13 +97,109 @@
         <div style="display: flex; align-items: center; gap: 0.5rem;">
           © 2026 <strong style="color: #fff; font-family: var(--font-brand);">VPN <span style="color: var(--accent-cyan); text-transform: lowercase;">live-dev</span></strong> (vpn.live-dev.by) • Свободный интернет для РФ и РБ
         </div>
-        <div style="display: flex; gap: 1.5rem;">
+        <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
           <a href="/miniapp/" style="color: var(--text-muted); text-decoration: none;">Mini App</a>
           <a href="https://t.me/{{ BOT_USERNAME }}" target="_blank" style="color: var(--text-muted); text-decoration: none;">Telegram бот</a>
           <a href="{% url 'tariffs' %}" style="color: var(--text-muted); text-decoration: none;">Тарифы</a>
+          <button type="button" data-modal-target="support-modal" style="background: none; border: none; padding: 0; color: #34d399; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
+            <span>💬 Поддержка</span>
+          </button>
         </div>
       </div>
     </footer>
+  </div>
+
+  <!-- Floating Quick Support Pill in Bottom-Right Corner -->
+  <button type="button" class="floating-support-btn" data-modal-target="support-modal" title="Служба поддержки">
+    <span style="font-size: 1.1rem;">💬</span>
+    <span>Поддержка</span>
+  </button>
+
+  <!-- Global Support Modal (3 Variants: Telegram, WhatsApp, Phone) -->
+  <div class="modal-overlay" id="support-modal">
+    <div class="modal-body" style="max-width: 460px; padding: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(16, 185, 129, 0.18); display: flex; align-items: center; justify-content: center; color: #34d399; font-size: 1.25rem;">
+            💬
+          </div>
+          <div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">Служба поддержки</h3>
+            <span style="font-size: 0.75rem; color: var(--accent-emerald);">Всегда на связи • Быстрый ответ</span>
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary modal-close" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;">✕</button>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5;">
+        Выберите удобный способ связи. При нажатии вы сразу перейдёте в диалог или начнёте звонок:
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem;">
+        <!-- 1. Telegram (@livedev_by) -->
+        <a href="https://t.me/livedev_by" target="_blank" rel="noopener noreferrer" class="support-channel-card support-card-tg">
+          <div style="display: flex; align-items: center; gap: 0.9rem;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #0284c7, #38bdf8); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.35);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </div>
+            <div>
+              <div style="font-weight: 700; color: #fff; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>Telegram</span>
+                <span style="font-size: 0.7rem; background: rgba(56, 189, 248, 0.2); color: #38bdf8; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 600;">24/7</span>
+              </div>
+              <div style="font-size: 0.82rem; color: #38bdf8; font-family: var(--font-mono); font-weight: 600;">@livedev_by</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.1rem;">Мгновенные ответы в мессенджере</div>
+            </div>
+          </div>
+          <span style="font-size: 1.25rem; color: #38bdf8;">&rarr;</span>
+        </a>
+
+        <!-- 2. WhatsApp (+79206612923) -->
+        <a href="https://wa.me/79206612923" target="_blank" rel="noopener noreferrer" class="support-channel-card support-card-wa">
+          <div style="display: flex; align-items: center; gap: 0.9rem;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #16a34a, #22c55e); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
+            </div>
+            <div>
+              <div style="font-weight: 700; color: #fff; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>WhatsApp</span>
+                <span style="font-size: 0.7rem; background: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 600;">Онлайн</span>
+              </div>
+              <div style="font-size: 0.82rem; color: #4ade80; font-family: var(--font-mono); font-weight: 600;">+7 (920) 661-29-23</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.1rem;">Чат поддержки в WhatsApp</div>
+            </div>
+          </div>
+          <span style="font-size: 1.25rem; color: #4ade80;">&rarr;</span>
+        </a>
+
+        <!-- 3. Direct Phone Call (+79206612923 - Максим) -->
+        <a href="tel:+79206612923" class="support-channel-card support-card-phone">
+          <div style="display: flex; align-items: center; gap: 0.9rem;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #a855f7); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.35);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+            </div>
+            <div>
+              <div style="font-weight: 700; color: #fff; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>Позвонить (Максим)</span>
+                <span style="font-size: 0.7rem; background: rgba(168, 85, 247, 0.2); color: #c084fc; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 600;">Звонок</span>
+              </div>
+              <div style="font-size: 0.82rem; color: #c084fc; font-family: var(--font-mono); font-weight: 600;">+7 (920) 661-29-23</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.1rem;">Голосовая связь и консультация</div>
+            </div>
+          </div>
+          <span style="font-size: 1.25rem; color: #c084fc;">&rarr;</span>
+        </a>
+      </div>
+
+      <button type="button" class="btn btn-secondary btn-block modal-close">Закрыть</button>
+    </div>
   </div>
 
   <div id="toast-notification">Готово!</div>

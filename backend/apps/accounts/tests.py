@@ -238,3 +238,24 @@ class AccountsTestCase(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertIn(reverse('login'), resp.url)
 
+    def test_support_modal_options_present_in_base_template(self):
+        """Verify support modal contains all 3 contact channels (Telegram, WhatsApp, Phone)."""
+        resp = self.client.get(reverse('login'))
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode('utf-8')
+
+        # Check Support trigger
+        self.assertIn('support-modal', content)
+        self.assertIn('Поддержка', content)
+
+        # Check 3 direct redirect channels
+        self.assertIn('https://t.me/livedev_by', content)
+        self.assertIn('@livedev_by', content)
+
+        self.assertIn('https://wa.me/79206612923', content)
+        self.assertIn('+7 (920) 661-29-23', content)
+
+        self.assertIn('tel:+79206612923', content)
+        self.assertIn('Максим', content)
+
+

@@ -346,6 +346,32 @@ function renderUI() {
       };
     });
   }
+
+  // MiniApp Support Modal
+  const modalSupport = document.getElementById('miniapp-support-modal');
+  const btnOpenSupport = document.getElementById('btn-open-miniapp-support');
+  const btnCloseSupport = document.getElementById('btn-close-miniapp-support');
+  const btnCloseSupportBottom = document.getElementById('btn-close-miniapp-support-bottom');
+
+  if (btnOpenSupport && modalSupport) {
+    btnOpenSupport.onclick = () => {
+      modalSupport.classList.add('active');
+    };
+  }
+
+  [btnCloseSupport, btnCloseSupportBottom].forEach(b => {
+    if (b && modalSupport) {
+      b.onclick = () => {
+        modalSupport.classList.remove('active');
+      };
+    }
+  });
+
+  if (modalSupport) {
+    modalSupport.onclick = (e) => {
+      if (e.target === modalSupport) modalSupport.classList.remove('active');
+    };
+  }
 }
 
 function showFeedback(msg) {
