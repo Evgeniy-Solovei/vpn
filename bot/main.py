@@ -39,16 +39,22 @@ async def cmd_start(message: Message, command: CommandObject):
     username = message.from_user.username
     ref_code = command.args if command.args else None
 
-    # Sync with backend
     data = await sync_user_with_backend(telegram_id, username, ref_code)
     user_info = data.get('user', {})
     vpn_info = data.get('vpn', {})
+    traffic_info = data.get('traffic', {})
+
+    server_title = vpn_info.get('server_name') or '🇳🇱 Нидерланды • Амстердам'
+    current_speed = traffic_info.get('current_speed', '500 Мб/с')
+    left_gb = traffic_info.get('left_gb', 200)
+    limit_gb = traffic_info.get('limit_gb', 200)
 
     welcome_text = (
-        f"👋 <b>Добро пожаловать в VPN Live Dev!</b>\n\n"
+        f"👋 <b>Добро пожаловать в VPN live-dev!</b>\n\n"
         f"⚡ <b>Быстрый и защищенный VPN без блокировок для РФ и РБ.</b>\n"
         f"• Протокол нового поколения: <b>VLESS Reality</b> (маскировка под чистый трафик)\n"
-        f"• Сервер: 🇳🇱 <b>{vpn_info.get('server_name', 'Нидерланды 01')}</b> (Пинг: {vpn_info.get('ping_ms', 45)} ms)\n"
+        f"• Сервер: <b>{server_title}</b> (Пинг: {vpn_info.get('ping_ms', 42)} ms)\n"
+        f"• Скорость: <b>{current_speed}</b> (Остаток квоты: {left_gb}/{limit_gb} ГБ)\n"
         f"• Белый список РФ: <b>Госуслуги, Сбер, Т-Банк и маркетплейсы работают напрямую!</b>\n\n"
         f"💰 Ваш баланс: <b>{user_info.get('balance', 15.0)} ₽</b> (хватит на {user_info.get('days_left', 3)} дн.)\n\n"
         f"👇 <i>Нажмите «Подключить в 1 клик» для моментальной настройки приложения INCY:</i>"
@@ -66,11 +72,18 @@ async def cb_main_menu(call: CallbackQuery):
     data = await sync_user_with_backend(call.from_user.id, call.from_user.username)
     user_info = data.get('user', {})
     vpn_info = data.get('vpn', {})
+    traffic_info = data.get('traffic', {})
+
+    server_title = vpn_info.get('server_name') or '🇳🇱 Нидерланды • Амстердам'
+    current_speed = traffic_info.get('current_speed', '500 Мб/с')
+    left_gb = traffic_info.get('left_gb', 200)
+    limit_gb = traffic_info.get('limit_gb', 200)
 
     text = (
-        f"🏠 <b>Главное меню VPN Live Dev</b>\n\n"
+        f"🏠 <b>Главное меню VPN live-dev</b>\n\n"
         f"• Баланс: <b>{user_info.get('balance', 0)} ₽</b> (на {user_info.get('days_left', 0)} дн.)\n"
-        f"• Сервер: 🇳🇱 <b>{vpn_info.get('server_name', 'Нидерланды')}</b>\n"
+        f"• Сервер: <b>{server_title}</b>\n"
+        f"• Скорость канала: <b>{current_speed}</b> ({left_gb}/{limit_gb} ГБ)\n"
         f"• Белый список РФ: {'<b>ВКЛ (банки напрямую)</b>' if vpn_info.get('whitelist_enabled') else '<b>ВЫКЛ (весь трафик в VPN)</b>'}"
     )
     await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_main_menu(vpn_info, user_info))
@@ -129,6 +142,27 @@ async def cb_toggle_whitelist(call: CallbackQuery):
             await call.answer("Ошибка при переключении", show_alert=True)
 
     # Refresh menu
+    await cb_main_menu(call)
+
+
+@dp.callback_query(F.data == "buy_turbo")
+async def cb_buy_turbo(call: CallbackQuery):
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/vpn/buy-traffic/",
+                json={"telegram_id": str(call.from_user.id)}
+            )
+            res_data = resp.json()
+            if res_data.get('success'):
+                await call.answer("🚀 Добавлено +50 ГБ скоростного трафика!", show_alert=True)
+            else:
+                err_msg = res_data.get('error', 'Недостаточно средств на балансе (нужно 30 ₽)')
+                await call.answer(f"⚠️ {err_msg}", show_alert=True)
+        except Exception as e:
+            logger.error(f"Error buying turbo traffic: {e}")
+            await call.answer("Ошибка при покупке трафика", show_alert=True)
+
     await cb_main_menu(call)
 
 

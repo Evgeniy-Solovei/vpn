@@ -33,6 +33,10 @@ def get_main_menu(vpn_data: dict, user_data: dict) -> InlineKeyboardMarkup:
             InlineKeyboardButton(
                 text=wl_text,
                 callback_data="toggle_whitelist"
+            ),
+            InlineKeyboardButton(
+                text="⚡ +50 ГБ Турбо (30 ₽)",
+                callback_data="buy_turbo"
             )
         ],
         [
