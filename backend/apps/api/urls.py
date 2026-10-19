@@ -9,6 +9,7 @@ urlpatterns = [
     path('vpn/servers/', views.servers_list_api, name='api_servers_list'),
     path('vpn/switch-server/', views.switch_server_api, name='api_switch_server'),
     path('vpn/buy-traffic/', views.buy_traffic_api, name='api_buy_traffic'),
+    path('vpn/custom-whitelist/', views.update_custom_whitelist_api, name='api_custom_whitelist'),
     path('billing/tariffs/', views.tariffs_list_api, name='api_tariffs_list'),
 ]
 

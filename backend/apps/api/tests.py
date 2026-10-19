@@ -149,4 +149,24 @@ class ApiTestCase(TestCase):
         user.refresh_from_db()
         self.assertEqual(user.balance, Decimal('20.00'))
 
+    def test_custom_whitelist_api(self):
+        """User can save custom domains to whitelist and retrieve them."""
+        user = User.objects.create_user(
+            username='whitelistuser',
+            email='wluser@test.com',
+            password='password123'
+        )
+        self.client.force_login(user)
+        resp = self.client.post(
+            reverse('api_custom_whitelist'),
+            data=json.dumps({'domains': 'https://mycompany.com/page, provider.by, test.local'}),
+            content_type='application/json'
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['success'])
+        self.assertIn('mycompany.com', data['custom_domains'])
+        self.assertIn('provider.by', data['custom_domains'])
+        self.assertIn('test.local', data['custom_domains'])
+
 

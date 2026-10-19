@@ -98,6 +98,7 @@ class VPNKey(models.Model):
     traffic_limit_gb = models.PositiveIntegerField(default=200, verbose_name="Лимит скоростного трафика (ГБ)")
     traffic_reset_date = models.DateField(default=get_default_reset_date, verbose_name="Дата следующего сброса квоты")
     is_throttled = models.BooleanField(default=False, verbose_name="Скорость ограничена (FUP)")
+    custom_whitelist = models.TextField(blank=True, default="", verbose_name="Пользовательские домены-исключения")
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлен")
@@ -154,6 +155,22 @@ class VPNKey(models.Model):
         self.traffic_reset_date = get_default_reset_date()
         self.save(update_fields=['used_traffic_bytes', 'is_throttled', 'traffic_reset_date', 'updated_at'])
         UserServerTraffic.objects.filter(user=self.user).update(bytes_used=0)
+
+    def get_custom_domains(self) -> list:
+        if not self.custom_whitelist:
+            return []
+        domains = []
+        for line in self.custom_whitelist.replace(',', '\n').split('\n'):
+            d = line.strip().lower()
+            if d:
+                if d.startswith('http://'):
+                    d = d[7:]
+                elif d.startswith('https://'):
+                    d = d[8:]
+                d = d.split('/')[0].strip()
+                if d and d not in domains:
+                    domains.append(d)
+        return domains
 
     def __str__(self):
         return f"Ключ {self.user.username} @ {self.server.name} ({self.used_traffic_gb}/{self.traffic_limit_gb} GB)"

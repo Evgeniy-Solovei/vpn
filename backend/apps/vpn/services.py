@@ -129,16 +129,25 @@ class ThreeXUIService:
             return False
 
 
-def generate_pac_script(server: VPNServer, whitelist_enabled: bool) -> str:
+def generate_pac_script(server: VPNServer, whitelist_enabled: bool, custom_domains: list = None) -> str:
     """
     Generates a Proxy Auto-Config (PAC) JavaScript file.
     Enables connection without downloading applications on macOS, Windows, iOS, Android, Firefox, Chrome.
     """
-    direct_domains_json = json.dumps(DIRECT_DOMAINS)
+    combined_domains = list(DIRECT_DOMAINS) if whitelist_enabled else []
+    if custom_domains:
+        for d in custom_domains:
+            clean = d.strip().lower()
+            if clean:
+                if not clean.startswith("*."):
+                    combined_domains.append(f"*.{clean}")
+                combined_domains.append(clean)
+
+    direct_domains_json = json.dumps(combined_domains)
     proxy_host = f"SOCKS5 {server.ip}:1080; PROXY {server.ip}:8080; DIRECT"
 
-    if not whitelist_enabled:
-        return f"""// VPN Live Dev PAC Script - All Traffic via VPN
+    if not whitelist_enabled and not custom_domains:
+        return f"""// VPN live-dev PAC Script - All Traffic via VPN
 function FindProxyForURL(url, host) {{
     if (isPlainHostName(host) || shExpMatch(host, "*.local")) {{
         return "DIRECT";
@@ -147,7 +156,7 @@ function FindProxyForURL(url, host) {{
 }}
 """
 
-    return f"""// VPN Live Dev PAC Script - Smart Direct Routing (RU / RB Bypass)
+    return f"""// VPN live-dev PAC Script - Smart Direct Routing with Custom Whitelist
 var directDomains = {direct_domains_json};
 
 function FindProxyForURL(url, host) {{
@@ -156,7 +165,7 @@ function FindProxyForURL(url, host) {{
         return "DIRECT";
     }}
 
-    // Russian & Belarusian domains and services -> DIRECT (no VPN, avoid bank/government blocks)
+    // Direct domains (RU/BY banks & user custom whitelist) -> DIRECT (no VPN)
     for (var i = 0; i < directDomains.length; i++) {{
         if (shExpMatch(host, directDomains[i])) {{
             return "DIRECT";

@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAutopayToggle();
   initServerSwitcher();
   initBuyTraffic();
+  initCustomWhitelist();
   initModals();
 });
 
@@ -434,6 +435,52 @@ function initBuyTraffic() {
     } finally {
       btnTurbo.disabled = false;
       btnTurbo.innerHTML = originalText;
+    }
+  });
+}
+
+// ==========================================
+// 8.5. CUSTOM WHITELIST (USER DOMAINS)
+// ==========================================
+function initCustomWhitelist() {
+  const saveBtn = document.getElementById('save-custom-whitelist-btn');
+  const textarea = document.getElementById('custom-whitelist-input');
+  if (!saveBtn || !textarea) return;
+
+  saveBtn.addEventListener('click', async () => {
+    const domains = textarea.value;
+    saveBtn.disabled = true;
+    const oldText = saveBtn.textContent;
+    saveBtn.textContent = 'Сохранение...';
+
+    try {
+      const res = await fetch('/api/vpn/custom-whitelist/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ domains: domains })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('✓ Список исключений обновлен!');
+        const countSpan = document.getElementById('custom-whitelist-count');
+        if (countSpan) {
+          countSpan.textContent = `${data.custom_domains.length} сайтов`;
+        }
+        const modal = document.getElementById('custom-whitelist-modal');
+        if (modal) modal.classList.remove('active');
+      } else {
+        showToast(data.error || 'Ошибка сохранения');
+      }
+    } catch (e) {
+      console.error('Save custom whitelist error:', e);
+      showToast('Ошибка сети');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = oldText;
     }
   });
 }

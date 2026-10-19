@@ -56,6 +56,8 @@ def build_user_response(user, is_new=False):
             'incy_url': key.get_incy_url(),
             'connect_url': key.get_connect_url(),
             'whitelist_enabled': key.whitelist_enabled,
+            'custom_whitelist': key.custom_whitelist,
+            'custom_domains': key.get_custom_domains(),
             'qr_url': f"{site_url}/vpn/qr/{key.sub_token}/",
             'pac_url': f"{site_url}/vpn/pac/{key.sub_token}/",
         },
@@ -325,4 +327,45 @@ def buy_traffic_api(request):
         'message': 'Добавлено +50 ГБ скоростного трафика!',
         **build_user_response(user)
     })
+
+
+@csrf_exempt
+def update_custom_whitelist_api(request):
+    """
+    Save user's custom domains for direct routing (bypass VPN).
+    Accepts JSON: {"domains": "work.corp, provider.by"} or {"telegram_id": ..., "domains": "..."}
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        user = None
+        if request.user.is_authenticated:
+            user = request.user
+        elif data.get('telegram_id'):
+            user = CustomUser.objects.filter(telegram_id=str(data.get('telegram_id'))).first()
+        elif data.get('user_id'):
+            user = CustomUser.objects.filter(id=data.get('user_id')).first()
+
+        if not user:
+            return JsonResponse({'error': 'Пользователь не найден'}, status=404)
+
+        key = VPNKey.objects.filter(user=user).first()
+        if not key:
+            server = get_or_create_default_server()
+            key = VPNKey.objects.create(user=user, server=server)
+
+        domains_text = data.get('domains', '')
+        key.custom_whitelist = domains_text.strip()
+        key.save(update_fields=['custom_whitelist', 'updated_at'])
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Список сайтов-исключений сохранен!',
+            'custom_domains': key.get_custom_domains(),
+            **build_user_response(user)
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 

@@ -69,7 +69,7 @@ def pac_view(request, token):
     URL: /vpn/pac/<token>
     """
     key = get_object_or_404(VPNKey, sub_token=token)
-    pac_content = generate_pac_script(key.server, key.whitelist_enabled)
+    pac_content = generate_pac_script(key.server, key.whitelist_enabled, key.get_custom_domains())
     return HttpResponse(pac_content, content_type="application/x-ns-proxy-autoconfig")
 
 
