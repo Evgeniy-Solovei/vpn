@@ -1,0 +1,482 @@
+/* ==========================================================================
+   VPN LIVE DEV - SENIOR DESIGN SYSTEM & STYLES
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg-primary: #07090e;
+  --bg-secondary: #0d111a;
+  --bg-card: rgba(18, 24, 38, 0.75);
+  --bg-card-hover: rgba(26, 34, 52, 0.85);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(16, 185, 129, 0.5);
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --accent-emerald: #10b981;
+  --accent-emerald-glow: rgba(16, 185, 129, 0.35);
+  --accent-indigo: #6366f1;
+  --accent-indigo-glow: rgba(99, 102, 241, 0.35);
+  --accent-violet: #8b5cf6;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Background Animated Canvas */
+#bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+.app-wrapper {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Container */
+.container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Header & Navigation */
+.header-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(7, 9, 14, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 1rem 0;
+}
+
+.nav-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: var(--text-main);
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-emerald), var(--accent-indigo));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px var(--accent-emerald-glow);
+}
+
+/* Auth Cards & Forms */
+.auth-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 2.5rem 1rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: rgba(13, 17, 26, 0.85);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.5rem;
+  padding: 2.25rem;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+  animation: fadeIn 0.4s ease-out;
+}
+
+.auth-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+  color: var(--text-muted);
+  font-size: 0.925rem;
+  line-height: 1.5;
+  margin-bottom: 1.75rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  padding: 0.85rem 1rem;
+  color: var(--text-main);
+  font-size: 0.95rem;
+  font-family: var(--font-sans);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--accent-emerald);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 3px var(--accent-emerald-glow);
+}
+
+.input-password-toggle {
+  position: absolute;
+  right: 0.85rem;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.input-password-toggle:hover {
+  color: var(--text-main);
+}
+
+/* Primary and Glowing Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--accent-emerald-glow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border: 1px solid var(--border-subtle);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* Existing email detection banner */
+.alert-box {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 0.85rem;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.alert-title {
+  color: #fbbf24;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.alert-desc {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.alert-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Dashboard UI */
+.vpn-power-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  text-align: center;
+}
+
+/* Glowing Rotating Big Power Button */
+.power-btn-container {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.power-btn-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--accent-emerald), transparent, var(--accent-indigo), transparent, var(--accent-emerald));
+  animation: rotateGlow 8s linear infinite;
+  opacity: 0.6;
+  filter: blur(6px);
+}
+
+.power-btn {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1a2333 0%, #0d121c 100%);
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  color: var(--accent-emerald);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 40px var(--accent-emerald-glow);
+  transition: all 0.3s ease;
+}
+
+.power-btn:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 50px rgba(16, 185, 129, 0.6);
+  border-color: var(--accent-emerald);
+}
+
+.power-btn.disconnected {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  color: var(--text-dim);
+}
+
+.power-btn.disconnected .power-btn-ring {
+  opacity: 0;
+}
+
+/* Status Pill */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--accent-emerald);
+  box-shadow: 0 0 8px var(--accent-emerald);
+  animation: pulse 2s infinite;
+}
+
+/* Sleek Toggle Switch */
+.switch-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  transition: background 0.3s;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:checked + .toggle-switch {
+  background: var(--accent-emerald);
+}
+
+input:checked + .toggle-switch::after {
+  transform: translateX(22px);
+}
+
+/* Grid Layout */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-overlay.active {
+  display: flex;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.modal-body {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+}
+
+/* Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rotateGlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .power-btn-container {
+    width: 140px;
+    height: 140px;
+  }
+  .power-btn {
+    width: 125px;
+    height: 125px;
+  }
+}

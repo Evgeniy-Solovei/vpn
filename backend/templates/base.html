@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% block title %}VPN Live Dev — Быстрый и надежный VPN для РФ и РБ{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V18a1 1 0 0 1-2 0v-1.07A6 6 0 0 1 6.07 12H7a1 1 0 0 1 0-2h-.93A6 6 0 0 1 11 6.07V7a1 1 0 0 1 2 0v-.93A6 6 0 0 1 17.93 11H17a1 1 0 0 1 0 2h.93A6 6 0 0 1 13 16.93z'/></svg>">
+</head>
+<body>
+  <!-- Ambient background animated canvas -->
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="app-wrapper">
+    <!-- Top Navigation Header -->
+    <header class="header-nav">
+      <div class="container nav-content">
+        <a href="{% url 'dashboard' %}" class="logo-brand">
+          <div class="logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <span>VPN LIVE DEV</span>
+        </a>
+
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          {% if user.is_authenticated %}
+            <a href="{% url 'tariffs' %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+              <span>💳 {{ user.balance }} ₽</span>
+            </a>
+            <a href="{% url 'logout' %}" class="btn btn-secondary" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;" title="Выйти">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </a>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Войти</a>
+            <a href="{% url 'register' %}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Создать аккаунт</a>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+
+    <!-- Global Messages Container -->
+    {% if messages %}
+      <div class="container" style="margin-top: 1.5rem;">
+        {% for message in messages %}
+          <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; padding: 0.85rem 1.25rem; border-radius: 0.75rem; margin-bottom: 0.75rem; font-size: 0.9rem;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Main Content Block -->
+    <main style="flex: 1;">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer style="border-top: 1px solid var(--border-subtle); padding: 2rem 0; margin-top: 3rem; background: rgba(7, 9, 14, 0.6);">
+      <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: gap: 1rem; font-size: 0.85rem; color: var(--text-dim);">
+        <div>
+          © 2026 <strong>VPN Live Dev</strong> (vpn.live-dev.by). Свободный интернет для РФ и РБ.
+        </div>
+        <div style="display: flex; gap: 1.5rem;">
+          <a href="https://t.me/{{ BOT_USERNAME }}" target="_blank" style="color: var(--text-muted); text-decoration: none;">Телеграм бот</a>
+          <a href="{% url 'tariffs' %}" style="color: var(--text-muted); text-decoration: none;">Тарифы</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

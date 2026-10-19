@@ -1,0 +1,168 @@
+/* ==========================================================================
+   TELEGRAM MINI APP - MOBILE-FIRST HIGH-END STYLES
+   ========================================================================== */
+
+:root {
+  --bg-primary: #07090e;
+  --bg-card: rgba(18, 24, 38, 0.85);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --accent-emerald: #10b981;
+  --accent-emerald-glow: rgba(16, 185, 129, 0.4);
+  --accent-indigo: #6366f1;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--bg-primary);
+  color: var(--text-main);
+  padding: 1rem;
+  min-height: 100vh;
+  user-select: none;
+}
+
+.miniapp-container {
+  max-width: 440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-emerald), var(--accent-indigo));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+}
+
+.power-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 0;
+}
+
+.power-circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1a2333 0%, #0d121c 100%);
+  border: 2px solid var(--accent-emerald);
+  box-shadow: 0 0 35px var(--accent-emerald-glow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-emerald);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.power-circle:active {
+  transform: scale(0.95);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  backdrop-filter: blur(12px);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem;
+  border-radius: 0.85rem;
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.btn:active {
+  opacity: 0.8;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 4px 15px var(--accent-emerald-glow);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Switch */
+.switch-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.switch.active {
+  background: var(--accent-emerald);
+}
+
+.switch.active::after {
+  transform: translateX(22px);
+}

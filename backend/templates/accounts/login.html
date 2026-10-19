@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Вход в личный кабинет — VPN Live Dev{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+    <h1 class="auth-title">Вход в кабинет</h1>
+    <p class="auth-subtitle">
+      Введите ваш логин или email и пароль для доступа к ключам и управлению VPN.
+    </p>
+
+    <form method="post" action="{% url 'login' %}" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem;">
+          {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label class="form-label" for="id_login">Логин или Email</label>
+        <div class="input-wrapper">
+          {{ form.login }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <label class="form-label" for="id_password" style="margin-bottom: 0;">Пароль</label>
+          <a href="{% url 'password_reset' %}" style="font-size: 0.8rem; color: var(--accent-emerald); text-decoration: none;">Забыли пароль?</a>
+        </div>
+        <div class="input-wrapper">
+          {{ form.password }}
+          <button type="button" class="input-password-toggle" data-target="id_password" aria-label="Показать пароль">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">
+        <span>Войти в кабинет</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
+      Ещё нет аккаунта? <a href="{% url 'register' %}" style="color: var(--accent-emerald); text-decoration: none; font-weight: 600;">Зарегистрироваться</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

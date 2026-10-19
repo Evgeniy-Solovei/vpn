@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Создание аккаунта — VPN Live Dev{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+      <h1 class="auth-title">Создаём аккаунт</h1>
+      <span class="status-pill" style="font-size: 0.75rem; padding: 0.25rem 0.65rem;">Приватный доступ</span>
+    </div>
+    
+    <p class="auth-subtitle">
+      Логин и пароль нужны, чтобы вернуться в кабинет с любого устройства. Email — чтобы восстановить доступ при необходимости.
+    </p>
+
+    <!-- If Email Already Registered Warning -->
+    {% if email_already_exists %}
+      <div class="alert-box">
+        <div class="alert-title">⚠️ Этот email уже зарегистрирован</div>
+        <p class="alert-desc">Хотите восстановить доступ к своему существующему кабинету?</p>
+        <div class="alert-actions">
+          <a href="{% url 'password_reset' %}?email={{ existing_email|urlencode }}" class="btn btn-primary" style="padding: 0.45rem 0.9rem; font-size: 0.8rem;">
+            Восстановить пароль
+          </a>
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('id_email').focus();" style="padding: 0.45rem 0.9rem; font-size: 0.8rem;">
+            Изменить email
+          </button>
+        </div>
+      </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'register' %}" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem;">
+          {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Login -->
+      <div class="form-group">
+        <label class="form-label" for="id_username">Ваш логин</label>
+        <div class="input-wrapper">
+          {{ form.username }}
+        </div>
+        {% if form.username.errors %}
+          <div style="color: #f87171; font-size: 0.8rem; margin-top: 0.35rem;">
+            {{ form.username.errors.0 }}
+          </div>
+        {% else %}
+          <div style="color: var(--text-dim); font-size: 0.75rem; margin-top: 0.35rem;">
+            Только латинские буквы и цифры
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label class="form-label" for="id_password">Мой секретный пароль</label>
+        <div class="input-wrapper">
+          {{ form.password }}
+          <button type="button" class="input-password-toggle" data-target="id_password" aria-label="Показать пароль">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        {% if form.password.errors %}
+          <div style="color: #f87171; font-size: 0.8rem; margin-top: 0.35rem;">
+            {{ form.password.errors.0 }}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Repeat Password -->
+      <div class="form-group">
+        <label class="form-label" for="id_password_confirm">Повторите пароль</label>
+        <div class="input-wrapper">
+          {{ form.password_confirm }}
+          <button type="button" class="input-password-toggle" data-target="id_password_confirm" aria-label="Показать пароль">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        {% if form.password_confirm.errors %}
+          <div style="color: #f87171; font-size: 0.8rem; margin-top: 0.35rem;">
+            {{ form.password_confirm.errors.0 }}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label class="form-label" for="id_email">Email</label>
+        <div class="input-wrapper">
+          {{ form.email }}
+        </div>
+        {% if form.email.errors %}
+          <div style="color: #f87171; font-size: 0.8rem; margin-top: 0.35rem;">
+            {{ form.email.errors.0 }}
+          </div>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">
+        <span>Зарегистрироваться</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
+      Уже есть аккаунт? <a href="{% url 'login' %}" style="color: var(--accent-emerald); text-decoration: none; font-weight: 600;">Войти</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

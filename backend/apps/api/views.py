@@ -1,0 +1,190 @@
+import json
+import logging
+from decimal import Decimal
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from apps.accounts.models import CustomUser
+from apps.vpn.models import VPNServer, VPNKey
+from apps.billing.models import TariffPlan, Transaction
+
+logger = logging.getLogger(__name__)
+
+def get_or_create_default_server():
+    server = VPNServer.objects.filter(is_active=True).first()
+    if not server:
+        server = VPNServer.objects.create(
+            name="Нидерланды 01 (Амстердам)",
+            country_code="NL",
+            country_name="Нидерланды",
+            ip=getattr(settings, 'XRAY_PUBLIC_IP', '89.110.100.12') or '89.110.100.12',
+            port=int(getattr(settings, 'XRAY_PUBLIC_PORT', 443) or 443),
+            reality_sni=getattr(settings, 'XRAY_SNI', 'www.microsoft.com') or 'www.microsoft.com',
+            reality_pbk=getattr(settings, 'XRAY_PBK', 'w4XF_zC_test_pub_key_1234567890abcdef') or 'w4XF_zC_test_pub_key_1234567890abcdef',
+            reality_short_id=getattr(settings, 'XRAY_SHORT_ID', '0123456789abcdef') or '0123456789abcdef',
+            ping_ms=45,
+            is_active=True
+        )
+    return server
+
+
+@csrf_exempt
+def tg_sync_view(request):
+    """
+    Sync endpoint for Telegram Bot and Telegram Mini App.
+    Accepts telegram_id, telegram_username, ref_code.
+    Creates or fetches user, provides their VPN key, balance, and settings.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        telegram_id = str(data.get('telegram_id', '')).strip()
+        telegram_username = data.get('telegram_username', '')
+        ref_code = data.get('ref_code')
+
+        if not telegram_id:
+            return JsonResponse({'error': 'telegram_id is required'}, status=400)
+
+        user = CustomUser.objects.filter(telegram_id=telegram_id).first()
+        created = False
+        if not user:
+            # Create user linked to telegram
+            username = telegram_username or f"tg_{telegram_id}"
+            # Ensure unique username
+            base_username = username
+            counter = 1
+            while CustomUser.objects.filter(username=username).exists():
+                username = f"{base_username}_{counter}"
+                counter += 1
+
+            email = f"tg_{telegram_id}@live-dev.by"
+            user = CustomUser.objects.create(
+                username=username,
+                email=email,
+                telegram_id=telegram_id,
+                telegram_username=telegram_username,
+                balance=Decimal('15.00'), # 3-day trial balance
+                daily_deduction=Decimal('3.50')
+            )
+            created = True
+
+            if ref_code:
+                try:
+                    referrer = CustomUser.objects.get(referral_code=ref_code)
+                    user.referred_by = referrer
+                    referrer.balance += Decimal('10.00')
+                    referrer.save()
+                    user.save()
+                except CustomUser.DoesNotExist:
+                    pass
+
+        server = get_or_create_default_server()
+        key, _ = VPNKey.objects.get_or_create(user=user, server=server)
+
+        site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by')
+        referral_url = f"{site_url}/auth/register/?ref={user.referral_code}"
+
+        return JsonResponse({
+            'success': True,
+            'is_new': created,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'telegram_id': user.telegram_id,
+                'balance': float(user.balance),
+                'daily_deduction': float(user.daily_deduction),
+                'days_left': user.days_left,
+                'autopay': user.autopay,
+                'referral_code': user.referral_code,
+                'referral_url': referral_url,
+                'referrals_count': user.referrals.count(),
+            },
+            'vpn': {
+                'server_name': server.name,
+                'country_code': server.country_code,
+                'country_name': server.country_name,
+                'ping_ms': server.ping_ms,
+                'vless_url': key.get_vless_url(),
+                'sub_url': key.get_sub_url(),
+                'incy_url': key.get_incy_url(),
+                'whitelist_enabled': key.whitelist_enabled,
+                'qr_url': f"{site_url}/vpn/qr/{key.sub_token}/",
+                'pac_url': f"{site_url}/vpn/pac/{key.sub_token}/",
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error in tg_sync_view: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def toggle_whitelist_api(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        telegram_id = data.get('telegram_id')
+        user_id = data.get('user_id')
+
+        user = None
+        if telegram_id:
+            user = CustomUser.objects.filter(telegram_id=str(telegram_id)).first()
+        elif user_id:
+            user = CustomUser.objects.filter(id=user_id).first()
+
+        if not user:
+            return JsonResponse({'error': 'User not found'}, status=404)
+
+        key = VPNKey.objects.filter(user=user).first()
+        if not key:
+            server = get_or_create_default_server()
+            key = VPNKey.objects.create(user=user, server=server)
+
+        key.whitelist_enabled = not key.whitelist_enabled
+        key.save()
+
+        return JsonResponse({
+            'success': True,
+            'whitelist_enabled': key.whitelist_enabled,
+            'message': 'Белый список РФ обновлен'
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def servers_list_api(request):
+    servers = VPNServer.objects.filter(is_active=True)
+    return JsonResponse({
+        'servers': [
+            {
+                'id': s.id,
+                'name': s.name,
+                'country_code': s.country_code,
+                'country_name': s.country_name,
+                'ping_ms': s.ping_ms,
+                'is_active': s.is_active,
+            }
+            for s in servers
+        ]
+    })
+
+
+def tariffs_list_api(request):
+    plans = TariffPlan.objects.filter(is_active=True)
+    return JsonResponse({
+        'plans': [
+            {
+                'id': p.id,
+                'name': p.name,
+                'code': p.code,
+                'daily_price': float(p.daily_price),
+                'speed_mbps': p.speed_mbps,
+                'description': p.description,
+                'is_featured': p.is_featured,
+            }
+            for p in plans
+        ]
+    })
