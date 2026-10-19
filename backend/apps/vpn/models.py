@@ -83,3 +83,7 @@ class VPNKey(models.Model):
         # INCY deep link scheme format for 1-click import
         sub_url = self.get_sub_url()
         return f"incy://install-config?url={quote(sub_url)}"
+
+    def get_connect_url(self) -> str:
+        site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
+        return f"{site_url}/vpn/connect/{self.sub_token}/"

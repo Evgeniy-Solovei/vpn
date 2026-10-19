@@ -6,26 +6,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from apps.accounts.models import CustomUser
 from apps.vpn.models import VPNServer, VPNKey
+from apps.vpn.services import get_or_create_default_server
 from apps.billing.models import TariffPlan, Transaction
 
 logger = logging.getLogger(__name__)
-
-def get_or_create_default_server():
-    server = VPNServer.objects.filter(is_active=True).first()
-    if not server:
-        server = VPNServer.objects.create(
-            name="Нидерланды 01 (Амстердам)",
-            country_code="NL",
-            country_name="Нидерланды",
-            ip=getattr(settings, 'XRAY_PUBLIC_IP', '89.110.100.12') or '89.110.100.12',
-            port=int(getattr(settings, 'XRAY_PUBLIC_PORT', 443) or 443),
-            reality_sni=getattr(settings, 'XRAY_SNI', 'www.microsoft.com') or 'www.microsoft.com',
-            reality_pbk=getattr(settings, 'XRAY_PBK', 'w4XF_zC_test_pub_key_1234567890abcdef') or 'w4XF_zC_test_pub_key_1234567890abcdef',
-            reality_short_id=getattr(settings, 'XRAY_SHORT_ID', '0123456789abcdef') or '0123456789abcdef',
-            ping_ms=45,
-            is_active=True
-        )
-    return server
 
 
 @csrf_exempt
@@ -110,6 +94,7 @@ def tg_sync_view(request):
                 'vless_url': key.get_vless_url(),
                 'sub_url': key.get_sub_url(),
                 'incy_url': key.get_incy_url(),
+                'connect_url': key.get_connect_url(),
                 'whitelist_enabled': key.whitelist_enabled,
                 'qr_url': f"{site_url}/vpn/qr/{key.sub_token}/",
                 'pac_url': f"{site_url}/vpn/pac/{key.sub_token}/",

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Подключение к INCY — VPN Live Dev{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card" style="text-align: center; padding: 3rem 2rem;">
+    <!-- Animated Rocket / Shield Icon -->
+    <div style="width: 76px; height: 76px; margin: 0 auto 1.5rem; background: rgba(16, 185, 129, 0.12); border: 2px solid rgba(16, 185, 129, 0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px var(--accent-emerald-glow);">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+    </div>
+
+    <h2 style="font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 0.75rem;">
+      Подключение в приложении INCY
+    </h2>
+
+    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5;">
+      Если приложение INCY установлено, сейчас откроется окно импорта настроек. Если нет — скачайте приложение ниже.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+      <a href="{{ incy_url }}" class="btn btn-primary btn-block" style="padding: 1rem; font-size: 1.05rem;">
+        ⚡ Открыть в INCY прямо сейчас
+      </a>
+
+      <button type="button" class="btn btn-secondary btn-block" data-copy="{{ vless_url }}">
+        📋 Скопировать ключ VLESS
+      </button>
+
+      <button type="button" class="btn btn-secondary btn-block" data-copy="{{ sub_url }}">
+        🔗 Скопировать ссылку подписки
+      </button>
+    </div>
+
+    <div style="font-size: 0.85rem; color: var(--text-dim); margin-top: 1rem;">
+      Нет приложения? <a href="https://apps.apple.com/app/id6474328827" target="_blank" style="color: var(--accent-emerald); text-decoration: none;">Скачать INCY в App Store / Google Play</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Attempt auto-launch
+  setTimeout(() => {
+    window.location.href = "{{ incy_url }}";
+  }, 300);
+</script>
+{% endblock %}

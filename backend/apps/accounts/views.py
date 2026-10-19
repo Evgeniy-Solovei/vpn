@@ -14,6 +14,7 @@ from django.http import JsonResponse
 from .models import CustomUser
 from .forms import RegisterForm, LoginForm, PasswordResetRequestForm, SetNewPasswordForm
 from apps.vpn.models import VPNServer, VPNKey
+from apps.vpn.services import get_or_create_default_server
 
 logger = logging.getLogger(__name__)
 
@@ -43,20 +44,7 @@ def register_view(request):
 
             # Ensure default active VPN key is created
             try:
-                server = VPNServer.objects.filter(is_active=True).first()
-                if not server:
-                    server = VPNServer.objects.create(
-                        name="Нидерланды 01 (Амстердам)",
-                        country_code="NL",
-                        country_name="Нидерланды",
-                        ip="89.110.100.12",
-                        port=443,
-                        reality_sni="www.microsoft.com",
-                        reality_pbk="w4XF_zC_test_pub_key_1234567890abcdef",
-                        reality_short_id="0123456789abcdef",
-                        ping_ms=45,
-                        is_active=True
-                    )
+                server = get_or_create_default_server()
                 VPNKey.objects.get_or_create(user=user, server=server)
             except Exception as e:
                 logger.error(f"Error provisioning initial VPN key: {e}")
@@ -175,7 +163,7 @@ def dashboard_view(request):
     user = request.user
     
     # Get or create VPN key
-    server = VPNServer.objects.filter(is_active=True).first()
+    server = get_or_create_default_server()
     key, _ = VPNKey.objects.get_or_create(user=user, server=server)
     
     servers = VPNServer.objects.filter(is_active=True)

@@ -146,3 +146,15 @@ def regenerate_key_view(request):
                 'message': "Ключ успешно обновлен"
             })
     return JsonResponse({'success': False}, status=400)
+
+
+def incy_redirect_view(request, token):
+    """Landing and redirect view for 1-click import into INCY client."""
+    from django.shortcuts import render
+    key = get_object_or_404(VPNKey, sub_token=token)
+    return render(request, 'vpn/connect.html', {
+        'key': key,
+        'incy_url': key.get_incy_url(),
+        'vless_url': key.get_vless_url(),
+        'sub_url': key.get_sub_url(),
+    })

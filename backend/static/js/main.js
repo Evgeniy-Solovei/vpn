@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCopyButtons();
   initWhitelistToggle();
   initKeyRegeneration();
+  initAutopayToggle();
   initModals();
 });
 
@@ -241,6 +242,36 @@ function initWhitelistToggle() {
       }
     } catch (e) {
       showToast('Ошибка при переключении', 'error');
+      toggle.checked = !isChecked;
+    }
+  });
+}
+
+// ==========================================
+// 5.1. AUTOPAY TOGGLE AJAX
+// ==========================================
+function initAutopayToggle() {
+  const toggle = document.getElementById('autopay-toggle');
+  if (!toggle) return;
+
+  toggle.addEventListener('change', async () => {
+    const isChecked = toggle.checked;
+    const csrfToken = getCookie('csrftoken');
+
+    try {
+      const res = await fetch('/billing/toggle-autopay/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(isChecked ? 'Автоплатеж включен' : 'Автоплатеж отключен');
+      }
+    } catch (e) {
+      showToast('Ошибка при переключении автоплатежа', 'error');
       toggle.checked = !isChecked;
     }
   });

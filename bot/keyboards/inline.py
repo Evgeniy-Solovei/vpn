@@ -2,7 +2,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from bot.config import TELEGRAM_WEBAPP_URL, SITE_URL
 
 def get_main_menu(vpn_data: dict, user_data: dict) -> InlineKeyboardMarkup:
-    incy_url = vpn_data.get('incy_url', '#')
+    connect_url = vpn_data.get('connect_url') or f"{SITE_URL}/dashboard/"
     whitelist_active = vpn_data.get('whitelist_enabled', True)
     wl_text = "🛡️ Белый список РФ: ВКЛ" if whitelist_active else "🛡️ Белый список РФ: ВЫКЛ"
 
@@ -10,7 +10,7 @@ def get_main_menu(vpn_data: dict, user_data: dict) -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(
                 text="⚡ Подключить в 1 клик (INCY)",
-                url=incy_url
+                url=connect_url
             )
         ],
         [
