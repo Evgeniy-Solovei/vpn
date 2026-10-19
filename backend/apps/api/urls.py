@@ -8,6 +8,7 @@ urlpatterns = [
     path('vpn/toggle-whitelist/', views.toggle_whitelist_api, name='api_toggle_whitelist'),
     path('vpn/servers/', views.servers_list_api, name='api_servers_list'),
     path('vpn/switch-server/', views.switch_server_api, name='api_switch_server'),
+    path('vpn/buy-traffic/', views.buy_traffic_api, name='api_buy_traffic'),
     path('billing/tariffs/', views.tariffs_list_api, name='api_tariffs_list'),
 ]
 

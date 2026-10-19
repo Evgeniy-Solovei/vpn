@@ -5,6 +5,7 @@
 let tg = window.Telegram?.WebApp;
 let userData = null;
 let vpnData = null;
+let trafficData = null;
 
 const loadingView = document.getElementById('loading-view');
 const miniappView = document.getElementById('miniapp-view');
@@ -42,10 +43,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (data.success) {
         userData = data.user;
         vpnData = data.vpn;
+        trafficData = data.traffic;
         renderUI();
       } else {
         showError(data.error || 'Ошибка синхронизации Telegram');
       }
+
     } catch (err) {
       console.error('Error syncing TG WebApp:', err);
       showError('Не удалось подключиться к API сервера.');
@@ -71,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (data.success) {
           userData = data.user;
           vpnData = data.vpn;
+          trafficData = data.traffic;
           if (browserBanner) {
             browserBanner.style.display = 'flex';
             if (browserBannerText) {
@@ -100,6 +104,7 @@ async function checkWebSession() {
     if (data.authenticated && data.success) {
       userData = data.user;
       vpnData = data.vpn;
+      trafficData = data.traffic;
       if (browserBanner) {
         browserBanner.style.display = 'flex';
         if (browserBannerText) {
@@ -107,6 +112,7 @@ async function checkWebSession() {
         }
       }
       renderUI();
+
     } else {
       // User is not authenticated in browser
       if (loadingView) loadingView.style.display = 'none';
@@ -136,6 +142,22 @@ function renderUI() {
 
   document.getElementById('server-name').textContent = vpnData.server_name;
   document.getElementById('server-ping').textContent = `${vpnData.ping_ms} ms`;
+
+  // Traffic & Speed FUP Limits
+  if (trafficData) {
+    const trafficVal = document.getElementById('miniapp-traffic-val');
+    if (trafficVal) trafficVal.textContent = `${trafficData.used_gb} / ${trafficData.limit_gb} ГБ`;
+
+    const trafficLeft = document.getElementById('miniapp-traffic-left');
+    if (trafficLeft) trafficLeft.textContent = `Осталось ${trafficData.left_gb} ГБ`;
+
+    const trafficBar = document.getElementById('miniapp-traffic-bar');
+    if (trafficBar) trafficBar.style.width = `${trafficData.percent}%`;
+
+    const speedBadge = document.getElementById('miniapp-speed-badge');
+    if (speedBadge) speedBadge.textContent = `⚡ ${trafficData.current_speed}`;
+  }
+
 
   const btnIncy = document.getElementById('btn-incy');
   btnIncy.href = vpnData.connect_url || vpnData.incy_url;

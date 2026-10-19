@@ -10,8 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initKeyRegeneration();
   initAutopayToggle();
   initServerSwitcher();
+  initBuyTraffic();
   initModals();
 });
+
 
 // ==========================================
 // 1. VIBRANT 60FPS LUMINOUS CANVAS WITH MOUSE GLOW
@@ -371,11 +373,78 @@ function initKeyRegeneration() {
 }
 
 // ==========================================
-// 8. MODALS
+// 8. BUY TURBO TRAFFIC AJAX (+50 GB)
+// ==========================================
+function initBuyTraffic() {
+  const btnTurbo = document.getElementById('btn-buy-turbo');
+  if (!btnTurbo) return;
+
+  btnTurbo.addEventListener('click', async () => {
+    btnTurbo.disabled = true;
+    const originalText = btnTurbo.innerHTML;
+    btnTurbo.innerHTML = '<span>Обработка покупки...</span>';
+
+    try {
+      const res = await fetch('/api/vpn/buy-traffic/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'Добавлено +50 ГБ скоростного трафика!');
+        
+        // Update DOM elements
+        const usedElem = document.getElementById('traffic-used-val');
+        if (usedElem) usedElem.textContent = data.traffic.used_gb;
+
+        const limitElem = document.getElementById('traffic-limit-val');
+        if (limitElem) limitElem.textContent = data.traffic.limit_gb;
+
+        const leftElem = document.getElementById('traffic-left-val');
+        if (leftElem) leftElem.textContent = data.traffic.left_gb + ' ГБ';
+
+        const percentElem = document.getElementById('traffic-percent-val');
+        if (percentElem) percentElem.textContent = data.traffic.percent;
+
+        const barElem = document.getElementById('traffic-progress-bar');
+        if (barElem) barElem.style.width = data.traffic.percent + '%';
+
+        const speedBadge = document.getElementById('speed-indicator-badge');
+        if (speedBadge) {
+          speedBadge.className = 'status-pill pill-cyan';
+          speedBadge.textContent = '⚡ ' + data.traffic.current_speed;
+        }
+
+        // Update user balance in header if present
+        const balanceHeader = document.querySelector('.header-nav a[href*="tariffs"]');
+        if (balanceHeader) {
+          balanceHeader.innerHTML = `<span style="color: var(--accent-emerald); font-weight: 700;">💳 ${data.user.balance} ₽</span>`;
+        }
+      } else {
+        showToast(data.error || 'Ошибка при покупке');
+      }
+    } catch (e) {
+      console.error('Buy traffic error:', e);
+      showToast('Ошибка сети');
+    } finally {
+      btnTurbo.disabled = false;
+      btnTurbo.innerHTML = originalText;
+    }
+  });
+}
+
+// ==========================================
+// 9. MODALS
 // ==========================================
 function initModals() {
   document.querySelectorAll('[data-modal-target]').forEach(trigger => {
     trigger.addEventListener('click', () => {
+
       const targetId = trigger.getAttribute('data-modal-target');
       const modal = document.getElementById(targetId);
       if (modal) modal.classList.add('active');

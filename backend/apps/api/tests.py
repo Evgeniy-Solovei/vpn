@@ -132,3 +132,21 @@ class ApiTestCase(TestCase):
         self.assertTrue(data.get('authenticated'))
         self.assertEqual(data['user']['username'], 'demo')
 
+    def test_buy_traffic_api(self):
+        """Buy traffic increments limit by 50 GB and deducts 30 ₽."""
+        user = User.objects.create_user(
+            username='turbouser',
+            email='turbouser@test.com',
+            password='password123',
+            balance=Decimal('50.00')
+        )
+        self.client.force_login(user)
+        resp = self.client.post(reverse('api_buy_traffic'))
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['traffic']['limit_gb'], 250)
+        user.refresh_from_db()
+        self.assertEqual(user.balance, Decimal('20.00'))
+
+

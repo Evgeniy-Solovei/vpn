@@ -89,6 +89,11 @@ class VPNKey(models.Model):
     whitelist_enabled = models.BooleanField(default=True, verbose_name="Белый список РФ (Direct Routing)")
     is_active = models.BooleanField(default=True, verbose_name="Активен")
     
+    # Fair Usage Policy (FUP) & Traffic Management
+    used_traffic_bytes = models.BigIntegerField(default=18253611008, verbose_name="Использованный трафик (байт)")
+    traffic_limit_gb = models.PositiveIntegerField(default=200, verbose_name="Лимит скоростного трафика (ГБ)")
+    is_throttled = models.BooleanField(default=False, verbose_name="Скорость ограничена (FUP)")
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлен")
 
@@ -96,8 +101,40 @@ class VPNKey(models.Model):
         verbose_name = "VPN Ключ"
         verbose_name_plural = "VPN Ключи"
 
+    @property
+    def used_traffic_gb(self) -> float:
+        return round(self.used_traffic_bytes / (1024 ** 3), 1)
+
+    @property
+    def traffic_percent(self) -> int:
+        if not self.traffic_limit_gb:
+            return 0
+        return min(100, int((self.used_traffic_gb / self.traffic_limit_gb) * 100))
+
+    @property
+    def traffic_left_gb(self) -> float:
+        return max(0.0, round(self.traffic_limit_gb - self.used_traffic_gb, 1))
+
+    @property
+    def current_speed_mbps(self) -> int:
+        if self.is_throttled:
+            return 10
+        return 500
+
+    def check_and_update_throttle(self):
+        """Auto-throttle if usage exceeds quota."""
+        if self.used_traffic_gb >= self.traffic_limit_gb:
+            if not self.is_throttled:
+                self.is_throttled = True
+                self.save(update_fields=['is_throttled'])
+        else:
+            if self.is_throttled:
+                self.is_throttled = False
+                self.save(update_fields=['is_throttled'])
+
     def __str__(self):
-        return f"Ключ {self.user.username} @ {self.server.name}"
+        return f"Ключ {self.user.username} @ {self.server.name} ({self.used_traffic_gb}/{self.traffic_limit_gb} GB)"
+
 
     def get_vless_url(self) -> str:
         tag = quote(f"LiveDev-{self.server.country_code}-{self.user.username}")

@@ -58,8 +58,17 @@ def build_user_response(user, is_new=False):
             'whitelist_enabled': key.whitelist_enabled,
             'qr_url': f"{site_url}/vpn/qr/{key.sub_token}/",
             'pac_url': f"{site_url}/vpn/pac/{key.sub_token}/",
+        },
+        'traffic': {
+            'used_gb': key.used_traffic_gb,
+            'limit_gb': key.traffic_limit_gb,
+            'percent': key.traffic_percent,
+            'left_gb': key.traffic_left_gb,
+            'is_throttled': key.is_throttled,
+            'current_speed': f"{key.current_speed_mbps} Мб/с",
         }
     }
+
 
 
 
@@ -272,3 +281,47 @@ def tariffs_list_api(request):
             for p in plans
         ]
     })
+
+
+@csrf_exempt
+def buy_traffic_api(request):
+    """
+    Purchase +50 GB Turbo high-speed quota for 30 ₽.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    user = None
+    if request.user.is_authenticated:
+        user = request.user
+    else:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        if data.get('telegram_id'):
+            user = CustomUser.objects.filter(telegram_id=str(data.get('telegram_id'))).first()
+        elif data.get('user_id'):
+            user = CustomUser.objects.filter(id=data.get('user_id')).first()
+
+    if not user:
+        return JsonResponse({'error': 'Пользователь не найден'}, status=404)
+
+    price = Decimal('30.00')
+    if user.balance < price:
+        return JsonResponse({'success': False, 'error': f'Недостаточно средств. Ваш баланс {user.balance} ₽, а требуется 30 ₽.'}, status=400)
+
+    user.balance -= price
+    user.save()
+
+    key = VPNKey.objects.filter(user=user).first()
+    if not key:
+        server = get_or_create_default_server()
+        key = VPNKey.objects.create(user=user, server=server)
+    key.traffic_limit_gb += 50
+    key.is_throttled = False
+    key.save()
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Добавлено +50 ГБ скоростного трафика!',
+        **build_user_response(user)
+    })
+
