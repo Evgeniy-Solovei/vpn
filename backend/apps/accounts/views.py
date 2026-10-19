@@ -11,12 +11,34 @@ from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 from django.http import JsonResponse
 
-from .models import CustomUser
+from .models import CustomUser, DeviceAuthKey
 from .forms import RegisterForm, LoginForm, PasswordResetRequestForm, SetNewPasswordForm
 from apps.vpn.models import VPNServer, VPNKey
 from apps.vpn.services import get_or_create_default_server
 
 logger = logging.getLogger(__name__)
+
+def apply_persistent_auth(request, response, user, remember=True, days=90):
+    """
+    Caches authentication for 90 days.
+    Sets 90-day session expiry and attaches a persistent 90-day DeviceAuthKey cookie.
+    """
+    cookie_name = getattr(settings, 'DEVICE_KEY_COOKIE_NAME', 'vpn_device_key')
+    if remember:
+        request.session.set_expiry(days * 24 * 3600)
+        device_key = DeviceAuthKey.issue_key(user, request=request, days=days)
+        response.set_cookie(
+            cookie_name,
+            device_key.key,
+            max_age=days * 24 * 3600,
+            httponly=True,
+            samesite='Lax',
+            secure=request.is_secure()
+        )
+        logger.info(f"Issued 90-day device key for {user.username}")
+    else:
+        request.session.set_expiry(0)
+    return response
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -51,7 +73,8 @@ def register_view(request):
 
             login(request, user)
             messages.success(request, f"Добро пожаловать, {user.username}! Вам начислен пробный баланс.")
-            return redirect('dashboard')
+            response = redirect('dashboard')
+            return apply_persistent_auth(request, response, user, remember=True, days=90)
         else:
             if 'email' in form.errors:
                 for err in form.errors['email'].as_data():
@@ -76,18 +99,27 @@ def login_view(request):
         form = LoginForm(request.POST)
         if form.is_valid():
             user = form.cleaned_data['user']
+            remember_me = form.cleaned_data.get('remember_me', True)
             login(request, user)
             next_url = request.GET.get('next', 'dashboard')
-            return redirect(next_url)
+            response = redirect(next_url)
+            return apply_persistent_auth(request, response, user, remember=remember_me, days=90)
     else:
-        form = LoginForm()
+        form = LoginForm(initial={'remember_me': True})
 
     return render(request, 'accounts/login.html', {'form': form})
 
 
 def logout_view(request):
+    cookie_name = getattr(settings, 'DEVICE_KEY_COOKIE_NAME', 'vpn_device_key')
+    device_key_val = request.COOKIES.get(cookie_name)
+    if device_key_val:
+        DeviceAuthKey.objects.filter(key=device_key_val).delete()
     logout(request)
-    return redirect('login')
+    response = redirect('login')
+    response.delete_cookie(cookie_name)
+    response.delete_cookie(getattr(settings, 'SESSION_COOKIE_NAME', 'vpn_sessionid'))
+    return response
 
 
 def password_reset_request_view(request):
@@ -150,7 +182,8 @@ def password_reset_confirm_view(request, uidb64, token):
                 user.save()
                 login(request, user)
                 messages.success(request, "Ваш пароль успешно изменен!")
-                return redirect('dashboard')
+                response = redirect('dashboard')
+                return apply_persistent_auth(request, response, user, remember=True, days=90)
         else:
             form = SetNewPasswordForm()
         return render(request, 'accounts/password_reset_confirm.html', {'form': form, 'validlink': True})

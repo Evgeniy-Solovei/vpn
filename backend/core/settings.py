@@ -50,6 +50,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.accounts.middleware.PersistentAuthMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -167,4 +168,18 @@ BEPAID_SHOP_ID = os.getenv('BEPAID_SHOP_ID', '4225')
 BEPAID_SECRET_KEY = os.getenv('BEPAID_SECRET_KEY', '3834fbef1fe6ea024ef77f5c79ec7ff1ba710ea6241c08c2f341afda8af4c1c4')
 BEPAID_TEST_MODE = os.getenv('BEPAID_TEST_MODE', 'True').lower() in ('true', '1')
 BEPAID_CHECKOUT_URL = os.getenv('BEPAID_CHECKOUT_URL', 'https://checkout.bepaid.by/ctp/api/checkouts')
+
+# ==========================================
+# 90-Day Cached Session & Persistent Device Auth
+# ==========================================
+SESSION_COOKIE_AGE = 90 * 24 * 60 * 60       # 90 days in seconds (7,776,000s)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False     # Keep logged in when browser closes
+SESSION_SAVE_EVERY_REQUEST = True           # Rolling 90 days active expiration window
+SESSION_COOKIE_HTTPONLY = True              # Prevent XSS extraction
+SESSION_COOKIE_NAME = 'vpn_sessionid'
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+DEVICE_KEY_COOKIE_NAME = 'vpn_device_key'
+DEVICE_KEY_AGE = 90 * 24 * 60 * 60          # 90 days
+
 

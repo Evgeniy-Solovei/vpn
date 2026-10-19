@@ -14,3 +14,14 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('balance', 'daily_deduction', 'autopay', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by')
         }),
     )
+
+
+from .models import DeviceAuthKey
+
+@admin.register(DeviceAuthKey)
+class DeviceAuthKeyAdmin(admin.ModelAdmin):
+    list_display = ('user', 'key', 'ip_address', 'created_at', 'expires_at', 'is_valid')
+    search_fields = ('user__username', 'user__email', 'key', 'ip_address')
+    list_filter = ('created_at', 'expires_at')
+    readonly_fields = ('created_at',)
+

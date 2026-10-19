@@ -88,6 +88,11 @@ class LoginForm(forms.Form):
         }),
         label="Пароль"
     )
+    remember_me = forms.BooleanField(
+        required=False,
+        initial=True,
+        label="Запомнить меня на 90 дней"
+    )
 
     def clean(self):
         cleaned_data = super().clean()

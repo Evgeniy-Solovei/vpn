@@ -108,7 +108,9 @@ def demo_login_api(request):
     auth_login(request, demo_user)
     data = build_user_response(demo_user)
     data['authenticated'] = True
-    return JsonResponse(data)
+    response = JsonResponse(data)
+    from apps.accounts.views import apply_persistent_auth
+    return apply_persistent_auth(request, response, demo_user, remember=True, days=90)
 
 
 @csrf_exempt
@@ -165,7 +167,10 @@ def tg_sync_view(request):
                 except CustomUser.DoesNotExist:
                     pass
 
-        return JsonResponse(build_user_response(user, is_new=created))
+        auth_login(request, user)
+        response = JsonResponse(build_user_response(user, is_new=created))
+        from apps.accounts.views import apply_persistent_auth
+        return apply_persistent_auth(request, response, user, remember=True, days=90)
     except Exception as e:
         logger.error(f"Error in tg_sync_view: {e}")
         return JsonResponse({'error': str(e)}, status=500)
