@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPromoCode();
   initBePaid();
   initModals();
+  initGuideTabs();
 });
 
 
@@ -594,6 +595,41 @@ function initModals() {
       if (e.target === closeBtn || closeBtn.classList.contains('modal-close')) {
         const modal = closeBtn.closest('.modal-overlay');
         if (modal) modal.classList.remove('active');
+      }
+    });
+  });
+// ==========================================
+// 10. SETUP GUIDE TABS
+// ==========================================
+function initGuideTabs() {
+  const tabs = document.querySelectorAll('.btn-guide-tab');
+  const panes = document.querySelectorAll('.guide-tab-pane');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetId = tab.getAttribute('data-guide-target');
+
+      tabs.forEach(t => {
+        t.classList.remove('active');
+        t.style.background = 'transparent';
+        t.style.color = 'var(--text-muted)';
+        t.style.fontWeight = '600';
+      });
+
+      tab.classList.add('active');
+      tab.style.background = 'rgba(255, 255, 255, 0.12)';
+      tab.style.color = '#fff';
+      tab.style.fontWeight = '700';
+
+      panes.forEach(p => {
+        p.style.display = 'none';
+        p.classList.remove('active');
+      });
+
+      const activePane = document.getElementById(targetId);
+      if (activePane) {
+        activePane.style.display = 'block';
+        activePane.classList.add('active');
       }
     });
   });

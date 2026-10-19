@@ -101,11 +101,108 @@
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
           <span style="font-weight: 600; font-size: 0.9rem;">Приглашай друзей</span>
-          <span style="font-size: 0.75rem; color: #fbbf24; font-weight: 700;">+10 ₽ бонус</span>
+          <span style="font-size: 0.75rem; color: #fbbf24; font-weight: 700;">🎁 +5 дней бесплатно</span>
         </div>
+        <p style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 0.65rem;">
+          Получайте по 5 дней VPN бесплатно за каждого друга при его первой оплате.
+        </p>
         <button class="btn btn-secondary" id="btn-share-ref" style="font-size: 0.85rem;">
           📤 Поделиться реферальной ссылкой
         </button>
+      </div>
+
+      <!-- Promo Code Card -->
+      <div class="card" style="padding: 0.85rem 1rem;">
+        <div style="font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: #fff;">
+          🎟️ Активация промокода (3, 5, 10 дней)
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="text" id="miniapp-promo-input" placeholder="Промокод (напр. WELCOME3)" style="flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); border-radius: 0.6rem; padding: 0.5rem 0.75rem; color: #fff; font-size: 0.8rem; text-transform: uppercase;">
+          <button class="btn btn-secondary" id="btn-miniapp-promo" style="padding: 0.5rem 0.85rem; font-size: 0.8rem;">
+            Ввести
+          </button>
+        </div>
+      </div>
+
+      <!-- Payment & Belarus bePaid -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+        <button class="btn btn-secondary" id="btn-miniapp-bepaid" style="font-size: 0.78rem; border-color: rgba(16,185,129,0.35); color: #34d399; padding: 0.6rem 0.5rem;">
+          🇧🇾 Карты РБ / ЕРИП
+        </button>
+        <button class="btn btn-secondary" id="btn-open-miniapp-guides" style="font-size: 0.78rem; border-color: rgba(6,182,212,0.35); color: #38bdf8; padding: 0.6rem 0.5rem;">
+          📖 Инструкции с фото
+        </button>
+      </div>
+
+      <!-- MiniApp Visual Guides Modal -->
+      <div class="miniapp-modal-overlay" id="miniapp-guides-modal">
+        <div class="miniapp-modal-body">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <span style="font-size: 1.2rem;">📖</span>
+              <strong style="color: #fff; font-size: 0.95rem;">Инструкция по шагам</strong>
+            </div>
+            <button type="button" id="btn-close-miniapp-guides" style="background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 0.2rem 0.5rem;">✕</button>
+          </div>
+
+          <!-- MiniApp Tabs -->
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.25rem; margin-bottom: 0.85rem; background: rgba(255,255,255,0.05); padding: 0.25rem; border-radius: 0.65rem;">
+            <button type="button" class="miniapp-guide-tab active" data-tab="m-tab-ios">🍏 iOS</button>
+            <button type="button" class="miniapp-guide-tab" data-tab="m-tab-android">🤖 Android</button>
+            <button type="button" class="miniapp-guide-tab" data-tab="m-tab-pc">💻 ПК</button>
+            <button type="button" class="miniapp-guide-tab" data-tab="m-tab-tv">📶 TV</button>
+          </div>
+
+          <!-- Tab Content: iOS -->
+          <div class="m-guide-pane" id="m-tab-ios">
+            <div style="border-radius: 0.65rem; overflow: hidden; margin-bottom: 0.75rem; border: 1px solid var(--border-subtle);">
+              <img src="img/guides/guide_ios.jpg" alt="iOS Guide" style="width: 100%; display: block;">
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; display: flex; flex-direction: column; gap: 0.5rem;">
+              <div><strong>1. Приложение:</strong> Установите INCY или Streisand из App Store.</div>
+              <div><strong>2. Подключение:</strong> Нажмите «Подключить в INCY» на главном экране — ключ импортируется в 1 клик.</div>
+              <div><strong>3. Готово:</strong> Нажмите центральную кнопку питания в приложении. VLESS Reality активен!</div>
+            </div>
+          </div>
+
+          <!-- Tab Content: Android -->
+          <div class="m-guide-pane" id="m-tab-android" style="display: none;">
+            <div style="border-radius: 0.65rem; overflow: hidden; margin-bottom: 0.75rem; border: 1px solid var(--border-subtle);">
+              <img src="img/guides/guide_android.jpg" alt="Android Guide" style="width: 100%; display: block;">
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; display: flex; flex-direction: column; gap: 0.5rem;">
+              <div><strong>1. Приложение:</strong> Установите INCY, v2rayNG или Hiddify.</div>
+              <div><strong>2. Импорт:</strong> Нажмите «📋 Ключ VLESS» выше и импортируйте из буфера в приложении («+»).</div>
+              <div><strong>3. Smart Bypass:</strong> Включите раздельное туннелирование — российские банки пойдут напрямую без капчи.</div>
+            </div>
+          </div>
+
+          <!-- Tab Content: PC -->
+          <div class="m-guide-pane" id="m-tab-pc" style="display: none;">
+            <div style="border-radius: 0.65rem; overflow: hidden; margin-bottom: 0.75rem; border: 1px solid var(--border-subtle);">
+              <img src="img/guides/guide_desktop.jpg" alt="PC Guide" style="width: 100%; display: block;">
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; display: flex; flex-direction: column; gap: 0.5rem;">
+              <div><strong>1. Клиент Hiddify / v2rayN:</strong> Скачайте на Windows/Mac, добавьте подписку. Скорость 500 Мб/с.</div>
+              <div><strong>2. Без установки ПО:</strong> Вставьте ссылку на PAC-скрипт в сетевые настройки ОС для умного браузерного прокси.</div>
+            </div>
+          </div>
+
+          <!-- Tab Content: TV -->
+          <div class="m-guide-pane" id="m-tab-tv" style="display: none;">
+            <div style="border-radius: 0.65rem; overflow: hidden; margin-bottom: 0.75rem; border: 1px solid var(--border-subtle);">
+              <img src="img/guides/guide_router_tv.jpg" alt="TV Guide" style="width: 100%; display: block;">
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; display: flex; flex-direction: column; gap: 0.5rem;">
+              <div><strong>1. Smart TV за 1 минуту:</strong> В INCY на смартфоне включите «Allow LAN», на ТВ укажите IP телефона.</div>
+              <div><strong>2. Роутер Keenetic / OpenWrt:</strong> Установите Sing-box / Passwall для защиты всего дома сразу.</div>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-secondary" id="btn-close-miniapp-guides-bottom" style="margin-top: 1rem; width: 100%; font-size: 0.85rem;">
+            Понятно
+          </button>
+        </div>
       </div>
     </div>
 

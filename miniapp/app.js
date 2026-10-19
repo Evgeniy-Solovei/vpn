@@ -214,7 +214,7 @@ function renderUI() {
 
   // Share ref
   document.getElementById('btn-share-ref').onclick = () => {
-    const text = `🔥 Попробуй быстрый VPN без блокировок для РФ и РБ! Получи бонус на баланс при регистрации: ${userData.referral_url}`;
+    const text = `🔥 Попробуй быстрый VPN без блокировок для РФ и РБ! Получи 3 дня теста и +5 дней за оплату: ${userData.referral_url}`;
     if (tg?.openTelegramLink) {
       tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(userData.referral_url)}&text=${encodeURIComponent(text)}`);
     } else {
@@ -222,6 +222,130 @@ function renderUI() {
       showFeedback('Реферальная ссылка скопирована!');
     }
   };
+
+  // Promo code activation
+  const btnPromo = document.getElementById('btn-miniapp-promo');
+  const inputPromo = document.getElementById('miniapp-promo-input');
+  if (btnPromo && inputPromo) {
+    btnPromo.onclick = async () => {
+      const code = inputPromo.value.trim();
+      if (!code) {
+        showFeedback('Введите промокод');
+        return;
+      }
+      btnPromo.disabled = true;
+      try {
+        const res = await fetch('/api/billing/activate-promo/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            code: code,
+            telegram_id: userData.telegram_id,
+            user_id: userData.id
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+          showFeedback(`🎉 +${data.bonus_days} дн. начислено!`);
+          inputPromo.value = '';
+          userData.balance = data.new_balance;
+          userData.days_left = data.days_left;
+          document.getElementById('user-balance').textContent = `${userData.balance} ₽`;
+          document.getElementById('user-days').textContent = `на ${userData.days_left} дн.`;
+        } else {
+          if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+          showFeedback(data.error || 'Ошибка активации');
+        }
+      } catch (e) {
+        console.error(e);
+        showFeedback('Ошибка сети');
+      } finally {
+        btnPromo.disabled = false;
+      }
+    };
+  }
+
+  // bePaid checkout
+  const btnBePaid = document.getElementById('btn-miniapp-bepaid');
+  if (btnBePaid) {
+    btnBePaid.onclick = async () => {
+      btnBePaid.disabled = true;
+      showFeedback('Создание платежа bePaid...');
+      try {
+        const res = await fetch('/api/billing/bepaid/checkout/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            telegram_id: userData.telegram_id,
+            user_id: userData.id
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.checkout_url) {
+          if (tg?.openLink) {
+            tg.openLink(data.checkout_url);
+          } else {
+            window.location.href = data.checkout_url;
+          }
+        } else {
+          showFeedback(data.error || 'Ошибка платёжной системы');
+        }
+      } catch (e) {
+        console.error(e);
+        showFeedback('Ошибка соединения');
+      } finally {
+        btnBePaid.disabled = false;
+      }
+    };
+  }
+
+  // MiniApp Visual Guides Modal
+  const modalGuides = document.getElementById('miniapp-guides-modal');
+  const btnOpenGuides = document.getElementById('btn-open-miniapp-guides');
+  const btnCloseGuides = document.getElementById('btn-close-miniapp-guides');
+  const btnCloseGuidesBottom = document.getElementById('btn-close-miniapp-guides-bottom');
+
+  if (btnOpenGuides && modalGuides) {
+    btnOpenGuides.onclick = () => {
+      modalGuides.classList.add('active');
+    };
+  }
+
+  [btnCloseGuides, btnCloseGuidesBottom].forEach(b => {
+    if (b && modalGuides) {
+      b.onclick = () => {
+        modalGuides.classList.remove('active');
+      };
+    }
+  });
+
+  if (modalGuides) {
+    modalGuides.onclick = (e) => {
+      if (e.target === modalGuides) modalGuides.classList.remove('active');
+    };
+
+    const guideTabs = modalGuides.querySelectorAll('.miniapp-guide-tab');
+    const guidePanes = modalGuides.querySelectorAll('.m-guide-pane');
+
+    guideTabs.forEach(t => {
+      t.onclick = () => {
+        guideTabs.forEach(tab => tab.classList.remove('active'));
+        t.classList.add('active');
+
+        const tabTarget = t.getAttribute('data-tab');
+        guidePanes.forEach(pane => {
+          if (pane.id === tabTarget) {
+            pane.style.display = 'block';
+          } else {
+            pane.style.display = 'none';
+          }
+        });
+      };
+    });
+  }
 }
 
 function showFeedback(msg) {

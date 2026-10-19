@@ -50,6 +50,13 @@
         🚀 1 Gbps канал
       </span>
     </div>
+
+    <div style="margin-top: 1.15rem; display: flex; justify-content: center;">
+      <button type="button" class="btn btn-secondary" data-modal-target="guides-modal" style="border-color: rgba(6, 182, 212, 0.45); color: #38bdf8; font-size: 0.85rem; padding: 0.55rem 1.25rem; box-shadow: 0 0 20px rgba(6, 182, 212, 0.12); display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 1.1rem;">📖</span>
+        <span>Инструкции по настройке с фото (iOS • Android • ПК • Smart TV)</span>
+      </button>
+    </div>
   </section>
 
   <!-- ==========================================
@@ -303,12 +310,12 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
         <h3 style="font-size: 1rem; font-weight: 700; color: #fff;">Приглашай друзей</h3>
         <span class="status-pill pill-amber" style="font-size: 0.75rem;">
-          🎁 +10 ₽ бонус
+          🎁 +5 дней бесплатно
         </span>
       </div>
 
       <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-        Получайте по 10 ₽ на баланс за каждого зарегистрированного друга по вашей ссылке.
+        Получайте по <strong>5 дней бесплатного VPN</strong> на баланс (+17.50 ₽) за каждого приглашенного друга при его первой оплате.
       </p>
 
       <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
@@ -526,6 +533,158 @@
     </div>
 
     <button type="button" class="btn btn-secondary btn-block modal-close">Закрыть</button>
+  </div>
+</div>
+
+<!-- Visual Setup Guides Modal (Step-by-Step with 3D Illustrations) -->
+<div class="modal-overlay" id="guides-modal">
+  <div class="modal-body" style="max-width: 680px; max-height: 90vh; overflow-y: auto; padding: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <span style="font-size: 1.4rem;">📖</span>
+        <div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">Инструкции по подключению</h3>
+          <span style="font-size: 0.75rem; color: var(--accent-cyan);">Пошаговая настройка с иллюстрациями</span>
+        </div>
+      </div>
+      <button type="button" class="btn btn-secondary modal-close" style="padding: 0.35rem 0.7rem; font-size: 0.85rem;">✕</button>
+    </div>
+
+    <!-- Platform Selector Tabs -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; margin-bottom: 1.25rem; background: rgba(255,255,255,0.04); padding: 0.35rem; border-radius: 0.85rem; border: 1px solid var(--border-subtle);">
+      <button type="button" class="btn-guide-tab active" data-guide-target="guide-tab-ios" style="padding: 0.5rem 0.25rem; font-size: 0.78rem; border-radius: 0.65rem; border: none; background: transparent; color: #fff; font-weight: 700; cursor: pointer; text-align: center;">
+        🍏 iOS
+      </button>
+      <button type="button" class="btn-guide-tab" data-guide-target="guide-tab-android" style="padding: 0.5rem 0.25rem; font-size: 0.78rem; border-radius: 0.65rem; border: none; background: transparent; color: var(--text-muted); font-weight: 600; cursor: pointer; text-align: center;">
+        🤖 Android
+      </button>
+      <button type="button" class="btn-guide-tab" data-guide-target="guide-tab-desktop" style="padding: 0.5rem 0.25rem; font-size: 0.78rem; border-radius: 0.65rem; border: none; background: transparent; color: var(--text-muted); font-weight: 600; cursor: pointer; text-align: center;">
+        💻 ПК
+      </button>
+      <button type="button" class="btn-guide-tab" data-guide-target="guide-tab-tv" style="padding: 0.5rem 0.25rem; font-size: 0.78rem; border-radius: 0.65rem; border: none; background: transparent; color: var(--text-muted); font-weight: 600; cursor: pointer; text-align: center;">
+        📶 Роутер / TV
+      </button>
+    </div>
+
+    <!-- Tab 1: iOS -->
+    <div class="guide-tab-pane active" id="guide-tab-ios">
+      <div style="border-radius: 0.85rem; overflow: hidden; margin-bottom: 1.25rem; border: 1px solid var(--border-subtle); background: #000; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
+        <img src="/static/img/guides/guide_ios.jpg" alt="Инструкция iOS" style="width: 100%; height: auto; display: block; object-fit: cover;">
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.85rem; line-height: 1.5; color: var(--text-muted);">
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(16,185,129,0.18); color: #34d399; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">1</div>
+          <div>
+            <strong style="color: #fff;">Установите приложение:</strong>
+            <p style="margin: 0.2rem 0 0 0;">Скачайте <a href="https://apps.apple.com/app/incy-vpn/id6475688975" target="_blank" style="color: #38bdf8; text-decoration: underline;">INCY</a> из App Store (также поддерживаются Streisand, FoXray, Happ).</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(16,185,129,0.18); color: #34d399; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">2</div>
+          <div>
+            <strong style="color: #fff;">Подключение в 1 нажатие:</strong>
+            <p style="margin: 0.2rem 0 0 0;">Нажмите кнопку <span style="color: #34d399; font-weight: 600;">«Подключить в 1 клик (INCY)»</span> на главной странице кабинета — ключ автоматически сохранится в приложении.</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(16,185,129,0.18); color: #34d399; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">3</div>
+          <div>
+            <strong style="color: #fff;">Готово к работе:</strong>
+            <p style="margin: 0.2rem 0 0 0;">В приложении нажмите центральную кнопку подключения. Протокол <strong>VLESS Reality</strong> замаскирован под HTTPS — блокировки провайдеров бессильны.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Android -->
+    <div class="guide-tab-pane" id="guide-tab-android" style="display: none;">
+      <div style="border-radius: 0.85rem; overflow: hidden; margin-bottom: 1.25rem; border: 1px solid var(--border-subtle); background: #000; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
+        <img src="/static/img/guides/guide_android.jpg" alt="Инструкция Android" style="width: 100%; height: auto; display: block; object-fit: cover;">
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.85rem; line-height: 1.5; color: var(--text-muted);">
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(6,182,212,0.18); color: #38bdf8; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">1</div>
+          <div>
+            <strong style="color: #fff;">Установите клиент:</strong>
+            <p style="margin: 0.2rem 0 0 0;">Установите <strong>INCY</strong>, <strong>v2rayNG</strong> или <strong>Hiddify</strong> из Google Play или GitHub.</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(6,182,212,0.18); color: #38bdf8; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">2</div>
+          <div>
+            <strong style="color: #fff;">Импорт ключа:</strong>
+            <p style="margin: 0.2rem 0 0 0;">Скопируйте <em>VLESS-ключ</em> или <em>QR-код</em> в кабинете, в приложении нажмите значок «+» → <em>«Импорт из буфера обмена»</em>.</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(6,182,212,0.18); color: #38bdf8; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">3</div>
+          <div>
+            <strong style="color: #fff;">Раздельное туннелирование (Smart Bypass):</strong>
+            <p style="margin: 0.2rem 0 0 0;">В настройках приложения включите <em>«Bypass LAN & Russia»</em>. Банковские приложения (Сбер, Т-Банк) продолжат открываться напрямую на 100% скорости без лишней капчи.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Desktop (PC / Mac) -->
+    <div class="guide-tab-pane" id="guide-tab-desktop" style="display: none;">
+      <div style="border-radius: 0.85rem; overflow: hidden; margin-bottom: 1.25rem; border: 1px solid var(--border-subtle); background: #000; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
+        <img src="/static/img/guides/guide_desktop.jpg" alt="Инструкция ПК" style="width: 100%; height: auto; display: block; object-fit: cover;">
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.85rem; line-height: 1.5; color: var(--text-muted);">
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(139,92,246,0.18); color: #c4b5fd; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">1</div>
+          <div>
+            <strong style="color: #fff;">Способ 1: Программа Hiddify / v2rayN</strong>
+            <p style="margin: 0.2rem 0 0 0;">Установите <strong>Hiddify</strong> (macOS / Windows). Скопируйте ссылку подписки из кабинета и нажмите <em>«Новый профиль из буфера»</em>. Скорость до 500 Мб/с, пинг от 12 ms.</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(139,92,246,0.18); color: #c4b5fd; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">2</div>
+          <div>
+            <strong style="color: #fff;">Способ 2: Браузерный PAC без установки ПО</strong>
+            <p style="margin: 0.2rem 0 0 0;">Не хотите ставить программы? Откройте карточку «PAC-скрипт» в кабинете, скопируйте URL и вставьте в настройки сети вашей ОС. YouTube и соцсети заработают автоматически.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Router / Smart TV -->
+    <div class="guide-tab-pane" id="guide-tab-tv" style="display: none;">
+      <div style="border-radius: 0.85rem; overflow: hidden; margin-bottom: 1.25rem; border: 1px solid var(--border-subtle); background: #000; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
+        <img src="/static/img/guides/guide_router_tv.jpg" alt="Инструкция Роутер и Smart TV" style="width: 100%; height: auto; display: block; object-fit: cover;">
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.85rem; line-height: 1.5; color: var(--text-muted);">
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(245,158,11,0.18); color: #fbbf24; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">1</div>
+          <div>
+            <strong style="color: #fff;">Smart TV за 1 минуту (Allow LAN):</strong>
+            <p style="margin: 0.2rem 0 0 0;">В приложении INCY / Hiddify на смартфоне включите опцию <strong>«Поделиться в локальной сети (Allow LAN)»</strong>. В настройках Wi-Fi на телевизоре укажите IP телефона — YouTube 4K на ТВ заработает сразу!</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(245,158,11,0.18); color: #fbbf24; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">2</div>
+          <div>
+            <strong style="color: #fff;">Роутеры Keenetic и OpenWrt:</strong>
+            <p style="margin: 0.2rem 0 0 0;">Установите пакет <strong>Sing-box</strong> или <strong>Passwall</strong>, скопируйте подписку или VLESS-ключ. Весь дом и все устройства защищены без настройки каждого гаджета по отдельности.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+      <button type="button" class="btn btn-secondary btn-block modal-close">Закрыть</button>
+    </div>
   </div>
 </div>
 {% endblock %}
