@@ -4,33 +4,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>{% block title %}VPN Live Dev — Быстрый и надежный VPN для РФ и РБ{% endblock %}</title>
+  <title>{% block title %}VPN live-dev — Быстрый и надежный VPN для РФ и РБ{% endblock %}</title>
+  
+  <!-- Premium Fonts: Space Grotesk (Brand), Outfit (Headings), Inter (Body), JetBrains Mono (Tech) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V18a1 1 0 0 1-2 0v-1.07A6 6 0 0 1 6.07 12H7a1 1 0 0 1 0-2h-.93A6 6 0 0 1 11 6.07V7a1 1 0 0 1 2 0v-.93A6 6 0 0 1 17.93 11H17a1 1 0 0 1 0 2h.93A6 6 0 0 1 13 16.93z'/></svg>">
 </head>
 <body>
-  <!-- Ambient background animated canvas -->
+  <!-- Ambient Aurora Glow Blobs (Vibrant Color Meshes) -->
+  <div class="aurora-blobs" aria-hidden="true">
+    <div class="aurora-blob blob-1"></div>
+    <div class="aurora-blob blob-2"></div>
+    <div class="aurora-blob blob-3"></div>
+  </div>
+
+  <!-- Interactive Background Canvas -->
   <canvas id="bg-canvas"></canvas>
 
   <div class="app-wrapper">
     <!-- Top Navigation Header -->
     <header class="header-nav">
       <div class="container nav-content">
+        <!-- New Brand Logo without caps on live-dev -->
         <a href="{% url 'dashboard' %}" class="logo-brand">
-          <div class="logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <div class="logo-gem">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <defs>
+                <linearGradient id="shieldGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#10b981"/>
+                  <stop offset="0.5" stop-color="#06b6d4"/>
+                  <stop offset="1" stop-color="#8b5cf6"/>
+                </linearGradient>
+              </defs>
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="url(#shieldGrad)" fill-opacity="0.25" stroke="url(#shieldGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M13 10V3L4 14h7v7l9-11h-7z" fill="#fff" opacity="0.9"/>
             </svg>
           </div>
-          <span>VPN LIVE DEV</span>
+          <div class="brand-text">
+            <span class="brand-vpn">VPN</span>
+            <span class="brand-sub">live-dev</span>
+          </div>
         </a>
 
-        <div style="display: flex; align-items: center; gap: 1rem;">
+        <!-- Right Side Nav Actions -->
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <a href="/miniapp/" class="nav-miniapp-btn" title="Telegram Mini App">
+            <span>📱 Mini App</span>
+          </a>
+
           {% if user.is_authenticated %}
-            <a href="{% url 'tariffs' %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
-              <span>💳 {{ user.balance }} ₽</span>
+            <a href="{% url 'tariffs' %}" class="btn btn-secondary" style="padding: 0.45rem 0.95rem; font-size: 0.85rem;">
+              <span style="color: var(--accent-emerald); font-weight: 700;">💳 {{ user.balance }} ₽</span>
             </a>
-            <a href="{% url 'logout' %}" class="btn btn-secondary" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;" title="Выйти">
+            <a href="{% url 'logout' %}" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" title="Выйти">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                 <polyline points="16 17 21 12 16 7"/>
@@ -38,8 +68,8 @@
               </svg>
             </a>
           {% else %}
-            <a href="{% url 'login' %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Войти</a>
-            <a href="{% url 'register' %}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Создать аккаунт</a>
+            <a href="{% url 'login' %}" class="btn btn-secondary" style="padding: 0.45rem 0.95rem; font-size: 0.85rem;">Войти</a>
+            <a href="{% url 'register' %}" class="btn btn-primary" style="padding: 0.45rem 1rem; font-size: 0.85rem;">Создать аккаунт</a>
           {% endif %}
         </div>
       </div>
@@ -62,18 +92,21 @@
     </main>
 
     <!-- Footer -->
-    <footer style="border-top: 1px solid var(--border-subtle); padding: 2rem 0; margin-top: 3rem; background: rgba(7, 9, 14, 0.6);">
-      <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: gap: 1rem; font-size: 0.85rem; color: var(--text-dim);">
-        <div>
-          © 2026 <strong>VPN Live Dev</strong> (vpn.live-dev.by). Свободный интернет для РФ и РБ.
+    <footer style="border-top: 1px solid var(--border-subtle); padding: 2rem 0; margin-top: 3.5rem; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(12px);">
+      <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; font-size: 0.85rem; color: var(--text-dim);">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          © 2026 <strong style="color: #fff; font-family: var(--font-brand);">VPN <span style="color: var(--accent-cyan); text-transform: lowercase;">live-dev</span></strong> (vpn.live-dev.by) • Свободный интернет для РФ и РБ
         </div>
         <div style="display: flex; gap: 1.5rem;">
-          <a href="https://t.me/{{ BOT_USERNAME }}" target="_blank" style="color: var(--text-muted); text-decoration: none;">Телеграм бот</a>
+          <a href="/miniapp/" style="color: var(--text-muted); text-decoration: none;">Mini App</a>
+          <a href="https://t.me/{{ BOT_USERNAME }}" target="_blank" style="color: var(--text-muted); text-decoration: none;">Telegram бот</a>
           <a href="{% url 'tariffs' %}" style="color: var(--text-muted); text-decoration: none;">Тарифы</a>
         </div>
       </div>
     </footer>
   </div>
+
+  <div id="toast-notification">Готово!</div>
 
   <script src="{% static 'js/main.js' %}"></script>
 </body>

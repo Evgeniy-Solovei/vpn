@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>VPN Live Dev — Mini App</title>
+  <title>VPN live-dev — Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -35,16 +35,20 @@
 
       <!-- Hero Power Button -->
       <section class="power-section">
-        <div style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 0.4rem 0.85rem; border-radius: 999px; font-size: 0.8rem; border: 1px solid var(--border-subtle);">
-          🇳🇱 <span id="server-name">Нидерланды (Амстердам)</span> • <span id="server-ping">45 ms</span>
+        <div class="server-badge">
+          <span class="ping-indicator-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; margin-right:4px;"></span>
+          <span id="server-name">🇳🇱 Нидерланды • Амстердам</span> • <span id="server-ping" style="color: var(--accent-cyan); font-weight: 700;">42 ms</span>
         </div>
 
-        <div class="power-circle" id="power-btn">
-          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
-            <line x1="12" y1="2" x2="12" y2="12"/>
-          </svg>
-          <span style="font-size: 0.7rem; font-weight: 700; margin-top: 6px; text-transform: uppercase;">INCY Connect</span>
+        <div class="power-btn-wrap">
+          <div class="power-btn-ring"></div>
+          <div class="power-circle" id="power-btn">
+            <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+              <line x1="12" y1="2" x2="12" y2="12"/>
+            </svg>
+            <span style="font-size: 0.72rem; font-weight: 800; margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase;">INCY Connect</span>
+          </div>
         </div>
       </section>
 

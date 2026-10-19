@@ -15,9 +15,64 @@ User = get_user_model()
 def seed():
     print("🌱 Инициализация демо-данных для локального просмотра...")
 
-    # 1. Create or get default VPN Server
-    server = get_or_create_default_server()
-    print(f"✅ VPN Сервер: {server.name} ({server.country_name})")
+    # 1. Create or update European High-Speed VPN Servers
+    servers_data = [
+        {
+            "country_code": "NL",
+            "country_name": "Нидерланды",
+            "city": "Амстердам",
+            "name": "Нидерланды • Амстердам",
+            "ip": "89.110.100.12",
+            "port": 443,
+            "ping_ms": 42,
+            "load_percent": 24,
+            "speed_description": "1 Gbps • Безлимит",
+            "is_active": True,
+        },
+        {
+            "country_code": "DE",
+            "country_name": "Германия",
+            "city": "Франкфурт",
+            "name": "Германия • Франкфурт",
+            "ip": "45.142.214.55",
+            "port": 443,
+            "ping_ms": 38,
+            "load_percent": 31,
+            "speed_description": "1 Gbps • Безлимит",
+            "is_active": True,
+        },
+        {
+            "country_code": "FI",
+            "country_name": "Финляндия",
+            "city": "Хельсинки",
+            "name": "Финляндия • Хельсинки",
+            "ip": "65.21.144.80",
+            "port": 443,
+            "ping_ms": 27,
+            "load_percent": 18,
+            "speed_description": "1 Gbps • Безлимит",
+            "is_active": True,
+        },
+    ]
+
+    primary_server = None
+    for s_info in servers_data:
+        s, _ = VPNServer.objects.update_or_create(
+            country_code=s_info["country_code"],
+            city=s_info["city"],
+            defaults=s_info
+        )
+        if not primary_server:
+            primary_server = s
+        print(f"✅ VPN Сервер: {s.display_name} ({s.speed_description}, {s.ping_ms} ms)")
+
+    # Clean any legacy servers with '01'
+    VPNServer.objects.filter(name__contains='01').exclude(id=primary_server.id).delete()
+    if '01' in primary_server.name:
+        primary_server.name = "Нидерланды • Амстердам"
+        primary_server.save()
+    server = primary_server
+
 
     # 2. Create or get Tariff Plans
     plan1, _ = TariffPlan.objects.get_or_create(

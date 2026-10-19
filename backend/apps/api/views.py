@@ -14,8 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 def build_user_response(user, is_new=False):
-    server = get_or_create_default_server()
-    key, _ = VPNKey.objects.get_or_create(user=user, server=server)
+    key = VPNKey.objects.filter(user=user).first()
+    if not key:
+        server = get_or_create_default_server()
+        key, _ = VPNKey.objects.get_or_create(user=user, server=server)
+    else:
+        server = key.server
+
     site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by')
     referral_url = f"{site_url}/auth/register/?ref={user.referral_code}"
 
@@ -36,10 +41,16 @@ def build_user_response(user, is_new=False):
             'referrals_count': user.referrals.count(),
         },
         'vpn': {
-            'server_name': server.name,
+            'server_id': server.id,
+            'server_name': server.display_name,
+            'clean_name': server.clean_name,
+            'city': server.city,
             'country_code': server.country_code,
             'country_name': server.country_name,
+            'flag': server.flag,
             'ping_ms': server.ping_ms,
+            'load_percent': server.load_percent,
+            'speed_description': server.speed_description,
             'vless_url': key.get_vless_url(),
             'sub_url': key.get_sub_url(),
             'incy_url': key.get_incy_url(),
@@ -49,6 +60,7 @@ def build_user_response(user, is_new=False):
             'pac_url': f"{site_url}/vpn/pac/{key.sub_token}/",
         }
     }
+
 
 
 def user_profile_api(request):
@@ -185,20 +197,63 @@ def toggle_whitelist_api(request):
 
 
 def servers_list_api(request):
-    servers = VPNServer.objects.filter(is_active=True)
+    servers = VPNServer.objects.filter(is_active=True).order_by('ping_ms')
     return JsonResponse({
         'servers': [
             {
                 'id': s.id,
-                'name': s.name,
+                'name': s.display_name,
+                'clean_name': s.clean_name,
                 'country_code': s.country_code,
                 'country_name': s.country_name,
+                'city': s.city,
+                'flag': s.flag,
                 'ping_ms': s.ping_ms,
+                'load_percent': s.load_percent,
+                'speed_description': s.speed_description,
                 'is_active': s.is_active,
             }
             for s in servers
         ]
     })
+
+
+@csrf_exempt
+def switch_server_api(request):
+    """
+    Switch active VPN server for user.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        server_id = data.get('server_id')
+        user = None
+        if request.user.is_authenticated:
+            user = request.user
+        elif data.get('telegram_id'):
+            user = CustomUser.objects.filter(telegram_id=str(data.get('telegram_id'))).first()
+        elif data.get('user_id'):
+            user = CustomUser.objects.filter(id=data.get('user_id')).first()
+
+        if not user:
+            return JsonResponse({'error': 'User not found'}, status=404)
+
+        server = VPNServer.objects.filter(id=server_id, is_active=True).first()
+        if not server:
+            return JsonResponse({'error': 'Server not found'}, status=404)
+
+        key = VPNKey.objects.filter(user=user).first()
+        if not key:
+            key = VPNKey.objects.create(user=user, server=server)
+        else:
+            key.server = server
+            key.save()
+
+        return JsonResponse(build_user_response(user))
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 
 def tariffs_list_api(request):

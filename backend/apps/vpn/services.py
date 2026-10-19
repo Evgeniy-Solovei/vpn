@@ -36,15 +36,18 @@ def get_or_create_default_server() -> VPNServer:
     if not server:
         from django.conf import settings
         server = VPNServer.objects.create(
-            name="Нидерланды 01 (Амстердам)",
+            name="Нидерланды • Амстердам",
             country_code="NL",
             country_name="Нидерланды",
+            city="Амстердам",
             ip=getattr(settings, 'XRAY_PUBLIC_IP', '89.110.100.12') or '89.110.100.12',
             port=int(getattr(settings, 'XRAY_PUBLIC_PORT', 443) or 443),
             reality_sni=getattr(settings, 'XRAY_SNI', 'www.microsoft.com') or 'www.microsoft.com',
             reality_pbk=getattr(settings, 'XRAY_PBK', 'w4XF_zC_test_pub_key_1234567890abcdef') or 'w4XF_zC_test_pub_key_1234567890abcdef',
             reality_short_id=getattr(settings, 'XRAY_SHORT_ID', '0123456789abcdef') or '0123456789abcdef',
-            ping_ms=45,
+            ping_ms=42,
+            load_percent=24,
+            speed_description="1 Gbps • Безлимит",
             is_active=True
         )
     return server

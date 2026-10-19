@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Личный кабинет — VPN Live Dev{% endblock %}
+{% block title %}Личный кабинет — VPN live-dev{% endblock %}
 
 {% block content %}
 <div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
@@ -9,17 +9,18 @@
        ========================================== -->
   <section class="vpn-power-hero">
     <div style="margin-bottom: 1.25rem;">
-      <button type="button" class="btn btn-secondary" data-modal-target="server-modal" style="border-radius: 9999px; padding: 0.5rem 1.25rem; font-size: 0.85rem;">
-        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10b981; margin-right: 6px;"></span>
-        <span>🇳🇱 {{ vpn_key.server.name }}</span>
-        <span style="color: var(--text-dim); margin-left: 6px;">{{ vpn_key.server.ping_ms }} ms</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 6px;">
+      <button type="button" class="server-selector-pill" data-modal-target="server-modal" id="current-server-btn">
+        <span class="ping-indicator-dot"></span>
+        <span id="current-server-flag">{{ vpn_key.server.flag }}</span>
+        <span id="current-server-name">{{ vpn_key.server.clean_name }}</span>
+        <span style="color: var(--accent-cyan); font-weight: 700;" id="current-server-ping">{{ vpn_key.server.ping_ms }} ms</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
       </button>
     </div>
 
-    <!-- Glowing Hero Power Button -->
+    <!-- Glowing Multi-Ring Hero Power Button -->
     <div class="power-btn-container">
       <div class="power-btn-ring"></div>
       <div class="power-btn {% if not user.has_active_subscription %}disconnected{% endif %}" id="main-power-btn" onclick="document.getElementById('btn-incy-connect').click();">
@@ -27,22 +28,26 @@
           <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
           <line x1="12" y1="2" x2="12" y2="12"/>
         </svg>
-        <span style="font-size: 0.75rem; font-weight: 700; margin-top: 8px; letter-spacing: 0.05em; text-transform: uppercase;">
+        <span style="font-size: 0.75rem; font-weight: 800; margin-top: 8px; letter-spacing: 0.06em; text-transform: uppercase;">
           {% if user.has_active_subscription %}INCY Connect{% else %}Не активен{% endif %}
         </span>
       </div>
     </div>
 
-    <div style="display: flex; gap: 0.75rem; align-items: center; justify-content: center; flex-wrap: wrap;">
-      <span class="status-pill">
+    <!-- Status & Protocol Badges -->
+    <div style="display: flex; gap: 0.65rem; align-items: center; justify-content: center; flex-wrap: wrap;">
+      <span class="status-pill pill-active">
         <span class="status-dot"></span>
         {% if user.has_active_subscription %}Подписка активна{% else %}Требуется пополнение{% endif %}
       </span>
-      <span class="status-pill" style="border-color: rgba(99, 102, 241, 0.4); color: #818cf8; background: rgba(99, 102, 241, 0.1);">
-        VLESS Reality (Vision)
+      <span class="status-pill pill-violet">
+        ⚡ VLESS Reality (Vision)
       </span>
-      <span class="status-pill" style="border-color: rgba(245, 158, 11, 0.4); color: #fbbf24; background: rgba(245, 158, 11, 0.1);">
-        ТСПУ Bypass
+      <span class="status-pill pill-amber">
+        🛡️ ТСПУ Bypass (Direct)
+      </span>
+      <span class="status-pill pill-cyan">
+        🚀 1 Gbps канал
       </span>
     </div>
   </section>
@@ -52,16 +57,16 @@
        ========================================== -->
   <div class="dashboard-grid">
 
-    <!-- Card 1: Balance & Tariffs -->
-    <div class="glass-card">
+    <!-- Card 1: Balance & Tariffs (Emerald / Cyan Ribbon) -->
+    <div class="glass-card card-accent-emerald">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
         <div>
-          <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.05em;">Мой баланс</span>
-          <div style="font-size: 2.25rem; font-weight: 800; color: #fff; margin-top: 0.25rem; letter-spacing: -0.02em;">
-            {{ user.balance }} <span style="font-size: 1.5rem; color: var(--accent-emerald);">₽</span>
+          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.06em;">Мой баланс</span>
+          <div class="balance-value" style="margin-top: 0.2rem;">
+            {{ user.balance }} <span class="balance-currency">₽</span>
           </div>
         </div>
-        <a href="{% url 'tariffs' %}" class="btn btn-primary" style="padding: 0.55rem 1.1rem; font-size: 0.85rem;">
+        <a href="{% url 'tariffs' %}" class="btn btn-primary" style="padding: 0.55rem 1.15rem; font-size: 0.85rem;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
@@ -70,19 +75,22 @@
         </a>
       </div>
 
-      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 0.85rem; padding: 0.85rem 1rem; margin-bottom: 1rem;">
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem;">
-          <span>Ежедневное списание:</span>
+      <div style="background: rgba(255, 255, 255, 0.035); border: 1px solid var(--border-subtle); border-radius: 0.95rem; padding: 0.9rem 1.1rem; margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.45rem;">
+          <span>Тариф:</span>
           <strong style="color: #fff;">{{ user.daily_deduction }} ₽ / день</strong>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted);">
-          <span>Дней доступа осталось:</span>
-          <strong style="color: var(--accent-emerald);">{{ user.days_left }} дней</strong>
+          <span>Доступ активен:</span>
+          <strong style="color: var(--accent-emerald); font-weight: 700;">{{ user.days_left }} дней</strong>
         </div>
       </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem;">
-        <span style="font-size: 0.85rem; color: var(--text-muted);">Автопродление с карты</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.4rem;">
+        <div>
+          <div style="font-size: 0.88rem; font-weight: 600; color: #fff;">Автопродление баланса</div>
+          <div style="font-size: 0.75rem; color: var(--text-dim);">Списание без прерывания связи</div>
+        </div>
         <label class="switch-label">
           <input type="checkbox" id="autopay-toggle" {% if user.autopay %}checked{% endif %} style="display: none;">
           <span class="toggle-switch"></span>
@@ -90,26 +98,26 @@
       </div>
     </div>
 
-    <!-- Card 2: 1-Click Connect & Key Management -->
-    <div class="glass-card">
+    <!-- Card 2: 1-Click Connect & Key Management (Cyan / Violet Ribbon) -->
+    <div class="glass-card card-accent-cyan">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.05em;">Подключение VPN</span>
+        <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.06em;">Подключение VPN</span>
         <button type="button" id="btn-regenerate-key" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;" title="Обновить UUID ключа">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="23 4 23 10 17 10"/>
             <polyline points="1 20 1 14 7 14"/>
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
           </svg>
-          Обновить
+          Обновить ключ
         </button>
       </div>
 
-      <!-- INCY Button -->
-      <a href="{{ vpn_key.get_incy_url }}" id="btn-incy-connect" class="btn btn-primary btn-block" style="margin-bottom: 0.75rem;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <!-- INCY Button with Cyber Sheen -->
+      <a href="{{ vpn_key.get_connect_url }}" id="btn-incy-connect" class="btn btn-cyber-incy btn-block" style="margin-bottom: 0.85rem;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
         </svg>
-        <span>Подключить в 1 клик (INCY)</span>
+        <span style="font-weight: 700;">Подключить в 1 клик (INCY)</span>
       </a>
 
       <!-- Quick Action Buttons -->
@@ -119,7 +127,7 @@
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
           </svg>
-          Скопировать
+          Ключ VLESS
         </button>
 
         <button type="button" class="btn btn-secondary" data-modal-target="qr-modal">
@@ -133,24 +141,27 @@
         </button>
       </div>
 
-      <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-dim);">
-        Работает в приложениях: <strong>INCY</strong>, Happ, Hiddify, v2rayNG, Streisand, FoXray.
+      <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; justify-content: space-between;">
+        <span>Клиенты: <strong>INCY</strong>, Happ, Hiddify, Streisand</span>
+        <button type="button" class="btn btn-secondary" data-copy="{{ vpn_key.get_sub_url }}" style="padding: 0.25rem 0.55rem; font-size: 0.72rem;">
+          🔗 Подписка
+        </button>
       </div>
     </div>
 
-    <!-- Card 3: Russian Whitelists (Direct Routing) -->
-    <div class="glass-card">
+    <!-- Card 3: Russian Whitelists (Direct Routing) (Violet Ribbon) -->
+    <div class="glass-card card-accent-violet">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
         <div style="display: flex; align-items: center; gap: 0.6rem;">
-          <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.15); display: flex; align-items: center; justify-content: center; color: #818cf8;">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(139, 92, 246, 0.18); display: flex; align-items: center; justify-content: center; color: #a78bfa;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
           </div>
           <div>
-            <h3 style="font-size: 1rem; font-weight: 700; color: #fff;">Белый список РФ</h3>
-            <span style="font-size: 0.75rem; color: var(--text-dim);">Smart Direct Routing</span>
+            <h3 style="font-size: 1rem; font-weight: 700; color: #fff;">Белый список РФ / РБ</h3>
+            <span style="font-size: 0.75rem; color: var(--text-dim);">Smart Direct Bypass</span>
           </div>
         </div>
 
@@ -160,23 +171,33 @@
         </label>
       </div>
 
-      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
-        Когда включено, <strong>Сбер, Т-Банк, Госуслуги, Яндекс, Кинопоиск, Ozon и WB</strong> открываются напрямую без замедлений и капчи. Заблокированные сайты (Instagram, YouTube, X) идут через VPN.
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.85rem;">
+        Сервисы РФ открываются напрямую на полной скорости провайдера без капчи и блокировок:
       </p>
 
-      <div id="whitelist-badge" class="status-pill" style="font-size: 0.75rem;">
+      <!-- Colorful Service Badges -->
+      <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem;">
+        <span class="ru-service-tag">🏛️ Госуслуги</span>
+        <span class="ru-service-tag">🟢 Сбер</span>
+        <span class="ru-service-tag">🟡 Т-Банк</span>
+        <span class="ru-service-tag">🔴 Яндекс</span>
+        <span class="ru-service-tag">🔵 ВКонтакте</span>
+        <span class="ru-service-tag">🟣 Ozon & WB</span>
+      </div>
+
+      <div id="whitelist-badge" class="status-pill {% if vpn_key.whitelist_enabled %}pill-active{% else %}pill-amber{% endif %}" style="font-size: 0.75rem;">
         {% if vpn_key.whitelist_enabled %}
-          Активен (РФ напрямую)
+          ✓ Белый список включен (РФ напрямую)
         {% else %}
-          Выключен (все через VPN)
+          ✕ Выключен (весь трафик через VPN)
         {% endif %}
       </div>
     </div>
 
-    <!-- Card 4: Connect Without Installing Apps (PAC / Web Proxy) -->
+    <!-- Card 4: Connect Without Installing Apps (PAC) -->
     <div class="glass-card">
       <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem;">
-        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); display: flex; align-items: center; justify-content: center; color: #fbbf24;">
+        <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(6, 182, 212, 0.18); display: flex; align-items: center; justify-content: center; color: #38bdf8;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
             <line x1="2" y1="12" x2="22" y2="12"/>
@@ -184,13 +205,13 @@
           </svg>
         </div>
         <div>
-          <h3 style="font-size: 1rem; font-weight: 700; color: #fff;">Без приложений</h3>
+          <h3 style="font-size: 1rem; font-weight: 700; color: #fff;">Без скачивания программ</h3>
           <span style="font-size: 0.75rem; color: var(--text-dim);">PAC-скрипт для браузера</span>
         </div>
       </div>
 
       <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
-        Не хотите скачивать приложения? Настройте авто-прокси напрямую в настройках браузера или системы через PAC-конфиг.
+        Вставьте ссылку в настройки системы или браузера, и заблокированные сайты будут проксироваться автоматически.
       </p>
 
       <button type="button" class="btn btn-secondary btn-block" data-modal-target="pac-modal" style="font-size: 0.85rem;">
@@ -203,17 +224,17 @@
       </button>
     </div>
 
-    <!-- Card 5: Referral Program -->
-    <div class="glass-card">
+    <!-- Card 5: Referral Program (Amber Ribbon) -->
+    <div class="glass-card card-accent-amber">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
         <h3 style="font-size: 1rem; font-weight: 700; color: #fff;">Приглашай друзей</h3>
-        <span class="status-pill" style="font-size: 0.75rem; color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1);">
-          +10 ₽ бонус
+        <span class="status-pill pill-amber" style="font-size: 0.75rem;">
+          🎁 +10 ₽ бонус
         </span>
       </div>
 
       <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-        Приглашайте знакомых и получайте по 10 ₽ на баланс за каждого зарегистрированного пользователя.
+        Получайте по 10 ₽ на баланс за каждого зарегистрированного друга по вашей ссылке.
       </p>
 
       <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
@@ -228,26 +249,23 @@
       </div>
     </div>
 
-    <!-- Card 6: Telegram Bot & Support -->
+    <!-- Card 6: Telegram Bot & Mini App -->
     <div class="glass-card">
-      <h3 style="font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Telegram бот и поддержка</h3>
+      <h3 style="font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Telegram бот и Mini App</h3>
       <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
-        Управляйте VPN прямо из Telegram или свяжитесь с поддержкой в случае сложностей.
+        Управляйте ключами прямо из Telegram на смартфоне или свяжитесь с поддержкой.
       </p>
 
       <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+        <a href="/miniapp/" class="btn btn-secondary btn-block" style="justify-content: flex-start; font-size: 0.85rem;">
+          <span>📱 Открыть Telegram Mini App</span>
+        </a>
         <a href="https://t.me/{{ BOT_USERNAME }}" target="_blank" class="btn btn-secondary btn-block" style="justify-content: flex-start; font-size: 0.85rem;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="22" y1="2" x2="11" y2="13"/>
             <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
-          Открыть Telegram-бота
-        </a>
-        <a href="https://t.me/{{ BOT_USERNAME }}?start=support" target="_blank" class="btn btn-secondary btn-block" style="justify-content: flex-start; font-size: 0.85rem;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          Чат службы поддержки
+          Перейти в Telegram-бота
         </a>
       </div>
     </div>
@@ -267,7 +285,7 @@
       Отсканируйте камерой в приложении INCY, Happ или на Smart TV
     </p>
 
-    <div style="background: #0a0b0e; padding: 1rem; border-radius: 1rem; display: inline-block; border: 1px solid var(--border-subtle); margin-bottom: 1.5rem;">
+    <div style="background: #0a0e18; padding: 1.2rem; border-radius: 1.2rem; display: inline-block; border: 1px solid var(--border-subtle); margin-bottom: 1.5rem; box-shadow: 0 0 30px rgba(0,0,0,0.6);">
       <img id="qr-code-img" src="{% url 'qr_code' vpn_key.sub_token %}" alt="QR Code" style="width: 220px; height: 220px; display: block; border-radius: 0.5rem;">
     </div>
 
@@ -278,39 +296,43 @@
   </div>
 </div>
 
-<!-- Server Selector Modal -->
+<!-- Server Selector Modal with Real Dynamic Servers -->
 <div class="modal-overlay" id="server-modal">
   <div class="modal-body">
-    <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Выбор локации</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">Выбор сервера</h3>
+      <span style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 700;">1 Гбит/с безлимит</span>
+    </div>
     <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
-      Доступные быстрые сервера с оптимизацией под РФ и РБ
+      Все сервера имеют прямой канал и настроенную маскировку VLESS Reality:
     </p>
 
-    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;" id="server-list-container">
       {% for s in servers %}
-        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-subtle); border-radius: 0.85rem; padding: 0.85rem 1rem;">
-          <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <span style="font-size: 1.4rem;">🇳🇱</span>
+        <div class="server-item-card {% if s.id == vpn_key.server.id %}selected{% endif %}" data-server-id="{{ s.id }}">
+          <div style="display: flex; align-items: center; gap: 0.85rem;">
+            <span style="font-size: 1.7rem;">{{ s.flag }}</span>
             <div>
-              <div style="font-weight: 600; color: #fff; font-size: 0.95rem;">{{ s.name }}</div>
-              <div style="font-size: 0.75rem; color: var(--text-dim);">Пинг {{ s.ping_ms }} ms • 1 Гбит/с безлимит</div>
+              <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">{{ s.clean_name }}</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim);">
+                {{ s.speed_description }} • <span style="color: #34d399;">{{ s.load_percent }}%</span> нагрузка
+              </div>
             </div>
           </div>
-          <span class="status-pill" style="font-size: 0.75rem;">Выбран</span>
-        </div>
-      {% endfor %}
-      
-      <!-- Future Nodes -->
-      <div style="display: flex; justify-content: space-between; align-items: center; opacity: 0.5; background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-subtle); border-radius: 0.85rem; padding: 0.85rem 1rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <span style="font-size: 1.4rem;">🇩🇪</span>
-          <div>
-            <div style="font-weight: 600; color: #fff; font-size: 0.95rem;">Германия (Франкфурт)</div>
-            <div style="font-size: 0.75rem; color: var(--text-dim);">Скоро открытие</div>
+          <div style="text-align: right; display: flex; align-items: center; gap: 0.75rem;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: {% if s.ping_ms < 50 %}#34d399{% else %}#fbbf24{% endif %};">
+              {{ s.ping_ms }} ms
+            </div>
+            {% if s.id == vpn_key.server.id %}
+              <span class="status-pill pill-active" style="padding: 0.25rem 0.65rem; font-size: 0.75rem;">✓ Активен</span>
+            {% else %}
+              <button type="button" class="btn btn-secondary btn-switch-server" data-server-id="{{ s.id }}" style="padding: 0.35rem 0.85rem; font-size: 0.75rem;">
+                Выбрать
+              </button>
+            {% endif %}
           </div>
         </div>
-        <span style="font-size: 0.75rem; color: var(--text-dim);">Скоро</span>
-      </div>
+      {% endfor %}
     </div>
 
     <button type="button" class="btn btn-secondary btn-block modal-close">Закрыть</button>
@@ -331,11 +353,11 @@
         <input type="text" readonly value="{{ request.scheme }}://{{ request.get_host }}{% url 'pac_script' vpn_key.sub_token %}" class="form-input" style="font-size: 0.75rem; font-family: var(--font-mono);">
         <button type="button" class="btn btn-secondary" data-copy="{{ request.scheme }}://{{ request.get_host }}{% url 'pac_script' vpn_key.sub_token %}">📋</button>
       </div>
-      <p><strong>2. Вставьте в настройки:</strong></p>
+      <p><strong>2. Вставьте в настройки системы:</strong></p>
       <ul style="padding-left: 1.25rem; color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem;">
-        <li>В macOS: <em>Сеть → Дополнительно → Прокси → Автоконфигурация прокси (PAC)</em></li>
-        <li>В Windows: <em>Параметры → Сеть и интернет → Прокси → Использовать скрипт настройки</em></li>
-        <li>В iOS: <em>Wi-Fi → Настройка прокси → Автоматически → URL</em></li>
+        <li>В macOS: <em>Сеть → Дополнительно → Прокси → Автоконфигурация (PAC)</em></li>
+        <li>В Windows: <em>Параметры → Сеть и интернет → Прокси → Использовать скрипт</em></li>
+        <li>В iOS: <em>Wi-Fi → Настройка прокси → Автоматически</em></li>
       </ul>
     </div>
 

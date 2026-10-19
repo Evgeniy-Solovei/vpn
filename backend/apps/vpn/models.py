@@ -5,10 +5,27 @@ from django.db import models
 from django.conf import settings
 from apps.accounts.models import CustomUser
 
+COUNTRY_FLAGS = {
+    'NL': '🇳🇱',
+    'DE': '🇩🇪',
+    'FI': '🇫🇮',
+    'SE': '🇸🇪',
+    'US': '🇺🇸',
+    'TR': '🇹🇷',
+    'KZ': '🇰🇿',
+    'PL': '🇵🇱',
+    'GB': '🇬🇧',
+    'RU': '🇷🇺',
+    'BY': '🇧🇾',
+    'FR': '🇫🇷',
+    'CH': '🇨🇭',
+}
+
 class VPNServer(models.Model):
-    name = models.CharField(max_length=128, verbose_name="Название сервера", default="Нидерланды 01")
-    country_code = models.CharField(max_length=4, default="NL", verbose_name="Код страны")
+    name = models.CharField(max_length=128, verbose_name="Название сервера", default="Нидерланды • Амстердам")
+    country_code = models.CharField(max_length=4, default="NL", verbose_name="Код страны (ISO)")
     country_name = models.CharField(max_length=64, default="Нидерланды", verbose_name="Страна")
+    city = models.CharField(max_length=64, default="Амстердам", verbose_name="Город / Локация")
     ip = models.GenericIPAddressField(verbose_name="IP сервера", default="89.110.100.12")
     port = models.PositiveIntegerField(default=443, verbose_name="Порт VLESS Reality")
     
@@ -24,7 +41,9 @@ class VPNServer(models.Model):
     panel_password = models.CharField(max_length=128, blank=True, null=True, verbose_name="Пароль панели")
     panel_inbound_id = models.PositiveIntegerField(default=1, verbose_name="ID Inbound в 3X-UI")
 
-    ping_ms = models.PositiveIntegerField(default=45, verbose_name="Пинг (мс)")
+    ping_ms = models.PositiveIntegerField(default=42, verbose_name="Пинг (мс)")
+    load_percent = models.PositiveIntegerField(default=24, verbose_name="Загрузка сервера (%)")
+    speed_description = models.CharField(max_length=64, default="1 Gbps • Безлимит", verbose_name="Канал")
     is_active = models.BooleanField(default=True, verbose_name="Активен")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -32,8 +51,30 @@ class VPNServer(models.Model):
         verbose_name = "VPN Сервер"
         verbose_name_plural = "VPN Сервера"
 
+    @property
+    def flag(self) -> str:
+        return COUNTRY_FLAGS.get(self.country_code.upper().strip(), '🌐')
+
+    @property
+    def display_name(self) -> str:
+        """Красивое авто-название: 🇳🇱 Нидерланды • Амстердам"""
+        city_part = f" • {self.city}" if self.city else ""
+        return f"{self.flag} {self.country_name}{city_part}"
+
+    @property
+    def clean_name(self) -> str:
+        city_part = f" • {self.city}" if self.city else ""
+        return f"{self.country_name}{city_part}"
+
+    def save(self, *args, **kwargs):
+        if not self.name or '01' in self.name or '1(0)' in self.name:
+            city_part = f" • {self.city}" if self.city else ""
+            self.name = f"{self.country_name}{city_part}"
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.name} [{self.country_code}] ({self.ip}:{self.port})"
+        return f"{self.display_name} ({self.ip}:{self.port}) [{self.ping_ms} ms]"
+
 
 
 def generate_sub_token():

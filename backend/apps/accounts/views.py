@@ -162,11 +162,13 @@ def password_reset_confirm_view(request, uidb64, token):
 def dashboard_view(request):
     user = request.user
     
-    # Get or create VPN key
-    server = get_or_create_default_server()
-    key, _ = VPNKey.objects.get_or_create(user=user, server=server)
+    # Get or create VPN key (preserve selected server)
+    key = VPNKey.objects.filter(user=user).first()
+    if not key:
+        server = get_or_create_default_server()
+        key = VPNKey.objects.create(user=user, server=server)
     
-    servers = VPNServer.objects.filter(is_active=True)
+    servers = VPNServer.objects.filter(is_active=True).order_by('ping_ms')
     referrals_count = user.referrals.count()
     referral_url = f"{settings.SITE_URL}/auth/register/?ref={user.referral_code}"
     
@@ -177,3 +179,4 @@ def dashboard_view(request):
         'referrals_count': referrals_count,
         'referral_url': referral_url,
     })
+
