@@ -107,9 +107,29 @@ cat <<EOF > /usr/local/etc/xray/config.json
       "protocol": "blackhole",
       "tag": "block"
     }
-  ]
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "type": "field",
+        "protocol": [
+          "bittorrent"
+        ],
+        "outboundTag": "block"
+      }
+    ]
+  }
 }
 EOF
+
+# 6. Fair Queuing (FQ_CoDel) - Fair bandwidth sharing among all users
+echo -e "⚖️ ${CYAN}[6/6] Настройка FQ_CoDel (честное распределение скорости между пользователями)...${NC}"
+DEFAULT_IFACE=$(ip route show default | awk '{print $5}' | head -n1)
+if [ -n "$DEFAULT_IFACE" ]; then
+  tc qdisc replace dev "$DEFAULT_IFACE" root fq_codel > /dev/null 2>&1 || true
+  echo -e "✅ Планировщик FQ_CoDel активирован на интерфейсе ${YELLOW}${DEFAULT_IFACE}${NC}"
+fi
 
 # Open firewall ports
 if command -v ufw > /dev/null 2>&1; then

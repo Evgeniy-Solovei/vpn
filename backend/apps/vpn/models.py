@@ -1,5 +1,6 @@
 import uuid
 import secrets
+from datetime import date, timedelta
 from urllib.parse import quote
 from django.db import models
 from django.conf import settings
@@ -80,6 +81,9 @@ class VPNServer(models.Model):
 def generate_sub_token():
     return secrets.token_urlsafe(24)
 
+def get_default_reset_date():
+    return date.today() + timedelta(days=30)
+
 class VPNKey(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='vpn_keys', verbose_name="Пользователь")
     server = models.ForeignKey(VPNServer, on_delete=models.CASCADE, related_name='keys', verbose_name="Сервер")
@@ -89,9 +93,10 @@ class VPNKey(models.Model):
     whitelist_enabled = models.BooleanField(default=True, verbose_name="Белый список РФ (Direct Routing)")
     is_active = models.BooleanField(default=True, verbose_name="Активен")
     
-    # Fair Usage Policy (FUP) & Traffic Management
+    # Fair Usage Policy (FUP) & Traffic Management (Pooled across all servers)
     used_traffic_bytes = models.BigIntegerField(default=18253611008, verbose_name="Использованный трафик (байт)")
     traffic_limit_gb = models.PositiveIntegerField(default=200, verbose_name="Лимит скоростного трафика (ГБ)")
+    traffic_reset_date = models.DateField(default=get_default_reset_date, verbose_name="Дата следующего сброса квоты")
     is_throttled = models.BooleanField(default=False, verbose_name="Скорость ограничена (FUP)")
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
@@ -132,6 +137,24 @@ class VPNKey(models.Model):
                 self.is_throttled = False
                 self.save(update_fields=['is_throttled'])
 
+    def record_traffic(self, server: VPNServer, bytes_delta: int):
+        """Record traffic consumed on a specific server and update total user quota."""
+        self.used_traffic_bytes += bytes_delta
+        self.check_and_update_throttle()
+        self.save(update_fields=['used_traffic_bytes', 'is_throttled', 'updated_at'])
+
+        ust, _ = UserServerTraffic.objects.get_or_create(user=self.user, server=server)
+        ust.bytes_used += bytes_delta
+        ust.save()
+
+    def reset_monthly_traffic(self):
+        """Reset monthly traffic counters."""
+        self.used_traffic_bytes = 0
+        self.is_throttled = False
+        self.traffic_reset_date = get_default_reset_date()
+        self.save(update_fields=['used_traffic_bytes', 'is_throttled', 'traffic_reset_date', 'updated_at'])
+        UserServerTraffic.objects.filter(user=self.user).update(bytes_used=0)
+
     def __str__(self):
         return f"Ключ {self.user.username} @ {self.server.name} ({self.used_traffic_gb}/{self.traffic_limit_gb} GB)"
 
@@ -165,3 +188,23 @@ class VPNKey(models.Model):
     def get_connect_url(self) -> str:
         site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
         return f"{site_url}/vpn/connect/{self.sub_token}/"
+
+
+class UserServerTraffic(models.Model):
+    """Tracks traffic usage per user per server for multi-server aggregation."""
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='server_traffics', verbose_name="Пользователь")
+    server = models.ForeignKey(VPNServer, on_delete=models.CASCADE, related_name='user_traffics', verbose_name="Сервер")
+    bytes_used = models.BigIntegerField(default=0, verbose_name="Использовано на сервере (байт)")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Последняя активность")
+
+    class Meta:
+        verbose_name = "Трафик пользователя на сервере"
+        verbose_name_plural = "Трафик пользователей по серверам"
+        unique_together = ('user', 'server')
+
+    @property
+    def used_gb(self) -> float:
+        return round(self.bytes_used / (1024 ** 3), 2)
+
+    def __str__(self):
+        return f"{self.user.username} @ {self.server.clean_name}: {self.used_gb} GB"

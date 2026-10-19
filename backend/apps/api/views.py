@@ -64,6 +64,7 @@ def build_user_response(user, is_new=False):
             'limit_gb': key.traffic_limit_gb,
             'percent': key.traffic_percent,
             'left_gb': key.traffic_left_gb,
+            'reset_date': key.traffic_reset_date.strftime('%d.%m.%Y') if key.traffic_reset_date else None,
             'is_throttled': key.is_throttled,
             'current_speed': f"{key.current_speed_mbps} Мб/с",
         }
