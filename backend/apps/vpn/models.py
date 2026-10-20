@@ -254,6 +254,26 @@ class VPNKey(models.Model):
         sub_url = self.get_sub_url()
         return f"incy://install-config?url={quote(sub_url)}"
 
+    def get_hiddify_url(self) -> str:
+        # Hiddify deep link scheme format
+        sub_url = self.get_sub_url()
+        return f"hiddify://install-config?url={quote(sub_url)}"
+
+    def get_streisand_url(self) -> str:
+        # Streisand deep link scheme format
+        sub_url = self.get_sub_url()
+        return f"streisand://import/{quote(sub_url)}"
+
+    def get_v2box_url(self) -> str:
+        # V2Box deep link scheme format
+        sub_url = self.get_sub_url()
+        return f"v2box://install-sub?url={quote(sub_url)}&name=VPN%20live-dev"
+
+    def get_pac_url(self) -> str:
+        # Proxy Auto-Config URL for in-browser usage without installing applications
+        site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
+        return f"{site_url}/vpn/pac/{self.sub_token}/"
+
     def get_connect_url(self) -> str:
         site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
         return f"{site_url}/vpn/connect/{self.sub_token}/"

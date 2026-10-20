@@ -1,48 +1,176 @@
 {% extends 'base.html' %}
-{% block title %}Подключение к INCY — VPN Live Dev{% endblock %}
+{% block title %}Подключение к VPN — VPN live-dev{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-  <div class="auth-card" style="text-align: center; padding: 3rem 2rem;">
-    <!-- Animated Rocket / Shield Icon -->
-    <div style="width: 76px; height: 76px; margin: 0 auto 1.5rem; background: rgba(16, 185, 129, 0.12); border: 2px solid rgba(16, 185, 129, 0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px var(--accent-emerald-glow);">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-      </svg>
+<div class="container" style="max-width: 680px; margin: 3rem auto 2rem; padding: 0 1rem;">
+  
+  <div class="card" style="padding: 2.25rem 1.75rem; border: 1px solid var(--border-subtle); background: rgba(18, 22, 34, 0.88); box-shadow: var(--shadow-xl); border-radius: 1.25rem;">
+    
+    <!-- Top Icon & Header -->
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="width: 72px; height: 72px; margin: 0 auto 1.25rem; background: rgba(16, 185, 129, 0.15); border: 2px solid rgba(16, 185, 129, 0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px var(--accent-emerald-glow);">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      </div>
+
+      <div style="display: inline-block; padding: 0.25rem 0.85rem; border-radius: 999px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #34d399; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem;">
+        Быстрое подключение
+      </div>
+
+      <h1 style="font-size: 1.65rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">
+        Подключение к VPN
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; margin: 0;">
+        Подключение в приложении INCY, Streisand, Hiddify или прямо в браузере без установки программ.
+      </p>
     </div>
 
-    <h2 style="font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 0.75rem;">
-      Подключение в приложении INCY
-    </h2>
+    <!-- OPTION 1: IN-BROWSER / NO APPS (PAC) -->
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.75rem; position: relative;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="font-size: 1.35rem;">🌐</span>
+          <div>
+            <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; margin: 0;">Способ 1: Без приложений (В браузере)</h3>
+            <span style="font-size: 0.75rem; color: #34d399; font-weight: 600;">Самый простой • Не нужно ничего скачивать</span>
+          </div>
+        </div>
+        <span style="font-size: 0.72rem; background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 700;">Рекомендуется</span>
+      </div>
 
-    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5;">
-      Если приложение INCY установлено, сейчас откроется окно импорта настроек. Если нет — скачайте приложение ниже.
-    </p>
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
+        Вставьте ссылку автонастройки (PAC) в настройки Wi-Fi или браузера. Заблокированные сайты (Instagram, YouTube) будут открываться сами, а банки РФ и РБ продолжат работать напрямую!
+      </p>
 
-    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
-      <a href="{{ incy_url }}" class="btn btn-primary btn-block" style="padding: 1rem; font-size: 1.05rem;">
-        ⚡ Открыть в INCY прямо сейчас
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+        <input type="text" readonly value="{{ pac_url }}" id="pac-url-input" class="form-input" style="flex: 1; min-width: 200px; font-size: 0.82rem; font-family: var(--font-mono); background: rgba(0, 0, 0, 0.4); border-color: rgba(16, 185, 129, 0.3); color: #6ee7b7;">
+        <button type="button" class="btn btn-primary" data-copy="{{ pac_url }}" style="padding: 0.6rem 1.25rem; font-size: 0.85rem; white-space: nowrap;">
+          📋 Скопировать ссылку
+        </button>
+      </div>
+
+      <!-- Quick 10-sec instruction toggle -->
+      <details style="background: rgba(0, 0, 0, 0.25); border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.82rem; color: var(--text-dim);">
+        <summary style="cursor: pointer; font-weight: 600; color: #34d399;">👉 Инструкция за 10 секунд (iOS / macOS / Windows)</summary>
+        <div style="margin-top: 0.6rem; line-height: 1.6; color: var(--text-muted);">
+          <strong>На iPhone / iPad:</strong> «Настройки» → «Wi-Fi» → буква «(i)» рядом с вашей сетью → «Настройка прокси» → «Автоматически» → вставьте скопированную ссылку в поле URL → «Сохранить».<br>
+          <strong>На macOS:</strong> «Системные настройки» → «Сеть» → «Wi-Fi» → «Подробнее» → «Прокси» → включите «Автоматическая настройка прокси» и вставьте ссылку.<br>
+          <strong>На Windows:</strong> «Параметры» → «Сеть и Интернет» → «Прокси-сервер» → «Использовать сценарий настройки» → вставьте ссылку → «Сохранить».
+        </div>
+      </details>
+    </div>
+
+    <!-- OPTION 2: 1-CLICK APPS (iOS / Android / Desktop) -->
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem;">
+        <span style="font-size: 1.35rem;">⚡</span>
+        <div>
+          <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; margin: 0;">Способ 2: Через бесплатное приложение</h3>
+          <span style="font-size: 0.75rem; color: var(--text-dim);">Максимальная скорость, защита 24/7 и обход любых блокировок</span>
+        </div>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.25rem;">
+        Сначала скачайте бесплатный проверенный клиент из официального магазина, затем нажмите кнопку добавления ключа:
+      </p>
+
+      <!-- Dynamic Platform Selector / Actions -->
+      <div id="device-smart-actions">
+        <!-- iOS Actions -->
+        <div id="ios-actions" style="display: none; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="https://apps.apple.com/app/id6450534064" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="flex: 1; text-align: center; font-size: 0.88rem; padding: 0.75rem 1rem;">
+              🍏 1. Скачать Streisand (App Store)
+            </a>
+            <a href="https://apps.apple.com/app/id6446814690" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 0.82rem; padding: 0.75rem 0.9rem;">
+              V2Box (Альтернатива)
+            </a>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{{ streisand_url }}" class="btn btn-secondary" style="flex: 1; text-align: center; font-size: 0.85rem; padding: 0.75rem 1rem; color: #38bdf8;">
+              ⚡ 2. Открыть в Streisand в 1 клик
+            </a>
+            <a href="{{ v2box_url }}" class="btn btn-secondary" style="flex: 1; text-align: center; font-size: 0.85rem; padding: 0.75rem 1rem; color: #a78bfa;">
+              ⚡ 2. Открыть в V2Box
+            </a>
+          </div>
+        </div>
+
+        <!-- Android Actions -->
+        <div id="android-actions" style="display: none; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="https://play.google.com/store/apps/details?id=com.v2ray.ang" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="flex: 1; text-align: center; font-size: 0.88rem; padding: 0.75rem 1rem;">
+              🤖 1. Скачать v2rayNG (Google Play)
+            </a>
+            <a href="https://play.google.com/store/apps/details?id=app.hiddify.com" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 0.82rem; padding: 0.75rem 0.9rem;">
+              Hiddify (Google Play)
+            </a>
+          </div>
+
+          <a href="{{ hiddify_url }}" class="btn btn-secondary btn-block" style="text-align: center; font-size: 0.85rem; padding: 0.75rem 1rem; color: #34d399;">
+            ⚡ 2. Добавить конфиг в Hiddify
+          </a>
+        </div>
+
+        <!-- Desktop Actions -->
+        <div id="desktop-actions" style="display: none; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+          <a href="https://github.com/hiddify/hiddify-next/releases" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-block" style="text-align: center; font-size: 0.88rem; padding: 0.75rem 1rem;">
+            💻 1. Скачать Hiddify для Windows / Mac (GitHub)
+          </a>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <a href="{{ hiddify_url }}" class="btn btn-secondary" style="text-align: center; font-size: 0.82rem; padding: 0.65rem 0.5rem; color: #38bdf8;">
+              ⚡ Открыть в Hiddify
+            </a>
+            <a href="{{ incy_url }}" class="btn btn-secondary" style="text-align: center; font-size: 0.82rem; padding: 0.65rem 0.5rem; color: #a78bfa;">
+              ⚡ Открыть в INCY
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Copy Buttons -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+        <button type="button" class="btn btn-secondary" data-copy="{{ vless_url }}">
+          📋 Скопировать ключ VLESS
+        </button>
+        <button type="button" class="btn btn-secondary" data-copy="{{ sub_url }}">
+          🔗 Ссылка подписки
+        </button>
+      </div>
+    </div>
+
+    <!-- Return to Dashboard -->
+    <div style="text-align: center;">
+      <a href="{% url 'dashboard' %}" class="btn btn-secondary" style="padding: 0.65rem 1.75rem; font-size: 0.85rem;">
+        &larr; Вернуться в личный кабинет
       </a>
-
-      <button type="button" class="btn btn-secondary btn-block" data-copy="{{ vless_url }}">
-        📋 Скопировать ключ VLESS
-      </button>
-
-      <button type="button" class="btn btn-secondary btn-block" data-copy="{{ sub_url }}">
-        🔗 Скопировать ссылку подписки
-      </button>
     </div>
 
-    <div style="font-size: 0.85rem; color: var(--text-dim); margin-top: 1rem;">
-      Нет приложения? <a href="https://apps.apple.com/app/id6474328827" target="_blank" style="color: var(--accent-emerald); text-decoration: none;">Скачать INCY в App Store / Google Play</a>
-    </div>
   </div>
 </div>
 
 <script>
-  // Attempt auto-launch
-  setTimeout(() => {
-    window.location.href = "{{ incy_url }}";
-  }, 300);
+// Detect client operating system and highlight recommended store links
+document.addEventListener('DOMContentLoaded', () => {
+  const ua = navigator.userAgent.toLowerCase();
+  const iosBox = document.getElementById('ios-actions');
+  const androidBox = document.getElementById('android-actions');
+  const desktopBox = document.getElementById('desktop-actions');
+
+  if (/iphone|ipad|ipod/.test(ua)) {
+    if (iosBox) iosBox.style.display = 'flex';
+  } else if (/android/.test(ua)) {
+    if (androidBox) androidBox.style.display = 'flex';
+  } else {
+    // macOS / Windows / Linux
+    if (desktopBox) desktopBox.style.display = 'flex';
+    // also show iOS by default if user is on Mac
+    if (/macintosh|mac os x/.test(ua) && iosBox) {
+      iosBox.style.display = 'flex';
+    }
+  }
+});
 </script>
 {% endblock %}

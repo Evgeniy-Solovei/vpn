@@ -149,12 +149,16 @@ def regenerate_key_view(request):
 
 
 def incy_redirect_view(request, token):
-    """Landing and redirect view for 1-click import into INCY client."""
+    """Smart landing and multi-platform connection view (In-browser PAC + 1-Click Apps)."""
     from django.shortcuts import render
     key = get_object_or_404(VPNKey, sub_token=token)
     return render(request, 'vpn/connect.html', {
         'key': key,
         'incy_url': key.get_incy_url(),
+        'hiddify_url': key.get_hiddify_url(),
+        'streisand_url': key.get_streisand_url(),
+        'v2box_url': key.get_v2box_url(),
         'vless_url': key.get_vless_url(),
         'sub_url': key.get_sub_url(),
+        'pac_url': key.get_pac_url(),
     })
