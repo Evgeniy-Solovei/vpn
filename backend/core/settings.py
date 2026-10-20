@@ -51,6 +51,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'apps.accounts.middleware.PersistentAuthMiddleware',
+    'apps.accounts.middleware.ErrorIncidentMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -181,5 +182,87 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 
 DEVICE_KEY_COOKIE_NAME = 'vpn_device_key'
 DEVICE_KEY_AGE = 90 * 24 * 60 * 60          # 90 days
+
+# ==========================================
+# Logging Configuration
+# ==========================================
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] [{levelname}] {name} ({module}:{lineno}): {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '[{levelname}] {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'errors_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'errors.log',
+            'maxBytes': 5 * 1024 * 1024,
+            'backupCount': 5,
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+            'level': 'ERROR',
+        },
+        'vpn_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'vpn.log',
+            'maxBytes': 5 * 1024 * 1024,
+            'backupCount': 5,
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+            'level': 'INFO',
+        },
+        'billing_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'billing.log',
+            'maxBytes': 5 * 1024 * 1024,
+            'backupCount': 5,
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+            'level': 'INFO',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console', 'errors_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'apps.accounts': {
+            'handlers': ['console', 'errors_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps.vpn': {
+            'handlers': ['console', 'vpn_file', 'errors_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps.billing': {
+            'handlers': ['console', 'billing_file', 'errors_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps.api': {
+            'handlers': ['console', 'errors_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
 
 

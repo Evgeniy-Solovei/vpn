@@ -31,3 +31,7 @@ urlpatterns = [
     re_path(r'^media/(?P<path>.*)$', static_serve, {'document_root': settings.MEDIA_ROOT}, name='media_files'),
 ]
 
+handler500 = 'apps.accounts.views.custom_500_handler'
+handler404 = 'apps.accounts.views.custom_404_handler'
+
+

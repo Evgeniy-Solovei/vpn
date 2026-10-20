@@ -111,3 +111,119 @@ class VPNTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Подключение в приложении INCY")
         self.assertContains(resp, self.key.get_incy_url())
+
+    def test_check_server_health_detects_online_status(self):
+        """Mocked TCP connect marks server online and saves measured ping."""
+        from unittest.mock import patch
+        from apps.vpn.services import check_server_health
+
+        with patch('socket.socket') as mock_sock_cls:
+            mock_sock = mock_sock_cls.return_value
+            mock_sock.connect.return_value = None
+
+            result = check_server_health(self.server)
+            self.assertTrue(result['success'])
+            self.assertEqual(result['status'], 'online')
+            self.assertGreater(result['ping_ms'], 0)
+
+            self.server.refresh_from_db()
+            self.assertEqual(self.server.health_status, 'online')
+            self.assertIsNotNone(self.server.last_checked_at)
+
+    def test_check_server_health_detects_rkn_blocking_on_timeout(self):
+        """Socket timeout marks server blocked_rkn with timestamp."""
+        import socket
+        from unittest.mock import patch
+        from apps.vpn.services import check_server_health
+
+        with patch('socket.socket') as mock_sock_cls:
+            mock_sock = mock_sock_cls.return_value
+            mock_sock.connect.side_effect = socket.timeout("Connection timed out")
+
+            result = check_server_health(self.server)
+            self.assertFalse(result['success'])
+            self.assertEqual(result['status'], 'blocked_rkn')
+
+            self.server.refresh_from_db()
+            self.assertEqual(self.server.health_status, 'blocked_rkn')
+            self.assertIsNotNone(self.server.rkn_blocked_at)
+            self.assertIn("Timeout", self.server.rkn_check_result)
+
+    def test_auto_failover_migrates_banned_server_keys(self):
+        """Auto-failover migrates keys away from blocked_rkn servers to healthy nodes."""
+        from apps.vpn.services import failover_banned_servers
+
+        healthy_de = VPNServer.objects.create(
+            name="Germany • Frankfurt",
+            country_code="DE",
+            ip="194.87.100.12",
+            port=443,
+            ping_ms=55,
+            health_status="online",
+            is_active=True
+        )
+        banned_nl = self.server
+        banned_nl.health_status = "blocked_rkn"
+        banned_nl.save()
+
+        # Key is on banned server
+        self.assertEqual(self.key.server_id, banned_nl.id)
+
+        migrated_count = failover_banned_servers()
+        self.assertEqual(migrated_count, 1)
+
+        self.key.refresh_from_db()
+        self.assertEqual(self.key.server_id, healthy_de.id)
+
+    def test_relay_server_national_shutdown_support(self):
+        """Relay server represents domestic bridge node for national blackout bypass."""
+        relay_ru = VPNServer.objects.create(
+            name="Россия • Москва (Relay)",
+            country_code="RU",
+            ip="185.129.50.15",
+            port=443,
+            server_type="relay",
+            is_emergency_relay=True,
+            relay_upstream=self.server,
+            ping_ms=18,
+            health_status="online"
+        )
+        self.assertTrue(relay_ru.is_relay)
+        self.assertTrue(relay_ru.is_emergency_relay)
+        self.assertEqual(relay_ru.relay_upstream.id, self.server.id)
+
+        # PAC script generation for relay server
+        pac = generate_pac_script(relay_ru, whitelist_enabled=True)
+        self.assertIn("185.129.50.15", pac)
+        self.assertIn("DIRECT", pac)
+
+    def test_dashboard_auto_recovers_if_current_server_is_banned(self):
+        """When user visits dashboard with a banned server, their key is automatically fixed."""
+        healthy_fi = VPNServer.objects.create(
+            name="Finland • Helsinki",
+            country_code="FI",
+            ip="95.217.1.1",
+            port=443,
+            ping_ms=30,
+            health_status="online",
+            is_active=True
+        )
+        self.server.health_status = 'blocked_rkn'
+        self.server.save()
+
+        self.client.login(username='vpnuser', password='TestPassword123')
+        resp = self.client.get(reverse('dashboard'))
+        self.assertEqual(resp.status_code, 200)
+
+        self.key.refresh_from_db()
+        self.assertEqual(self.key.server_id, healthy_fi.id)
+
+    def test_check_servers_management_command(self):
+        """check_servers management command runs successfully with --mock flag."""
+        from django.core.management import call_command
+        from io import StringIO
+        out = StringIO()
+        call_command('check_servers', '--mock', stdout=out)
+        output = out.getvalue()
+        self.assertIn("Серверов проверено", output)
+

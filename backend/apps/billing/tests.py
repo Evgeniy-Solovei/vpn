@@ -150,3 +150,43 @@ class BillingTestCase(TestCase):
         self.user.refresh_from_db()
         self.assertEqual(self.user.balance, initial_balance + Decimal('150.00'))
 
+    def test_promo_code_inactive_rejected(self):
+        """Inactive promo codes cannot be redeemed."""
+        from apps.billing.models import PromoCode
+        PromoCode.objects.create(code='DISABLEDCODE', days=5, is_active=False)
+        resp = self.client.post(reverse('billing_activate_promo'), {'code': 'DISABLEDCODE'})
+        self.assertEqual(resp.status_code, 400)
+        data = resp.json()
+        self.assertFalse(data['success'])
+        self.assertIn("не активен", data['error'])
+
+    def test_promo_code_max_uses_limit_reached(self):
+        """Promo codes that reached maximum uses cannot be used by new users."""
+        from apps.billing.models import PromoCode
+        promo = PromoCode.objects.create(code='LIMITED1', days=3, max_uses=1, used_count=1)
+        resp = self.client.post(reverse('billing_activate_promo'), {'code': 'LIMITED1'})
+        self.assertEqual(resp.status_code, 400)
+        data = resp.json()
+        self.assertFalse(data['success'])
+        self.assertIn("Лимит активаций этого промокода исчерпан", data['error'])
+
+    def test_turbo_traffic_addon_flow_and_insufficient_balance(self):
+        """Purchasing extra 50 GB traffic requires at least 30 ₽ balance."""
+        # Insufficient balance
+        self.user.balance = Decimal('15.00')
+        self.user.save()
+        resp = self.client.post(reverse('api_buy_traffic'))
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()['success'])
+        self.assertIn("Недостаточно средств", resp.json()['error'])
+
+        # Sufficient balance
+        self.user.balance = Decimal('50.00')
+        self.user.save()
+        resp_ok = self.client.post(reverse('api_buy_traffic'))
+        self.assertEqual(resp_ok.status_code, 200)
+        self.assertTrue(resp_ok.json()['success'])
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, Decimal('20.00')) # 50 - 30
+
+

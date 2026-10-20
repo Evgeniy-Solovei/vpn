@@ -52,6 +52,23 @@ def seed():
             "load_percent": 18,
             "speed_description": "1 Gbps • Безлимит",
             "is_active": True,
+            "server_type": "direct",
+            "order": 10,
+        },
+        {
+            "country_code": "RU",
+            "country_name": "Россия",
+            "city": "Москва",
+            "name": "Россия • Москва",
+            "ip": "185.129.50.15",
+            "port": 443,
+            "ping_ms": 14,
+            "load_percent": 15,
+            "speed_description": "1 Gbps • Шатдаун Bypass",
+            "is_active": True,
+            "server_type": "relay",
+            "is_emergency_relay": True,
+            "order": 5,
         },
     ]
 

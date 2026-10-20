@@ -201,9 +201,17 @@ def dashboard_view(request):
         server = get_or_create_default_server()
         key = VPNKey.objects.create(user=user, server=server)
     
-    servers = VPNServer.objects.filter(is_active=True).order_by('ping_ms')
+    # Auto-failover if user's current server became inactive or blocked by RKN
+    if not key.server.is_active or key.server.health_status == 'blocked_rkn':
+        healthy = VPNServer.objects.filter(is_active=True).exclude(health_status='blocked_rkn').order_by('order', 'ping_ms').first()
+        if healthy:
+            key.server = healthy
+            key.save(update_fields=['server', 'updated_at'])
+
+    servers = VPNServer.objects.filter(is_active=True).exclude(health_status='blocked_rkn').order_by('order', 'ping_ms')
     referrals_count = user.referrals.count()
     referral_url = f"{settings.SITE_URL}/auth/register/?ref={user.referral_code}"
+
     
     return render(request, 'accounts/dashboard.html', {
         'user': user,
@@ -212,4 +220,24 @@ def dashboard_view(request):
         'referrals_count': referrals_count,
         'referral_url': referral_url,
     })
+
+
+def custom_500_handler(request):
+    import secrets
+    from datetime import datetime
+    incident_id = getattr(request, '_incident_id', None)
+    if not incident_id:
+        incident_id = f"ERR-500-{secrets.token_hex(3).upper()}-{datetime.now().strftime('%Y%m%d')}"
+    return render(request, '500.html', {'incident_id': incident_id}, status=500)
+
+
+def custom_404_handler(request, exception=None):
+    if request.path.startswith('/api/'):
+        return JsonResponse({
+            'success': False,
+            'error': 'Not Found',
+            'message': 'Запрашиваемый ресурс не найден.'
+        }, status=404)
+    return render(request, '404.html', status=404)
+
 

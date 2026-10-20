@@ -95,3 +95,47 @@ class DeviceAuthKey(models.Model):
     def __str__(self):
         return f"Ключ для {self.user.username} (до {self.expires_at.strftime('%Y-%m-%d')})"
 
+
+class ErrorIncident(models.Model):
+    """
+    Records unhandled server errors (500) with a unique incident code for quick debugging
+    and user support.
+    """
+    incident_id = models.CharField(max_length=32, unique=True, db_index=True, verbose_name="Код инцидента")
+    error_message = models.CharField(max_length=255, verbose_name="Ошибка")
+    traceback = models.TextField(verbose_name="Стек ошибки (Traceback)")
+    path = models.CharField(max_length=255, verbose_name="URL запроса")
+    method = models.CharField(max_length=10, default="GET", verbose_name="Метод")
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='incidents', verbose_name="Пользователь")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP адрес")
+    user_agent = models.CharField(max_length=256, blank=True, verbose_name="User-Agent")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Время ошибки")
+    is_resolved = models.BooleanField(default=False, verbose_name="Исправлено")
+
+    class Meta:
+        verbose_name = "Инцидент / Ошибка 500"
+        verbose_name_plural = "Журнал ошибок (Инциденты)"
+        ordering = ['-created_at']
+
+    @classmethod
+    def create_incident(cls, request, exception, tb_str=""):
+        from datetime import datetime
+        code = f"ERR-{secrets.token_hex(3).upper()}-{datetime.now().strftime('%Y%m%d')}"
+        user = request.user if getattr(request, 'user', None) and request.user.is_authenticated else None
+        ip = request.META.get('REMOTE_ADDR')
+        ua = request.META.get('HTTP_USER_AGENT', '')[:250]
+        return cls.objects.create(
+            incident_id=code,
+            error_message=str(exception)[:250],
+            traceback=tb_str,
+            path=request.path[:250],
+            method=request.method[:10],
+            user=user,
+            ip_address=ip,
+            user_agent=ua
+        )
+
+    def __str__(self):
+        return f"[{self.incident_id}] {self.error_message} ({self.path})"
+
+

@@ -23,7 +23,24 @@ COUNTRY_FLAGS = {
 }
 
 class VPNServer(models.Model):
+    SERVER_TYPE_CHOICES = [
+        ('direct', 'Прямой зарубежный сервер'),
+        ('relay', 'Мост «Белый интернет» РФ/РБ (Шатдаун)'),
+    ]
+
+    HEALTH_STATUS_CHOICES = [
+        ('online', '🟢 В сети (Отличный пинг)'),
+        ('degraded', '🟡 Высокий пинг (> 150 мс)'),
+        ('blocked_rkn', '🔴 Заблокирован РКН / ТСПУ'),
+        ('offline', '⚫ Недоступен'),
+    ]
+
     name = models.CharField(max_length=128, verbose_name="Название сервера", default="Нидерланды • Амстердам")
+    server_type = models.CharField(max_length=16, choices=SERVER_TYPE_CHOICES, default='direct', verbose_name="Тип сервера")
+    health_status = models.CharField(max_length=16, choices=HEALTH_STATUS_CHOICES, default='online', verbose_name="Состояние доступности")
+    is_emergency_relay = models.BooleanField(default=False, verbose_name="Мост «Белый интернет» (Шатдаун)")
+    relay_upstream = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='downstream_relays', verbose_name="Выходной сервер (Relay Upstream)")
+
     country_code = models.CharField(max_length=4, default="NL", verbose_name="Код страны (ISO)")
     country_name = models.CharField(max_length=64, default="Нидерланды", verbose_name="Страна")
     city = models.CharField(max_length=64, default="Амстердам", verbose_name="Город / Локация")
@@ -46,7 +63,13 @@ class VPNServer(models.Model):
     load_percent = models.PositiveIntegerField(default=24, verbose_name="Загрузка сервера (%)")
     speed_description = models.CharField(max_length=64, default="1 Gbps • Безлимит", verbose_name="Канал")
     is_active = models.BooleanField(default=True, verbose_name="Активен")
+    order = models.PositiveIntegerField(default=10, verbose_name="Порядок сортировки")
+    
+    last_checked_at = models.DateTimeField(null=True, blank=True, verbose_name="Время последней проверки")
+    rkn_blocked_at = models.DateTimeField(null=True, blank=True, verbose_name="Время блокировки РКН")
+    rkn_check_result = models.CharField(max_length=255, blank=True, default="", verbose_name="Результат проверки РКН")
     created_at = models.DateTimeField(auto_now_add=True)
+
 
     class Meta:
         verbose_name = "VPN Сервер"
@@ -57,15 +80,44 @@ class VPNServer(models.Model):
         return COUNTRY_FLAGS.get(self.country_code.upper().strip(), '🌐')
 
     @property
+    def is_relay(self) -> bool:
+        return self.server_type == 'relay' or self.is_emergency_relay
+
+    @property
+    def is_healthy(self) -> bool:
+        return self.is_active and self.health_status in ('online', 'degraded')
+
+    @property
     def display_name(self) -> str:
         """Красивое авто-название: 🇳🇱 Нидерланды • Амстердам"""
         city_part = f" • {self.city}" if self.city else ""
-        return f"{self.flag} {self.country_name}{city_part}"
+        relay_badge = " [Мост «Белый интернет»]" if self.is_relay else ""
+        return f"{self.flag} {self.country_name}{city_part}{relay_badge}"
 
     @property
     def clean_name(self) -> str:
         city_part = f" • {self.city}" if self.city else ""
-        return f"{self.country_name}{city_part}"
+        relay_badge = " (Белый интернет)" if self.is_relay else ""
+        return f"{self.country_name}{city_part}{relay_badge}"
+
+    def mark_blocked_rkn(self, reason="TSPU handshake drop / timeout"):
+        from django.utils import timezone
+        self.health_status = 'blocked_rkn'
+        self.rkn_blocked_at = timezone.now()
+        self.rkn_check_result = reason[:250]
+        self.is_active = False
+        self.save(update_fields=['health_status', 'rkn_blocked_at', 'rkn_check_result', 'is_active'])
+
+    def mark_online(self, ping: int = None):
+        from django.utils import timezone
+        self.health_status = 'online'
+        self.last_checked_at = timezone.now()
+        self.rkn_check_result = "OK"
+        update_fields = ['health_status', 'last_checked_at', 'rkn_check_result']
+        if ping is not None:
+            self.ping_ms = ping
+            update_fields.append('ping_ms')
+        self.save(update_fields=update_fields)
 
     def save(self, *args, **kwargs):
         if not self.name or '01' in self.name or '1(0)' in self.name:

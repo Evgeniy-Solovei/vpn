@@ -169,4 +169,87 @@ class ApiTestCase(TestCase):
         self.assertIn('provider.by', data['custom_domains'])
         self.assertIn('test.local', data['custom_domains'])
 
+    def test_servers_list_api_excludes_blocked_rkn_and_includes_relays(self):
+        """Servers list endpoint filters out RKN blocked nodes and displays relay attributes."""
+        VPNServer.objects.create(
+            name="Blocked Russian Server",
+            country_code="RU",
+            ip="1.2.3.4",
+            port=443,
+            health_status="blocked_rkn",
+            is_active=True
+        )
+        relay = VPNServer.objects.create(
+            name="Relay Node RU",
+            country_code="RU",
+            ip="185.129.50.15",
+            port=443,
+            server_type="relay",
+            is_emergency_relay=True,
+            health_status="online",
+            is_active=True
+        )
+
+        resp = self.client.get(reverse('api_servers_list'))
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+
+        server_ips = [s['ip'] for s in data['servers']]
+        self.assertNotIn('1.2.3.4', server_ips)
+        self.assertIn('185.129.50.15', server_ips)
+
+        relay_item = next(s for s in data['servers'] if s['ip'] == '185.129.50.15')
+        self.assertTrue(relay_item['is_relay'])
+        self.assertEqual(relay_item['server_type'], 'relay')
+
+    def test_api_switch_server_flow(self):
+        """User can switch their active server to an active healthy server."""
+        user = User.objects.create_user(
+            username='switchuser',
+            email='switch@test.com',
+            password='password123'
+        )
+        key = VPNKey.objects.create(user=user, server=self.server)
+        new_server = VPNServer.objects.create(
+            name="Sweden • Stockholm",
+            country_code="SE",
+            ip="194.87.200.5",
+            port=443,
+            ping_ms=40,
+            health_status="online",
+            is_active=True
+        )
+
+        self.client.force_login(user)
+
+        # Successful switch
+        resp = self.client.post(
+            reverse('api_switch_server'),
+            data=json.dumps({'server_id': new_server.id}),
+            content_type='application/json'
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json()['success'])
+        key.refresh_from_db()
+        self.assertEqual(key.server_id, new_server.id)
+
+        # Attempt switch to blocked server
+        blocked = VPNServer.objects.create(
+            name="Bad Server",
+            country_code="NL",
+            ip="9.9.9.9",
+            port=443,
+            health_status="blocked_rkn",
+            is_active=True
+        )
+        resp_bad = self.client.post(
+            reverse('api_switch_server'),
+            data=json.dumps({'server_id': blocked.id}),
+            content_type='application/json'
+        )
+        self.assertEqual(resp_bad.status_code, 400)
+        self.assertFalse(resp_bad.json()['success'])
+        self.assertIn("недоступен", resp_bad.json()['error'])
+
+
 

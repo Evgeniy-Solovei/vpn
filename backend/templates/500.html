@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Что-то пошло не так (Ошибка 500) — VPN live-dev{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px; margin: 4rem auto 2rem; padding: 0 1rem;">
+  <div class="card" style="padding: 2.5rem 2rem; text-align: center; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(18, 22, 34, 0.85); box-shadow: 0 10px 40px rgba(239, 68, 68, 0.15);">
+    
+    <!-- Cyber Glitch Icon -->
+    <div style="width: 72px; height: 72px; margin: 0 auto 1.5rem; border-radius: 20px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: #ef4444; box-shadow: 0 0 25px rgba(239, 68, 68, 0.25);">
+      ⚠️
+    </div>
+
+    <div style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;">
+      Ошибка 500 • Сбой системы
+    </div>
+
+    <h1 style="font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 0.75rem;">
+      Что-то пошло не так
+    </h1>
+
+    <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.75rem;">
+      Мы перехватили непредвиденную ошибку. Полный стек проблемы уже зафиксирован в журнале инцидентов, наши инженеры оповещены и разбираются.
+    </p>
+
+    <!-- Incident Badge Box -->
+    <div style="background: rgba(10, 14, 23, 0.9); border: 1px dashed rgba(248, 113, 113, 0.4); border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); font-weight: 600; letter-spacing: 0.05em;">Код диагностического инцидента:</span>
+        <button type="button" onclick="copyIncident()" id="copy-btn" class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.75rem;">
+          📋 Скопировать
+        </button>
+      </div>
+      <div id="incident-code" style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: #fca5a5; letter-spacing: 0.05em; word-break: break-all;">
+        {{ incident_id|default:"ERR-500-INTERNAL" }}
+      </div>
+      {% if error_message %}
+        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          Симптом: {{ error_message }}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Direct Support Action Channels -->
+    <div style="text-align: left; margin-bottom: 2rem;">
+      <h3 style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+        <span>💬</span> Обратитесь в поддержку — мы поможем мгновенно:
+      </h3>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
+        <!-- Telegram -->
+        <a href="https://t.me/livedev_by?text=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82!%20%D0%A3%20%D0%BC%D0%B5%D0%BD%D1%8F%20%D0%BE%D1%88%D0%B8%D0%B1%D0%BA%D0%B0%20%D0%BD%D0%B0%20%D1%81%D0%B0%D0%B9%D1%82%D0%B5%20VPN%20live-dev.%20%D0%9A%D0%BE%D0%B4%20%D0%B8%D0%BD%D1%86%D0%B8%D0%B4%D0%B5%D0%BD%D1%82%D0%B0:%20{{ incident_id|default:'ERR-500' }}" target="_blank" rel="noopener noreferrer" class="support-channel-card support-card-tg" style="padding: 0.75rem 0.9rem;">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #0284c7, #38bdf8); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem;">
+              ✈️
+            </div>
+            <div>
+              <div style="font-size: 0.85rem; font-weight: 700; color: #fff;">Telegram</div>
+              <div style="font-size: 0.75rem; color: #38bdf8;">@livedev_by</div>
+            </div>
+          </div>
+        </a>
+
+        <!-- WhatsApp -->
+        <a href="https://wa.me/79206612923?text=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82!%20%D0%9A%D0%BE%D0%B4%20%D0%BE%D1%88%D0%B8%D0%B1%D0%BA%D0%B8:%20{{ incident_id|default:'ERR-500' }}" target="_blank" rel="noopener noreferrer" class="support-channel-card support-card-wa" style="padding: 0.75rem 0.9rem;">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #16a34a, #22c55e); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem;">
+              💬
+            </div>
+            <div>
+              <div style="font-size: 0.85rem; font-weight: 700; color: #fff;">WhatsApp</div>
+              <div style="font-size: 0.75rem; color: #4ade80;">+7 (920) 661-29-23</div>
+            </div>
+          </div>
+        </a>
+
+        <!-- Direct Phone -->
+        <a href="tel:+79206612923" class="support-channel-card support-card-phone" style="padding: 0.75rem 0.9rem;">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #9333ea, #a855f7); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem;">
+              📞
+            </div>
+            <div>
+              <div style="font-size: 0.85rem; font-weight: 700; color: #fff;">Макс (Звонок)</div>
+              <div style="font-size: 0.75rem; color: #c084fc;">+7 (920) 661-29-23</div>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+      <a href="{% url 'dashboard' %}" class="btn btn-primary" style="padding: 0.65rem 1.5rem;">
+        &larr; Вернуться в личный кабинет
+      </a>
+      <button type="button" onclick="window.location.reload()" class="btn btn-secondary" style="padding: 0.65rem 1.25rem;">
+        🔄 Повторить попытку
+      </button>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function copyIncident() {
+  const code = document.getElementById('incident-code').innerText.trim();
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copy-btn');
+    const oldText = btn.innerHTML;
+    btn.innerHTML = '✓ Скопировано!';
+    btn.style.color = '#34d399';
+    setTimeout(() => {
+      btn.innerHTML = oldText;
+      btn.style.color = '';
+    }, 2000);
+  });
+}
+</script>
+{% endblock %}

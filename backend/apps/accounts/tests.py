@@ -258,4 +258,98 @@ class AccountsTestCase(TestCase):
         self.assertIn('tel:+79206612923', content)
         self.assertIn('Максим', content)
 
+    def test_error_incident_middleware_catches_exception_and_renders_500(self):
+        """Unhandled view exceptions are intercepted, logged into ErrorIncident DB, and render 500.html."""
+        from django.test import RequestFactory
+        from apps.accounts.middleware import ErrorIncidentMiddleware
+        from apps.accounts.models import ErrorIncident
+
+        rf = RequestFactory()
+        request = rf.get('/dashboard/')
+        user = User.objects.create_user(username='erruser', email='err@test.com', password='password123')
+        request.user = user
+
+        def broken_view(req):
+            raise RuntimeError("Database connection suddenly dropped during query")
+
+        middleware = ErrorIncidentMiddleware(broken_view)
+        response = None
+        try:
+            response = middleware(request)
+        except Exception as exc:
+            response = middleware.process_exception(request, exc)
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, 500)
+
+        # Incident record created in DB
+        incident = ErrorIncident.objects.filter(user=user).first()
+        self.assertIsNotNone(incident)
+        self.assertIn("Database connection suddenly dropped", incident.error_message)
+        self.assertIn("RuntimeError", incident.traceback)
+        self.assertEqual(incident.path, '/dashboard/')
+        self.assertFalse(incident.is_resolved)
+
+        content = response.content.decode('utf-8')
+        self.assertIn(incident.incident_id, content)
+        self.assertIn("Что-то пошло не так", content)
+        self.assertIn("@livedev_by", content)
+
+    def test_error_incident_middleware_api_json_response(self):
+        """API exceptions return JSON error with incident code instead of HTML."""
+        from django.test import RequestFactory
+        from apps.accounts.middleware import ErrorIncidentMiddleware
+        from apps.accounts.models import ErrorIncident
+        import json
+
+        rf = RequestFactory()
+        request = rf.post('/api/servers/switch/', data='{"server_id": 999}', content_type='application/json')
+        request.user = User.objects.create_user(username='apierruser', email='apierr@test.com', password='password123')
+
+        def broken_api_view(req):
+            raise ValueError("Invalid cryptographic key format encountered")
+
+        middleware = ErrorIncidentMiddleware(broken_api_view)
+        try:
+            response = middleware(request)
+        except Exception as exc:
+            response = middleware.process_exception(request, exc)
+
+        self.assertEqual(response.status_code, 500)
+        data = json.loads(response.content.decode('utf-8'))
+        self.assertFalse(data['success'])
+        self.assertIn('incident_id', data)
+        self.assertIn('@livedev_by', data['support']['telegram'])
+
+        # DB incident matches
+        incident = ErrorIncident.objects.get(incident_id=data['incident_id'])
+        self.assertIn("Invalid cryptographic key", incident.error_message)
+
+    def test_custom_404_html_and_api(self):
+        """Custom 404 handler returns stylized HTML for web and JSON for API."""
+        # Web 404
+        resp = self.client.get('/some-random-unknown-page-path-987/')
+        self.assertEqual(resp.status_code, 404)
+        self.assertContains(resp, "Страница не найдена", status_code=404)
+        self.assertContains(resp, "404", status_code=404)
+
+        # API 404
+        resp_api = self.client.get('/api/some-unknown-endpoint-route/')
+        self.assertEqual(resp_api.status_code, 404)
+        data = resp_api.json()
+        self.assertFalse(data['success'])
+        self.assertEqual(data['error'], 'Not Found')
+
+    def test_weak_password_registration_rejected(self):
+        """Password shorter than 6 characters is rejected by validator."""
+        resp = self.client.post(reverse('register'), {
+            'username': 'shortpassuser',
+            'email': 'shortpass@test.com',
+            'password': '123',
+            'password_confirm': '123',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(User.objects.filter(username='shortpassuser').exists())
+
+
 

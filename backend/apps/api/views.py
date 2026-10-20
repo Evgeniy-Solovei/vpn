@@ -214,7 +214,7 @@ def toggle_whitelist_api(request):
 
 
 def servers_list_api(request):
-    servers = VPNServer.objects.filter(is_active=True).order_by('ping_ms')
+    servers = VPNServer.objects.filter(is_active=True).exclude(health_status='blocked_rkn').order_by('order', 'ping_ms')
     return JsonResponse({
         'servers': [
             {
@@ -225,9 +225,13 @@ def servers_list_api(request):
                 'country_name': s.country_name,
                 'city': s.city,
                 'flag': s.flag,
+                'ip': s.ip,
                 'ping_ms': s.ping_ms,
                 'load_percent': s.load_percent,
                 'speed_description': s.speed_description,
+                'server_type': s.server_type,
+                'health_status': s.health_status,
+                'is_relay': s.is_relay,
                 'is_active': s.is_active,
             }
             for s in servers
@@ -241,7 +245,7 @@ def switch_server_api(request):
     Switch active VPN server for user.
     """
     if request.method != 'POST':
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
     try:
         data = json.loads(request.body.decode('utf-8')) if request.body else {}
         server_id = data.get('server_id')
@@ -254,11 +258,11 @@ def switch_server_api(request):
             user = CustomUser.objects.filter(id=data.get('user_id')).first()
 
         if not user:
-            return JsonResponse({'error': 'User not found'}, status=404)
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
 
-        server = VPNServer.objects.filter(id=server_id, is_active=True).first()
+        server = VPNServer.objects.filter(id=server_id, is_active=True).exclude(health_status='blocked_rkn').first()
         if not server:
-            return JsonResponse({'error': 'Server not found'}, status=404)
+            return JsonResponse({'success': False, 'error': 'Сервер недоступен или временно заблокирован'}, status=400)
 
         key = VPNKey.objects.filter(user=user).first()
         if not key:
@@ -267,9 +271,13 @@ def switch_server_api(request):
             key.server = server
             key.save()
 
-        return JsonResponse(build_user_response(user))
+        res_data = build_user_response(user)
+        res_data['success'] = True
+        return JsonResponse(res_data)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
 
 
 

@@ -1,7 +1,10 @@
 import json
 import logging
+import socket
+import time
 import httpx
 from typing import Optional, Dict, Any
+from django.db import models
 from .models import VPNServer, VPNKey
 
 logger = logging.getLogger(__name__)
@@ -176,3 +179,80 @@ function FindProxyForURL(url, host) {{
     return "{proxy_host}";
 }}
 """
+
+
+def check_server_health(server: VPNServer, timeout: float = 2.5) -> dict:
+    """
+    Measures TCP ping/latency to VPNServer and detects network drops / RKN blocking.
+    """
+    from django.utils import timezone
+    t_start = time.perf_counter()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(timeout)
+    try:
+        sock.connect((server.ip, server.port))
+        sock.close()
+        elapsed_ms = max(5, int((time.perf_counter() - t_start) * 1000))
+        server.mark_online(ping=elapsed_ms)
+        logger.info(f"Server {server.clean_name} ({server.ip}:{server.port}) is ONLINE, ping: {elapsed_ms}ms")
+        return {'success': True, 'status': 'online', 'ping_ms': elapsed_ms}
+    except socket.timeout:
+        # Typical TSPU / RKN behavior: packet drop resulting in timeout
+        server.mark_blocked_rkn(reason="Timeout (TSPU / RKN packet drop)")
+        logger.warning(f"Server {server.clean_name} ({server.ip}:{server.port}) TIMED OUT -> marked blocked_rkn")
+        return {'success': False, 'status': 'blocked_rkn', 'error': 'Timeout'}
+    except Exception as e:
+        server.health_status = 'offline'
+        server.last_checked_at = timezone.now()
+        server.rkn_check_result = str(e)[:250]
+        server.save(update_fields=['health_status', 'last_checked_at', 'rkn_check_result'])
+        logger.warning(f"Server {server.clean_name} offline: {e}")
+        return {'success': False, 'status': 'offline', 'error': str(e)}
+
+
+def failover_banned_servers() -> int:
+    """
+    Auto-failover: if any user keys are linked to an inactive or blocked_rkn server,
+    migrate them automatically to the best available healthy server.
+    """
+    banned_keys = VPNKey.objects.filter(
+        models.Q(server__is_active=False) | models.Q(server__health_status='blocked_rkn')
+    )
+    if not banned_keys.exists():
+        return 0
+
+    healthy_server = VPNServer.objects.filter(
+        is_active=True,
+        health_status__in=['online', 'degraded']
+    ).order_by('ping_ms').first()
+
+    if not healthy_server:
+        logger.critical("NO HEALTHY VPN SERVERS AVAILABLE FOR FAILOVER!")
+        return 0
+
+    count = 0
+    for key in banned_keys:
+        old_server = key.server
+        key.server = healthy_server
+        key.save(update_fields=['server', 'updated_at'])
+        count += 1
+        logger.warning(f"AUTO-FAILOVER: Migrated user {key.user.username} from {old_server.clean_name} to {healthy_server.clean_name}")
+
+    return count
+
+
+def check_all_servers_health_and_failover() -> dict:
+    """
+    Checks all servers, updates statuses, and triggers failover if necessary.
+    """
+    results = {}
+    servers = VPNServer.objects.all()
+    for s in servers:
+        results[s.id] = check_server_health(s)
+    migrated_count = failover_banned_servers()
+    return {
+        'servers_checked': len(results),
+        'results': results,
+        'migrated_users_count': migrated_count
+    }
+

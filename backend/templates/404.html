@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Страница не найдена (404) — VPN live-dev{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 640px; margin: 4rem auto 2rem; padding: 0 1rem;">
+  <div class="card" style="padding: 2.5rem 2rem; text-align: center; border: 1px solid var(--border-subtle); background: rgba(18, 22, 34, 0.85); box-shadow: var(--shadow-lg);">
+    
+    <!-- Neon 404 Visual -->
+    <div style="font-family: var(--font-brand); font-size: 5rem; font-weight: 900; line-height: 1; margin-bottom: 1rem; background: linear-gradient(135deg, #10b981, #06b6d4, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+      404
+    </div>
+
+    <div style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--accent-emerald); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;">
+      Страница не найдена
+    </div>
+
+    <h1 style="font-size: 1.75rem; font-weight: 800; color: #fff; margin-bottom: 0.75rem;">
+      Кажется, этот адрес ведёт в пустоту
+    </h1>
+
+    <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem;">
+      Возможно, страница была перемещена или ссылка содержит опечатку. Перейдите в личный кабинет или обратитесь в службу поддержки.
+    </p>
+
+    <!-- Support and Navigation Buttons -->
+    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+      <a href="{% url 'dashboard' %}" class="btn btn-primary" style="padding: 0.65rem 1.5rem;">
+        &larr; В личный кабинет
+      </a>
+      <button type="button" data-modal-target="support-modal" class="btn btn-secondary" style="padding: 0.65rem 1.25rem;">
+        💬 Написать в поддержку
+      </button>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

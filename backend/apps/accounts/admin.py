@@ -16,7 +16,7 @@ class CustomUserAdmin(UserAdmin):
     )
 
 
-from .models import DeviceAuthKey
+from .models import DeviceAuthKey, ErrorIncident
 
 @admin.register(DeviceAuthKey)
 class DeviceAuthKeyAdmin(admin.ModelAdmin):
@@ -24,4 +24,13 @@ class DeviceAuthKeyAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'user__email', 'key', 'ip_address')
     list_filter = ('created_at', 'expires_at')
     readonly_fields = ('created_at',)
+
+
+@admin.register(ErrorIncident)
+class ErrorIncidentAdmin(admin.ModelAdmin):
+    list_display = ('incident_id', 'error_message', 'path', 'method', 'user', 'created_at', 'is_resolved')
+    list_filter = ('is_resolved', 'method', 'created_at')
+    search_fields = ('incident_id', 'error_message', 'path', 'user__username', 'ip_address')
+    readonly_fields = ('incident_id', 'error_message', 'traceback', 'path', 'method', 'user', 'ip_address', 'user_agent', 'created_at')
+
 

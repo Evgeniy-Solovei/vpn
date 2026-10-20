@@ -1,11 +1,38 @@
 from django.contrib import admin
 from .models import VPNServer, VPNKey, UserServerTraffic
+from .services import check_server_health, failover_banned_servers
 
 @admin.register(VPNServer)
 class VPNServerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'country_code', 'city', 'ip', 'port', 'reality_sni', 'ping_ms', 'load_percent', 'is_active', 'created_at')
-    list_filter = ('country_code', 'is_active')
-    search_fields = ('name', 'ip', 'city', 'reality_sni')
+    list_display = ('name', 'country_code', 'server_type', 'health_status', 'ip', 'port', 'ping_ms', 'load_percent', 'is_active', 'last_checked_at')
+    list_filter = ('server_type', 'health_status', 'is_active', 'country_code')
+    search_fields = ('name', 'ip', 'city', 'reality_sni', 'country_name')
+    actions = ['check_health_action', 'hide_server_action', 'activate_server_action', 'mark_rkn_blocked_action']
+
+    def check_health_action(self, request, queryset):
+        for server in queryset:
+            check_server_health(server)
+        self.message_user(request, f"Проверена доступность {queryset.count()} серверов.")
+    check_health_action.short_description = "🔍 Проверить пинг и статус выбранных серверов"
+
+    def hide_server_action(self, request, queryset):
+        queryset.update(is_active=False)
+        migrated = failover_banned_servers()
+        self.message_user(request, f"Скрыто {queryset.count()} серверов. Переведено пользователей на резервные: {migrated}.")
+    hide_server_action.short_description = "👁️ Скрыть выбранные сервера (is_active=False) и перевести пользователей"
+
+    def activate_server_action(self, request, queryset):
+        queryset.update(is_active=True, health_status='online')
+        self.message_user(request, f"Активировано {queryset.count()} серверов.")
+    activate_server_action.short_description = "✅ Активировать выбранные сервера"
+
+    def mark_rkn_blocked_action(self, request, queryset):
+        for s in queryset:
+            s.mark_blocked_rkn(reason="Ручная блокировка через панель администратора")
+        migrated = failover_banned_servers()
+        self.message_user(request, f"Помечено как заблокированные РКН: {queryset.count()} серверов. Авто-переведено пользователей: {migrated}.")
+    mark_rkn_blocked_action.short_description = "🔴 Пометить как заблокированные РКН и спасти пользователей (Auto-Failover)"
+
 
 @admin.register(VPNKey)
 class VPNKeyAdmin(admin.ModelAdmin):

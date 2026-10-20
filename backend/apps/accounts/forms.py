@@ -61,6 +61,12 @@ class RegisterForm(forms.ModelForm):
         p2 = cleaned_data.get('password_confirm')
         if p1 and p2 and p1 != p2:
             self.add_error('password_confirm', "Пароли не совпадают")
+        if p1:
+            from django.contrib.auth.password_validation import validate_password
+            try:
+                validate_password(p1, self.instance)
+            except ValidationError as err:
+                self.add_error('password', err)
         return cleaned_data
 
     def save(self, commit=True):
