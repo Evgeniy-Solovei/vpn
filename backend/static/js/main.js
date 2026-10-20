@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ==========================================
-// 1. VIBRANT 60FPS LUMINOUS CANVAS WITH MOUSE GLOW
+// 1. VIBRANT 60FPS LUMINOUS SNOWFLAKES & CYBER PARTICLES
 // ==========================================
 function initBackgroundCanvas() {
   const canvas = document.getElementById('bg-canvas');
@@ -29,9 +29,9 @@ function initBackgroundCanvas() {
   const ctx = canvas.getContext('2d');
   let width, height;
   let particles = [];
-  const particleCount = 34;
+  const particleCount = 52;
 
-  const mouse = { x: -1000, y: -1000, radius: 140 };
+  const mouse = { x: -1000, y: -1000, radius: 150 };
 
   window.addEventListener('mousemove', (e) => {
     mouse.x = e.clientX;
@@ -50,59 +50,76 @@ function initBackgroundCanvas() {
   window.addEventListener('resize', resize);
   resize();
 
-  // Vivid Palette: Emerald, Cyan, Violet, Pink
+  // Crisp snowflake / cyber aurora palette: Pure Diamond, Icy Cyan, Emerald Neon, Soft Violet
   const colorPalette = [
-    '16, 185, 129',  // Emerald
-    '6, 182, 212',   // Cyan
-    '139, 92, 246',  // Violet
-    '236, 72, 153',  // Rose / Pink
+    '255, 255, 255', // Pure Crystalline White
+    '224, 242, 254', // Frost White
+    '56, 189, 248',  // Sky Cyan
+    '52, 211, 153',  // Cyber Emerald
+    '167, 139, 250', // Soft Lavender
   ];
 
   class Particle {
-    constructor() {
-      this.reset();
+    constructor(initial = false) {
+      this.reset(initial);
     }
-    reset() {
+
+    reset(initial = false) {
       this.x = Math.random() * width;
-      this.y = Math.random() * height;
-      this.vx = (Math.random() - 0.5) * 0.45;
-      this.vy = (Math.random() - 0.5) * 0.45;
+      this.y = initial ? Math.random() * height : -12;
+      this.vy = Math.random() * 0.55 + 0.35; // gentle descent like snow
+      this.vx = (Math.random() - 0.5) * 0.3; // subtle horizontal drift
+      this.swayAngle = Math.random() * Math.PI * 2;
+      this.swaySpeed = Math.random() * 0.02 + 0.008;
+      this.swayRadius = Math.random() * 0.65 + 0.3;
       this.radius = Math.random() * 2.2 + 1.2;
-      this.alpha = Math.random() * 0.4 + 0.15;
+      this.baseAlpha = Math.random() * 0.35 + 0.4; // clearly visible & radiant
+      this.alpha = this.baseAlpha;
+      this.twinkleSpeed = Math.random() * 0.03 + 0.012;
+      this.twinkleAngle = Math.random() * Math.PI * 2;
       this.color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
     }
-    update() {
-      // Gentle drift
-      this.x += this.vx;
-      this.y += this.vy;
 
-      // Mouse reaction
+    update() {
+      this.swayAngle += this.swaySpeed;
+      this.twinkleAngle += this.twinkleSpeed;
+      this.x += this.vx + Math.sin(this.swayAngle) * this.swayRadius;
+      this.y += this.vy;
+      this.alpha = Math.max(0.25, Math.min(0.9, this.baseAlpha + Math.sin(this.twinkleAngle) * 0.22));
+
+      // Interactive mouse reaction: gentle swirl / glide away
       const dx = mouse.x - this.x;
       const dy = mouse.y - this.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < mouse.radius) {
         const force = (mouse.radius - dist) / mouse.radius;
-        this.x -= (dx / dist) * force * 1.5;
-        this.y -= (dy / dist) * force * 1.5;
+        this.x -= (dx / dist) * force * 2.2;
+        this.y -= (dy / dist) * force * 2.2;
       }
 
-      if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
-        this.reset();
+      // Border wrapping
+      if (this.y > height + 15) {
+        this.reset(false);
+      } else if (this.x < -15) {
+        this.x = width + 10;
+      } else if (this.x > width + 15) {
+        this.x = -10;
       }
     }
+
     draw() {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(${this.color}, ${this.alpha})`;
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = `rgba(${this.color}, 0.6)`;
+      ctx.shadowBlur = this.radius * 3.5;
+      ctx.shadowColor = `rgba(${this.color}, 0.8)`;
       ctx.fill();
       ctx.shadowBlur = 0;
     }
   }
 
   for (let i = 0; i < particleCount; i++) {
-    particles.push(new Particle());
+    particles.push(new Particle(true));
   }
 
   function animate() {
@@ -112,18 +129,19 @@ function initBackgroundCanvas() {
       particles[i].update();
       particles[i].draw();
 
+      // Delicate cyber constellation threads between nearby flakes
       for (let j = i + 1; j < particles.length; j++) {
         const dx = particles[i].x - particles[j].x;
         const dy = particles[i].y - particles[j].y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist < 130) {
+        if (dist < 85) {
           ctx.beginPath();
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(particles[j].x, particles[j].y);
-          const opacity = 0.06 * (1 - dist / 130);
+          const opacity = 0.08 * (1 - dist / 85);
           ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-          ctx.lineWidth = 0.8;
+          ctx.lineWidth = 0.6;
           ctx.stroke();
         }
       }
@@ -598,6 +616,8 @@ function initModals() {
       }
     });
   });
+}
+
 // ==========================================
 // 10. SETUP GUIDE TABS
 // ==========================================
