@@ -251,5 +251,46 @@ class ApiTestCase(TestCase):
         self.assertFalse(resp_bad.json()['success'])
         self.assertIn("недоступен", resp_bad.json()['error'])
 
+    def test_api_deposit_flow(self):
+        """Russian deposit endpoint credits user balance via SBP/MIR."""
+        user = User.objects.create_user(
+            username='depositguy',
+            email='dep@test.com',
+            password='password123',
+            balance=Decimal('10.00'),
+            telegram_id='777888999'
+        )
+
+        # Successful deposit
+        resp = self.client.post(
+            reverse('api_deposit'),
+            data=json.dumps({
+                'telegram_id': '777888999',
+                'amount': 105,
+                'payment_method': 'sbp'
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['success'])
+        user.refresh_from_db()
+        self.assertEqual(user.balance, Decimal('115.00')) # 10 + 105
+
+        # Minimum amount validation
+        resp_low = self.client.post(
+            reverse('api_deposit'),
+            data=json.dumps({
+                'telegram_id': '777888999',
+                'amount': 5,
+                'payment_method': 'sbp'
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(resp_low.status_code, 400)
+        self.assertFalse(resp_low.json()['success'])
+        self.assertIn("Минимальная сумма", resp_low.json()['error'])
+
+
 
 

@@ -382,8 +382,62 @@ def update_custom_whitelist_api(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@csrf_exempt
+def api_deposit_view(request):
+    """
+    Russian payment / deposit endpoint for Telegram Mini App, Web, and Bot.
+    Accepts JSON:
+    {
+        "telegram_id": ...,
+        "amount": 105,
+        "payment_method": "sbp" | "mir" | "tpay" | "crypto"
+    }
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        user = None
+        if request.user.is_authenticated:
+            user = request.user
+        elif data.get('telegram_id'):
+            user = CustomUser.objects.filter(telegram_id=str(data.get('telegram_id'))).first()
+        elif data.get('user_id'):
+            user = CustomUser.objects.filter(id=data.get('user_id')).first()
+
+        if not user:
+            return JsonResponse({'success': False, 'error': 'Пользователь не найден'}, status=404)
+
+        amount = Decimal(str(data.get('amount', '105')))
+        payment_method = data.get('payment_method', 'sbp')
+
+        if amount < Decimal('10'):
+            return JsonResponse({'success': False, 'error': 'Минимальная сумма пополнения — 10 ₽'}, status=400)
+
+        from apps.billing.models import Transaction
+        tx = Transaction.objects.create(
+            user=user,
+            amount=amount,
+            payment_method=payment_method,
+            status='pending',
+            description=f"Пополнение баланса через {payment_method.upper()}"
+        )
+        tx.complete()
+        user.refresh_from_db()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Баланс успешно пополнен на {amount} ₽ ({payment_method.upper()})!',
+            'transaction_id': tx.id,
+            **build_user_response(user)
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
 from apps.billing.views import activate_promo_view as activate_promo_api
 from apps.billing.views import bepaid_checkout_view as bepaid_checkout_api
+
 
 
 

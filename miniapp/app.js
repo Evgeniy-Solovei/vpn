@@ -267,6 +267,88 @@ function renderUI() {
     };
   }
 
+  // Russian payment modal (SBP / Cards)
+  const modalPayRu = document.getElementById('miniapp-pay-ru-modal');
+  const btnOpenPayRu = document.getElementById('btn-open-miniapp-pay-ru');
+  const btnClosePayRu = document.getElementById('btn-close-miniapp-pay-ru');
+  const btnSubmitPayRu = document.getElementById('btn-submit-miniapp-ru-pay');
+
+  let selectedRuAmount = 105;
+
+  if (btnOpenPayRu && modalPayRu) {
+    btnOpenPayRu.onclick = () => modalPayRu.classList.add('active');
+  }
+  if (btnClosePayRu && modalPayRu) {
+    btnClosePayRu.onclick = () => modalPayRu.classList.remove('active');
+  }
+
+  // Handle amount buttons
+  document.querySelectorAll('.miniapp-ru-amount-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.miniapp-ru-amount-btn').forEach(b => {
+        b.className = 'btn btn-secondary miniapp-ru-amount-btn';
+      });
+      btn.className = 'btn btn-primary miniapp-ru-amount-btn';
+      selectedRuAmount = parseInt(btn.getAttribute('data-amount') || '105', 10);
+      if (btnSubmitPayRu) {
+        const method = document.querySelector('input[name="miniapp_ru_method"]:checked')?.value || 'sbp';
+        btnSubmitPayRu.textContent = `🇷🇺 Оплатить ${selectedRuAmount} ₽ (${method.toUpperCase()})`;
+      }
+    };
+  });
+
+  // Radio change updates button label
+  document.querySelectorAll('input[name="miniapp_ru_method"]').forEach(radio => {
+    radio.onchange = () => {
+      if (btnSubmitPayRu) {
+        btnSubmitPayRu.textContent = `🇷🇺 Оплатить ${selectedRuAmount} ₽ (${radio.value.toUpperCase()})`;
+      }
+    };
+  });
+
+  if (btnSubmitPayRu) {
+    btnSubmitPayRu.onclick = async () => {
+      btnSubmitPayRu.disabled = true;
+      const oldText = btnSubmitPayRu.textContent;
+      btnSubmitPayRu.textContent = 'Обработка платежа...';
+
+      const method = document.querySelector('input[name="miniapp_ru_method"]:checked')?.value || 'sbp';
+
+      try {
+        const res = await fetch('/api/billing/deposit/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            telegram_id: userData.telegram_id,
+            user_id: userData.id,
+            amount: selectedRuAmount,
+            payment_method: method
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showFeedback(data.message || 'Оплата прошла успешно!');
+          if (modalPayRu) modalPayRu.classList.remove('active');
+          if (userBalanceEl && data.user?.balance !== undefined) {
+            userBalanceEl.textContent = `${data.user.balance} ₽`;
+          }
+          if (userDaysEl && data.user?.days_left !== undefined) {
+            userDaysEl.textContent = `${data.user.days_left} дн`;
+          }
+        } else {
+          showFeedback(data.error || 'Ошибка платежа');
+        }
+      } catch (err) {
+        console.error(err);
+        showFeedback('Ошибка соединения');
+      } finally {
+        btnSubmitPayRu.disabled = false;
+        btnSubmitPayRu.textContent = oldText;
+      }
+    };
+  }
+
   // bePaid checkout
   const btnBePaid = document.getElementById('btn-miniapp-bepaid');
   if (btnBePaid) {

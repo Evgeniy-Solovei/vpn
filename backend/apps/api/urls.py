@@ -11,6 +11,7 @@ urlpatterns = [
     path('vpn/buy-traffic/', views.buy_traffic_api, name='api_buy_traffic'),
     path('vpn/custom-whitelist/', views.update_custom_whitelist_api, name='api_custom_whitelist'),
     path('billing/tariffs/', views.tariffs_list_api, name='api_tariffs_list'),
+    path('billing/deposit/', views.api_deposit_view, name='api_deposit'),
     path('billing/activate-promo/', views.activate_promo_api, name='api_activate_promo'),
     path('billing/bepaid/checkout/', views.bepaid_checkout_api, name='api_bepaid_checkout'),
 ]
