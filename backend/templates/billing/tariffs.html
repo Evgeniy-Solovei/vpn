@@ -76,9 +76,22 @@
       </button>
     </div>
 
-    <!-- 1. REGION: RUSSIA (СБП, Карты МИР, Сбер, Т-Банк) -->
+    <!-- 1. REGION: RUSSIA (ЮKassa: СБП, Карты МИР, Сбер, Т-Банк для самозанятых) -->
     <div id="pay-region-ru">
-      <form method="post" action="{% url 'deposit' %}">
+      <div style="background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.85rem; padding: 1.15rem; margin-bottom: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem;">
+          <span style="font-size: 1.3rem;">🇷🇺</span>
+          <div>
+            <strong style="color: #fff; font-size: 0.95rem;">Официальный эквайринг ЮKassa (Самозанятость РФ • НПД)</strong>
+            <span style="font-size: 0.75rem; color: #c084fc; display: block;">Приём платежей на банковский счёт • СБП 0% • Чеки в «Мой налог»</span>
+          </div>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45; margin: 0;">
+          Деньги зачисляются моментально. Поддерживаются СБП (QR-код и перевод), банковские карты МИР, Visa, Mastercard, SberPay и T-Pay.
+        </p>
+      </div>
+
+      <form method="post" action="{% url 'yookassa_create' %}">
         {% csrf_token %}
 
         <!-- Days Selector -->
@@ -106,8 +119,8 @@
               <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <input type="radio" name="payment_method" value="sbp" checked>
                 <div>
-                  <div style="font-weight: 700; font-size: 0.9rem; color: #fff;">СБП (Система быстрых платежей)</div>
-                  <div style="font-size: 0.75rem; color: var(--text-dim);">QR-код или ссылка в приложении любого банка РФ</div>
+                  <div style="font-weight: 700; font-size: 0.9rem; color: #fff;">СБП (Система быстрых платежей через ЮKassa)</div>
+                  <div style="font-size: 0.75rem; color: var(--text-dim);">QR-код или оплата в 1 клик через приложение любого банка РФ</div>
                 </div>
               </div>
               <span style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 700;">0% комиссии</span>
@@ -117,17 +130,17 @@
               <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <input type="radio" name="payment_method" value="mir">
                 <div>
-                  <div style="font-weight: 700; font-size: 0.9rem; color: #fff;">Банковская карта РФ (МИР, Сбер, Т-Банк)</div>
-                  <div style="font-size: 0.75rem; color: var(--text-dim);">Visa, Mastercard, МИР российских банков</div>
+                  <div style="font-weight: 700; font-size: 0.9rem; color: #fff;">Банковская карта РФ (МИР, Сбер, Т-Банк, ВТБ, Альфа)</div>
+                  <div style="font-size: 0.75rem; color: var(--text-dim);">Любые карты российских банков через защищённый шлюз ЮKassa</div>
                 </div>
               </div>
-              <span style="font-size: 0.75rem; color: var(--text-dim);">Сбер / Т-Банк</span>
+              <span style="font-size: 0.75rem; color: var(--text-dim);">ЮKassa 3-D Secure</span>
             </label>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block" style="padding: 1rem; font-size: 1.05rem;">
-          <span>🇷🇺 Оплатить через СБП / Карту РФ</span>
+        <button type="submit" class="btn btn-primary btn-block" style="padding: 1rem; font-size: 1.05rem; background: linear-gradient(135deg, #8b5cf6, #06b6d4);">
+          <span>🇷🇺 Оплатить через ЮKassa (СБП / Карты РФ)</span>
         </button>
       </form>
     </div>

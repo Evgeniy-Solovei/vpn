@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Оплата через ЮKassa • VPN live-dev{% endblock %}
+
+{% block content %}
+<div style="max-width: 520px; margin: 3rem auto; padding: 0 1rem;">
+  <div class="glass-card" style="text-align: center; border-color: rgba(139, 92, 246, 0.4); box-shadow: 0 12px 40px rgba(139, 92, 246, 0.15);">
+    
+    <!-- YooKassa Logo / Header -->
+    <div style="display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-bottom: 1.25rem;">
+      <div style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(6, 182, 212, 0.25)); display: flex; align-items: center; justify-content: center; color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.4);">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <line x1="2" y1="10" x2="22" y2="10"/>
+        </svg>
+      </div>
+    </div>
+
+    <div style="display: inline-block; padding: 0.25rem 0.85rem; border-radius: 999px; background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.35); color: #c084fc; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem;">
+      ЮKassa для самозанятых (РФ)
+    </div>
+
+    <h2 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 0.4rem;">
+      Шлюз оплаты ЮKassa
+    </h2>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+      Приём платежей в РФ: СБП, карты МИР / Visa / Mastercard, SberPay, T-Pay • Официальный фискальный чек
+    </p>
+
+    <!-- Order Summary Box -->
+    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1.5rem; text-align: left; font-size: 0.9rem;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.6rem;">
+        <span style="color: var(--text-dim);">Номер заказа:</span>
+        <code style="color: #38bdf8; font-weight: 700;">{{ order.order_id }}</code>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.6rem;">
+        <span style="color: var(--text-dim);">Пользователь:</span>
+        <strong style="color: #fff;">{{ order.user.username }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.6rem;">
+        <span style="color: var(--text-dim);">Срок продления:</span>
+        <strong style="color: #34d399;">+{{ order.days }} дней</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.6rem;">
+        <span style="color: var(--text-dim);">Способ оплаты:</span>
+        <span style="color: #c084fc; font-weight: 700;">{{ order.payment_method_type|upper }}</span>
+      </div>
+      <div style="border-top: 1px dashed var(--border-subtle); margin: 0.75rem 0; padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--text-dim); font-size: 0.95rem;">Сумма к оплате:</span>
+        <strong style="color: #fff; font-size: 1.4rem;">{{ order.amount_rub }} ₽</strong>
+      </div>
+    </div>
+
+    <!-- Payment Simulation Channels -->
+    <div style="display: flex; gap: 0.6rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--text-dim);">
+      <span style="background: rgba(255,255,255,0.05); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-subtle);">📲 СБП (0% комиссии)</span>
+      <span style="background: rgba(255,255,255,0.05); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-subtle);">💳 МИР / Сбер / Т-Банк</span>
+      <span style="background: rgba(255,255,255,0.05); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-subtle);">🧾 Чек НПД «Мой налог»</span>
+    </div>
+
+    <form method="post" action="{% url 'yookassa_mock_pay' order.order_id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary btn-block" style="font-size: 1.05rem; padding: 0.95rem; margin-bottom: 0.75rem; background: linear-gradient(135deg, #8b5cf6, #06b6d4);">
+        <span>⚡ Подтвердить тестовую оплату ({{ order.amount_rub }} ₽)</span>
+      </button>
+      <a href="/dashboard/" class="btn btn-secondary btn-block" style="font-size: 0.9rem;">Отмена</a>
+    </form>
+    
+    <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-dim);">
+      💡 При подключении боевых ключей <code>YOOKASSA_SHOP_ID</code> и <code>YOOKASSA_SECRET_KEY</code> страница автоматически перенаправляет на реальный защищенный эквайринг ЮKassa.
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCustomWhitelist();
   initPromoCode();
   initBePaid();
+  initYooKassa();
   initModals();
   initGuideTabs();
 });
@@ -583,6 +584,46 @@ function initBePaid() {
         window.location.href = data.checkout_url;
       } else {
         showToast(data.error || 'Ошибка создания платежа bePaid');
+        btn.disabled = false;
+        btn.textContent = oldText;
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('Ошибка соединения');
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
+  });
+}
+
+// ==========================================
+// 8.8. YOOKASSA CHECKOUT (RUSSIA / SELF-EMPLOYED)
+// ==========================================
+function initYooKassa() {
+  const btn = document.getElementById('btn-yookassa-pay');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = 'Подключение к ЮKassa...';
+
+    try {
+      const res = await fetch('/billing/yookassa/create/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Accept': 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ amount: 105, payment_method: 'sbp' })
+      });
+      const data = await res.json();
+      if (data.success && data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        showToast(data.error || 'Ошибка создания платежа ЮKassa');
         btn.disabled = false;
         btn.textContent = oldText;
       }

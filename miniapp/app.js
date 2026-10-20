@@ -310,14 +310,17 @@ function renderUI() {
     btnSubmitPayRu.onclick = async () => {
       btnSubmitPayRu.disabled = true;
       const oldText = btnSubmitPayRu.textContent;
-      btnSubmitPayRu.textContent = 'Обработка платежа...';
+      btnSubmitPayRu.textContent = 'Подключение к ЮKassa...';
 
       const method = document.querySelector('input[name="miniapp_ru_method"]:checked')?.value || 'sbp';
 
       try {
-        const res = await fetch('/api/billing/deposit/', {
+        const res = await fetch('/api/billing/yookassa/create/', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           credentials: 'same-origin',
           body: JSON.stringify({
             telegram_id: userData.telegram_id,
@@ -327,22 +330,25 @@ function renderUI() {
           })
         });
         const data = await res.json();
-        if (data.success) {
-          showFeedback(data.message || 'Оплата прошла успешно!');
+        if (data.success && data.checkout_url) {
           if (modalPayRu) modalPayRu.classList.remove('active');
-          if (userBalanceEl && data.user?.balance !== undefined) {
-            userBalanceEl.textContent = `${data.user.balance} ₽`;
-          }
-          if (userDaysEl && data.user?.days_left !== undefined) {
-            userDaysEl.textContent = `${data.user.days_left} дн`;
+          if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+            window.Telegram.WebApp.openLink(data.checkout_url);
+          } else {
+            window.location.href = data.checkout_url;
           }
         } else {
-          showFeedback(data.error || 'Ошибка платежа');
+          showFeedback(data.error || 'Ошибка создания платежа ЮKassa');
+          btnSubmitPayRu.disabled = false;
+          btnSubmitPayRu.textContent = oldText;
         }
       } catch (err) {
         console.error(err);
         showFeedback('Ошибка соединения');
-      } finally {
+        btnSubmitPayRu.disabled = false;
+        btnSubmitPayRu.textContent = oldText;
+      }
+    };
         btnSubmitPayRu.disabled = false;
         btnSubmitPayRu.textContent = oldText;
       }

@@ -437,6 +437,7 @@ def api_deposit_view(request):
 
 from apps.billing.views import activate_promo_view as activate_promo_api
 from apps.billing.views import bepaid_checkout_view as bepaid_checkout_api
+from apps.billing.views import yookassa_create_payment_view as yookassa_create_api
 
 
 

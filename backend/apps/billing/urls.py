@@ -9,4 +9,7 @@ urlpatterns = [
     path('bepaid/checkout/', views.bepaid_checkout_view, name='bepaid_checkout'),
     path('bepaid/webhook/', views.bepaid_webhook_view, name='bepaid_webhook'),
     path('bepaid/mock-pay/<str:order_id>/', views.bepaid_mock_pay_view, name='bepaid_mock_pay'),
+    path('yookassa/create/', views.yookassa_create_payment_view, name='yookassa_create'),
+    path('yookassa/webhook/', views.yookassa_webhook_view, name='yookassa_webhook'),
+    path('yookassa/mock-pay/<str:order_id>/', views.yookassa_mock_pay_view, name='yookassa_mock_pay'),
 ]

@@ -24,6 +24,7 @@ class Transaction(models.Model):
     PAYMENT_METHODS = [
         ('sbp', 'СБП (Система быстрых платежей)'),
         ('mir', 'Банковская карта МИР'),
+        ('yookassa', 'ЮKassa (СБП / Карты РФ / SberPay / T-Pay)'),
         ('bepaid', 'bePaid (Карты РБ / ЕРИП / МИР)'),
         ('tpay', 'T-Pay'),
         ('sberpay', 'SberPay'),
@@ -167,4 +168,64 @@ class PaymentOrder(models.Model):
 
     def __str__(self):
         return f"Заказ {self.order_id} ({self.user.username}, {self.amount_byn} BYN, {self.status})"
+
+
+class YooKassaOrder(models.Model):
+    """
+    YooKassa Checkout Orders (Russia, Self-employed, SBP, MIR/Cards, SberPay, T-Pay).
+    Official YooKassa API v3 integration with automated fiscal receipt support for self-employed.
+    """
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Ожидает оплаты'
+        PAID = 'paid', 'Оплачен'
+        CANCELED = 'canceled', 'Отменен'
+
+    order_id = models.CharField(max_length=64, unique=True, verbose_name="ID Заказа")
+    payment_id = models.CharField(max_length=64, blank=True, verbose_name="ID платежа ЮKassa")
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='yookassa_orders', verbose_name="Пользователь")
+    amount_rub = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('105.00'), verbose_name="Сумма (RUB)")
+    days = models.PositiveIntegerField(default=30, verbose_name="Дней подписки")
+    payment_method_type = models.CharField(max_length=32, default='sbp', verbose_name="Метод оплаты")
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING, verbose_name="Статус")
+    confirmation_url = models.URLField(max_length=500, blank=True, verbose_name="Ссылка на оплату ЮKassa")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
+    paid_at = models.DateTimeField(null=True, blank=True, verbose_name="Оплачен")
+
+    class Meta:
+        verbose_name = "Заказ ЮKassa (РФ)"
+        verbose_name_plural = "Заказы ЮKassa (РФ)"
+        ordering = ['-created_at']
+
+    def complete_payment(self):
+        if self.status != self.Status.PAID:
+            from django.utils import timezone
+            self.status = self.Status.PAID
+            self.paid_at = timezone.now()
+            self.user.balance += self.amount_rub
+            self.user.save(update_fields=['balance'])
+            self.save(update_fields=['status', 'paid_at'])
+
+            # Record corresponding transaction
+            tx = Transaction.objects.create(
+                user=self.user,
+                amount=self.amount_rub,
+                payment_method='yookassa',
+                status='completed',
+                external_id=self.payment_id or self.order_id,
+                description=f"Оплата через ЮKassa ({self.amount_rub} ₽ / {self.days} дн. • {self.payment_method_type.upper()})"
+            )
+
+            # Referral reward (5 days)
+            if self.user.referred_by:
+                completed_count = Transaction.objects.filter(user=self.user, status='completed').count()
+                if completed_count == 1:
+                    referrer = self.user.referred_by
+                    bonus_days = Decimal('5')
+                    daily_price = referrer.daily_deduction or Decimal('3.50')
+                    referrer.balance += bonus_days * daily_price
+                    referrer.save(update_fields=['balance'])
+
+    def __str__(self):
+        return f"ЮKassa {self.order_id} ({self.user.username}, {self.amount_rub} ₽, {self.status})"
+
 

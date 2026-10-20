@@ -12,7 +12,7 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.conf import settings
 from apps.accounts.models import CustomUser
-from .models import TariffPlan, Transaction, PromoCode, PaymentOrder
+from .models import TariffPlan, Transaction, PromoCode, PaymentOrder, YooKassaOrder
 
 logger = logging.getLogger(__name__)
 
@@ -315,4 +315,220 @@ def bepaid_mock_pay_view(request, order_id):
         return redirect('dashboard')
 
     return render(request, 'billing/bepaid_mock.html', {'order': order})
+
+
+@csrf_exempt
+def yookassa_create_payment_view(request):
+    """
+    Creates YooKassa payment session (API v3) for Russia.
+    Supports SBP, MIR Cards, SberPay, T-Pay, and YooMoney.
+    Fully compatible with self-employed taxation (НПД).
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    user = None
+    if request.user.is_authenticated:
+        user = request.user
+    else:
+        try:
+            data = json.loads(request.body.decode('utf-8')) if request.body else {}
+            if data.get('telegram_id'):
+                user = CustomUser.objects.filter(telegram_id=str(data.get('telegram_id'))).first()
+            elif data.get('user_id'):
+                user = CustomUser.objects.filter(id=data.get('user_id')).first()
+        except Exception:
+            pass
+
+    if not user:
+        if request.headers.get('Accept') == 'application/json' or request.content_type == 'application/json':
+            return JsonResponse({'error': 'Пользователь не найден'}, status=404)
+        messages.error(request, "Для пополнения необходимо авторизоваться")
+        return redirect('login')
+
+    # Read params from POST form or JSON
+    amount_str = '105'
+    payment_method = 'sbp'
+    if request.content_type == 'application/json' and request.body:
+        try:
+            payload_data = json.loads(request.body.decode('utf-8'))
+            amount_str = str(payload_data.get('amount', '105'))
+            payment_method = payload_data.get('payment_method', 'sbp')
+        except Exception:
+            pass
+    else:
+        amount_str = request.POST.get('amount', '105')
+        payment_method = request.POST.get('payment_method', 'sbp')
+
+    try:
+        amount_rub = Decimal(amount_str)
+        if amount_rub < Decimal('10'):
+            amount_rub = Decimal('10')
+    except Exception:
+        amount_rub = Decimal('105.00')
+
+    daily_price = user.daily_deduction or Decimal('3.50')
+    days = max(1, int(amount_rub / daily_price))
+
+    order_id = f"LD-YK-{uuid.uuid4().hex[:10].upper()}"
+    shop_id = getattr(settings, 'YOOKASSA_SHOP_ID', '')
+    secret_key = getattr(settings, 'YOOKASSA_SECRET_KEY', '')
+    api_url = getattr(settings, 'YOOKASSA_API_URL', 'https://api.yookassa.ru/v3/payments')
+    site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
+    return_url = f"{site_url}/dashboard/?payment=yookassa_success&order={order_id}"
+
+    payment_id = ""
+    confirmation_url = ""
+
+    if shop_id and secret_key:
+        idempotence_key = str(uuid.uuid4())
+        yoo_payload = {
+            "amount": {
+                "value": f"{amount_rub:.2f}",
+                "currency": "RUB"
+            },
+            "capture": True,
+            "confirmation": {
+                "type": "redirect",
+                "return_url": return_url
+            },
+            "description": f"VPN live-dev: Подписка на {days} дн. ({user.username})",
+            "metadata": {
+                "order_id": order_id,
+                "user_id": str(user.id),
+                "username": user.username,
+                "days": str(days)
+            }
+        }
+        # Self-employed receipt (optional customer email if available)
+        if user.email:
+            yoo_payload["receipt"] = {
+                "customer": {"email": user.email},
+                "items": [
+                    {
+                        "description": f"VPN live-dev подписка {days} дн.",
+                        "quantity": "1.00",
+                        "amount": {"value": f"{amount_rub:.2f}", "currency": "RUB"},
+                        "vat_code": 1,  # Без НДС для самозанятых
+                        "payment_mode": "full_payment",
+                        "payment_subject": "service"
+                    }
+                ]
+            }
+
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.post(
+                    api_url,
+                    json=yoo_payload,
+                    auth=(str(shop_id), str(secret_key)),
+                    headers={
+                        'Idempotence-Key': idempotence_key,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                )
+                if resp.status_code in (200, 201):
+                    res_json = resp.json()
+                    payment_id = res_json.get('id', '')
+                    confirmation_url = res_json.get('confirmation', {}).get('confirmation_url', '')
+                else:
+                    logger.error("YooKassa API error %s: %s", resp.status_code, resp.text)
+        except Exception as e:
+            logger.exception("YooKassa API connection exception: %s", e)
+
+    # If mock/sandbox or API not configured, use local simulated YooKassa checkout
+    if not confirmation_url:
+        confirmation_url = f"{site_url}/billing/yookassa/mock-pay/{order_id}/"
+
+    order = YooKassaOrder.objects.create(
+        order_id=order_id,
+        payment_id=payment_id,
+        user=user,
+        amount_rub=amount_rub,
+        days=days,
+        payment_method_type=payment_method,
+        status=YooKassaOrder.Status.PENDING,
+        confirmation_url=confirmation_url
+    )
+
+    is_json = (
+        request.headers.get('Accept') == 'application/json' or
+        request.content_type == 'application/json' or
+        request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
+        request.POST.get('format') == 'json'
+    )
+    if is_json:
+        return JsonResponse({
+            'success': True,
+            'order_id': order.order_id,
+            'payment_id': order.payment_id,
+            'amount_rub': f"{order.amount_rub:.2f}",
+            'days': order.days,
+            'checkout_url': confirmation_url,
+            'confirmation_url': confirmation_url
+        })
+
+    return redirect(confirmation_url)
+
+
+@csrf_exempt
+def yookassa_webhook_view(request):
+    """
+    YooKassa Webhook Callback handler (API v3).
+    Receives notification: payment.succeeded / payment.canceled.
+    """
+    if request.method != 'POST':
+        return HttpResponse('Method not allowed', status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        event = data.get('event')
+        obj = data.get('object', {})
+        payment_id = obj.get('id')
+        metadata = obj.get('metadata', {})
+        order_id = metadata.get('order_id')
+        status = obj.get('status')
+
+        order = None
+        if payment_id:
+            order = YooKassaOrder.objects.filter(payment_id=payment_id).first()
+        if not order and order_id:
+            order = YooKassaOrder.objects.filter(order_id=order_id).first()
+
+        if not order:
+            logger.warning("YooKassa order not found for payment_id=%s, order_id=%s", payment_id, order_id)
+            return HttpResponse('Order not found', status=404)
+
+        if event == 'payment.succeeded' or status == 'succeeded':
+            order.complete_payment()
+            logger.info("YooKassa order %s (%s ₽) successfully marked paid", order.order_id, order.amount_rub)
+            return HttpResponse('OK', status=200)
+
+        elif event == 'payment.canceled' or status == 'canceled':
+            order.status = YooKassaOrder.Status.CANCELED
+            order.save(update_fields=['status'])
+            logger.info("YooKassa order %s canceled", order.order_id)
+            return HttpResponse('OK', status=200)
+
+        return HttpResponse('OK', status=200)
+    except Exception as e:
+        logger.exception("YooKassa webhook exception: %s", e)
+        return HttpResponse('Internal error', status=500)
+
+
+@login_required
+def yookassa_mock_pay_view(request, order_id):
+    """
+    Simulated YooKassa payment checkout for local dev & testing.
+    Presents SBP QR-code & Russian Bank Card options, matching official YooKassa styling.
+    """
+    order = get_object_or_404(YooKassaOrder, order_id=order_id, user=request.user)
+    if request.method == 'POST':
+        order.complete_payment()
+        messages.success(request, f"🎉 Оплата {order.amount_rub} ₽ через ЮKassa успешно подтверждена! Добавлено +{order.days} дней доступа.")
+        return redirect('dashboard')
+
+    return render(request, 'billing/yookassa_mock.html', {'order': order})
+
 

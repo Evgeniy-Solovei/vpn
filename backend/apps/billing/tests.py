@@ -189,4 +189,107 @@ class BillingTestCase(TestCase):
         self.user.refresh_from_db()
         self.assertEqual(self.user.balance, Decimal('20.00')) # 50 - 30
 
+    def test_yookassa_checkout_creation_and_redirect(self):
+        """YooKassa checkout creation creates YooKassaOrder and redirects to confirmation URL."""
+        from apps.billing.models import YooKassaOrder
+        resp = self.client.post(reverse('yookassa_create'), {
+            'amount': '105',
+            'payment_method': 'sbp'
+        })
+        self.assertEqual(resp.status_code, 302)
+        order = YooKassaOrder.objects.filter(user=self.user).first()
+        self.assertIsNotNone(order)
+        self.assertEqual(order.amount_rub, Decimal('105.00'))
+        self.assertEqual(order.payment_method_type, 'sbp')
+        self.assertEqual(order.status, YooKassaOrder.Status.PENDING)
+        self.assertIn(order.order_id, resp.url)
+
+    def test_yookassa_checkout_json_api(self):
+        """YooKassa JSON API returns checkout_url and order details."""
+        import json
+        from apps.billing.models import YooKassaOrder
+        resp = self.client.post(
+            reverse('yookassa_create'),
+            data=json.dumps({'amount': 200, 'payment_method': 'mir'}),
+            content_type='application/json',
+            HTTP_ACCEPT='application/json'
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['success'])
+        self.assertIn('checkout_url', data)
+        self.assertEqual(data['amount_rub'], '200.00')
+
+        order = YooKassaOrder.objects.get(order_id=data['order_id'])
+        self.assertEqual(order.amount_rub, Decimal('200.00'))
+        self.assertEqual(order.payment_method_type, 'mir')
+
+    def test_yookassa_webhook_payment_succeeded(self):
+        """YooKassa payment.succeeded webhook activates order, credits balance, and records transaction."""
+        import json
+        from apps.billing.models import YooKassaOrder, Transaction
+        order = YooKassaOrder.objects.create(
+            order_id='LD-YK-TESTWH1',
+            payment_id='2d54e4df-000f-5000-8000-1d989f66085a',
+            user=self.user,
+            amount_rub=Decimal('105.00'),
+            days=30,
+            payment_method_type='sbp',
+            status=YooKassaOrder.Status.PENDING
+        )
+        initial_balance = self.user.balance
+
+        webhook_payload = {
+            "type": "notification",
+            "event": "payment.succeeded",
+            "object": {
+                "id": "2d54e4df-000f-5000-8000-1d989f66085a",
+                "status": "succeeded",
+                "amount": {"value": "105.00", "currency": "RUB"},
+                "metadata": {"order_id": "LD-YK-TESTWH1"}
+            }
+        }
+        resp = self.client.post(
+            reverse('yookassa_webhook'),
+            data=json.dumps(webhook_payload),
+            content_type='application/json'
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        order.refresh_from_db()
+        self.assertEqual(order.status, YooKassaOrder.Status.PAID)
+        self.assertIsNotNone(order.paid_at)
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, initial_balance + Decimal('105.00'))
+
+        tx = Transaction.objects.filter(external_id=order.payment_id, status='completed').first()
+        self.assertIsNotNone(tx)
+        self.assertEqual(tx.payment_method, 'yookassa')
+
+    def test_yookassa_mock_pay_page(self):
+        """YooKassa mock payment view renders summary and processes simulated payment."""
+        from apps.billing.models import YooKassaOrder
+        order = YooKassaOrder.objects.create(
+            order_id='LD-YK-MOCK123',
+            user=self.user,
+            amount_rub=Decimal('105.00'),
+            days=30,
+            status=YooKassaOrder.Status.PENDING
+        )
+        # GET renders mock page
+        resp_get = self.client.get(reverse('yookassa_mock_pay', args=[order.order_id]))
+        self.assertEqual(resp_get.status_code, 200)
+        self.assertContains(resp_get, "ЮKassa")
+        self.assertContains(resp_get, "LD-YK-MOCK123")
+
+        # POST simulates confirmation
+        resp_post = self.client.post(reverse('yookassa_mock_pay', args=[order.order_id]))
+        self.assertEqual(resp_post.status_code, 302)
+        self.assertRedirects(resp_post, reverse('dashboard'))
+
+        order.refresh_from_db()
+        self.assertEqual(order.status, YooKassaOrder.Status.PAID)
+
+
 
