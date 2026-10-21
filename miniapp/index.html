@@ -376,9 +376,23 @@
       </div>
     </div>
 
-    <!-- Loading Skeleton -->
-    <div id="loading-view" style="text-align: center; padding: 4rem 1rem; color: var(--text-muted); font-size: 0.9rem;">
-      <div>Загрузка данных...</div>
+    <!-- Loading Skeleton with Cyber Spinner -->
+    <div id="loading-view" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; text-align: center; padding: 2rem;">
+      <div style="width: 58px; height: 58px; border-radius: 18px; background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(6,182,212,0.25)); display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 0 25px rgba(16, 185, 129, 0.35); animation: pulse 2s infinite ease-in-out;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+          <defs>
+            <linearGradient id="shieldMiniGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#10b981"/>
+              <stop offset="0.5" stop-color="#06b6d4"/>
+              <stop offset="1" stop-color="#8b5cf6"/>
+            </linearGradient>
+          </defs>
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="url(#shieldMiniGrad)" fill-opacity="0.25" stroke="url(#shieldMiniGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M13 10V3L4 14h7v7l9-11h-7z" fill="#fff" opacity="0.9"/>
+        </svg>
+      </div>
+      <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem; letter-spacing: -0.01em;">VPN <span style="color: #38bdf8; text-transform: lowercase;">live-dev</span></h3>
+      <p style="font-size: 0.85rem; color: #34d399; font-weight: 600;">Загрузка личного кабинета...</p>
     </div>
 
   </div>

@@ -41,10 +41,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       const data = await res.json();
       if (data.success) {
-        userData = data.user;
-        vpnData = data.vpn;
-        trafficData = data.traffic;
-        renderUI();
+        // Seamlessly forward to the Unified Native Mini App Dashboard
+        window.location.replace('/dashboard/?tg=1');
+        return;
       } else {
         showError(data.error || 'Ошибка синхронизации Telegram');
       }
@@ -72,16 +71,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         const data = await res.json();
         if (data.success) {
-          userData = data.user;
-          vpnData = data.vpn;
-          trafficData = data.traffic;
-          if (browserBanner) {
-            browserBanner.style.display = 'flex';
-            if (browserBannerText) {
-              browserBannerText.textContent = `🌐 Аккаунт: ${userData.username} (Demo)`;
-            }
-          }
-          renderUI();
+          window.location.replace('/dashboard/?tg=1');
+          return;
         } else {
           alert('Ошибка входа в демо: ' + (data.error || 'попробуйте позже'));
           btnLoginDemo.disabled = false;
@@ -102,17 +93,8 @@ async function checkWebSession() {
     const data = await res.json();
 
     if (data.authenticated && data.success) {
-      userData = data.user;
-      vpnData = data.vpn;
-      trafficData = data.traffic;
-      if (browserBanner) {
-        browserBanner.style.display = 'flex';
-        if (browserBannerText) {
-          browserBannerText.textContent = `🌐 Сессия сайта: ${userData.username}`;
-        }
-      }
-      renderUI();
-
+      window.location.replace('/dashboard/?tg=1');
+      return;
     } else {
       // User is not authenticated in browser
       if (loadingView) loadingView.style.display = 'none';

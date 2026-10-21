@@ -13,6 +13,27 @@
   
   <link rel="stylesheet" href="{% static 'css/style.css' %}?v=2.2">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V18a1 1 0 0 1-2 0v-1.07A6 6 0 0 1 6.07 12H7a1 1 0 0 1 0-2h-.93A6 6 0 0 1 11 6.07V7a1 1 0 0 1 2 0v-.93A6 6 0 0 1 17.93 11H17a1 1 0 0 1 0 2h.93A6 6 0 0 1 13 16.93z'/></svg>">
+
+  <!-- Telegram WebApp SDK & Native Adaptations -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    (function() {
+      try {
+        var tg = window.Telegram && window.Telegram.WebApp;
+        var isTgParam = window.location.search.indexOf('tg=1') !== -1;
+        if (tg && (tg.initData || isTgParam)) {
+          document.documentElement.classList.add('telegram-webapp');
+          if (document.body) document.body.classList.add('telegram-webapp');
+          tg.ready();
+          tg.expand();
+          if (tg.setHeaderColor) tg.setHeaderColor('#090d16');
+          if (tg.setBackgroundColor) tg.setBackgroundColor('#090d16');
+        }
+      } catch (e) {
+        console.log('TG Init error:', e);
+      }
+    })();
+  </script>
 </head>
 <body>
   <!-- Ambient Aurora Glow Blobs (Vibrant Color Meshes) -->

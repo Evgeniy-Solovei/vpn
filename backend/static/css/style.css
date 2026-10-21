@@ -875,3 +875,49 @@ input:checked + .toggle-switch::after {
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 30px rgba(16, 185, 129, 0.45);
 }
 
+/* ==========================================================================
+   TELEGRAM MINI APP NATIVE ADAPTATIONS (SINGLE UNIFIED FRONTEND)
+   ========================================================================== */
+.telegram-webapp .header-nav {
+  display: none !important;
+}
+
+.telegram-webapp footer {
+  display: none !important;
+}
+
+.telegram-webapp .floating-support-btn {
+  display: none !important;
+}
+
+.telegram-webapp .app-wrapper {
+  padding-top: 0.25rem !important;
+  padding-bottom: 2rem !important;
+}
+
+.telegram-webapp .container {
+  padding-left: 0.85rem !important;
+  padding-right: 0.85rem !important;
+  max-width: 580px !important;
+}
+
+.telegram-webapp .hero-server-bar {
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.telegram-webapp .hero-server-btn {
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.8rem !important;
+}
+
+.telegram-webapp .power-btn-container {
+  margin-bottom: 1.25rem !important;
+}
+
+.telegram-webapp .dashboard-grid {
+  grid-template-columns: 1fr !important;
+  gap: 1rem !important;
+}
+
+
