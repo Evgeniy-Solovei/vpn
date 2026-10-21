@@ -64,7 +64,7 @@
     </p>
 
     <!-- Region Switcher Tabs -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 0.35rem; border-radius: 0.75rem; border: 1px solid var(--border-subtle);">
+    <div class="pay-region-grid" style="gap: 0.5rem; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 0.35rem; border-radius: 0.75rem; border: 1px solid var(--border-subtle);">
       <button type="button" class="btn btn-primary pay-region-tab active" id="tab-btn-ru" onclick="switchPayRegion('ru')">
         🇷🇺 Россия (СБП / МИР)
       </button>
@@ -97,7 +97,7 @@
         <!-- Days Selector -->
         <div style="margin-bottom: 1.25rem;">
           <label class="form-label">Срок подписки</label>
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.4rem;">
+          <div class="days-selector-grid" style="gap: 0.5rem; margin-top: 0.4rem;">
             <button type="button" class="btn btn-secondary period-btn" onclick="setPeriod(7, 25);">7 дн (25 ₽)</button>
             <button type="button" class="btn btn-primary period-btn" onclick="setPeriod(30, 105);">30 дн (105 ₽)</button>
             <button type="button" class="btn btn-secondary period-btn" onclick="setPeriod(60, 200);">60 дн (200 ₽)</button>
