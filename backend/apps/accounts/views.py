@@ -154,6 +154,9 @@ def password_reset_request_view(request):
                     )
                 except Exception as e:
                     logger.error(f"Error sending email: {e}")
+
+                if getattr(settings, 'DEBUG', False):
+                    request.session['debug_reset_link'] = reset_link
             
             # Show the same confirmation screen regardless of user existence (security best practice)
             return redirect('password_reset_done')
@@ -164,7 +167,8 @@ def password_reset_request_view(request):
 
 
 def password_reset_done_view(request):
-    return render(request, 'accounts/password_reset_done.html')
+    debug_reset_link = request.session.pop('debug_reset_link', None) if getattr(settings, 'DEBUG', False) else None
+    return render(request, 'accounts/password_reset_done.html', {'debug_reset_link': debug_reset_link})
 
 
 def password_reset_confirm_view(request, uidb64, token):
