@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import socket
 import time
 import httpx
@@ -62,8 +63,9 @@ class ThreeXUIService:
     def __init__(self, server: VPNServer):
         self.server = server
         self.base_url = (server.panel_url or "").rstrip('/')
-        self.client = httpx.Client(timeout=10.0, verify=False)
+        self.client = httpx.Client(timeout=10.0, verify=False, follow_redirects=True)
         self.cookies = {}
+        self.csrf_token = ""
 
     def is_configured(self) -> bool:
         return bool(self.base_url and self.server.panel_password)
@@ -71,15 +73,30 @@ class ThreeXUIService:
     def login(self) -> bool:
         if not self.is_configured():
             return False
+
+        # Pre-fetch CSRF token if modern 3X-UI
+        headers = {}
+        try:
+            get_resp = self.client.get(f"{self.base_url}/")
+            csrf_match = re.search(r'meta name=["\']csrf-token["\'] content=["\']([^"\']+)["\']', get_resp.text)
+            if csrf_match:
+                self.csrf_token = csrf_match.group(1)
+                headers['X-Csrf-Token'] = self.csrf_token
+        except Exception as e:
+            logger.debug(f"Could not pre-fetch CSRF token from {self.base_url}: {e}")
+
         login_url = f"{self.base_url}/login"
         payload = {
             "username": self.server.panel_username,
             "password": self.server.panel_password
         }
         try:
-            resp = self.client.post(login_url, data=payload)
+            resp = self.client.post(login_url, json=payload, headers=headers)
+            if resp.status_code != 200 or not resp.json().get('success'):
+                resp = self.client.post(login_url, data=payload, headers=headers)
+
             if resp.status_code == 200 and resp.json().get('success'):
-                self.cookies = resp.cookies
+                self.cookies = dict(resp.cookies)
                 return True
             logger.warning(f"Failed to login to 3X-UI {self.base_url}: {resp.text}")
             return False
@@ -92,7 +109,17 @@ class ThreeXUIService:
             logger.info("3X-UI not configured or unreachable; using local key generation mode.")
             return True
 
-        add_url = f"{self.base_url}/panel/api/inbounds/addClient"
+        headers = {}
+        if self.csrf_token:
+            headers['X-Csrf-Token'] = self.csrf_token
+
+        tg_id = 0
+        if key.user.telegram_id:
+            try:
+                tg_id = int(str(key.user.telegram_id).strip())
+            except (ValueError, TypeError):
+                tg_id = 0
+
         client_settings = {
             "id": str(key.key_uuid),
             "flow": "xtls-rprx-vision",
@@ -101,20 +128,34 @@ class ThreeXUIService:
             "totalGB": 0,
             "expiryTime": 0,
             "enable": True,
-            "tgId": key.user.telegram_id or "",
+            "tgId": tg_id,
             "subId": key.sub_token
         }
-        payload = {
+
+        # 1. Try modern 3X-UI v3.x+ API (/panel/api/clients/add)
+        modern_payload = {
+            "client": client_settings,
+            "inboundIds": [self.server.panel_inbound_id]
+        }
+        try:
+            resp = self.client.post(f"{self.base_url}/panel/api/clients/add", json=modern_payload, cookies=self.cookies, headers=headers)
+            if resp.status_code == 200 and resp.json().get('success'):
+                logger.info(f"Successfully added client {key.user.username} to 3X-UI (modern API)")
+                return True
+        except Exception as e:
+            logger.debug(f"Modern 3X-UI clients/add failed, falling back: {e}")
+
+        # 2. Fallback to legacy inbounds/addClient
+        legacy_payload = {
             "id": self.server.panel_inbound_id,
             "settings": json.dumps({"clients": [client_settings]})
         }
         try:
-            resp = self.client.post(add_url, json=payload, cookies=self.cookies)
-            data = resp.json()
-            if data.get('success'):
-                logger.info(f"Successfully added client {key.user.username} to 3X-UI")
+            resp = self.client.post(f"{self.base_url}/panel/api/inbounds/addClient", json=legacy_payload, cookies=self.cookies, headers=headers)
+            if resp.status_code == 200 and resp.json().get('success'):
+                logger.info(f"Successfully added client {key.user.username} to 3X-UI (legacy API)")
                 return True
-            logger.warning(f"3X-UI addClient response: {data}")
+            logger.warning(f"3X-UI addClient response: {resp.text}")
             return False
         except Exception as e:
             logger.error(f"Error calling addClient on 3X-UI: {e}")
@@ -123,9 +164,23 @@ class ThreeXUIService:
     def delete_client(self, key: VPNKey) -> bool:
         if not self.login():
             return True
+        headers = {}
+        if self.csrf_token:
+            headers['X-Csrf-Token'] = self.csrf_token
+
+        email = f"{key.user.username}_{key.user.id}"
+        # 1. Try modern 3X-UI API
+        try:
+            resp = self.client.post(f"{self.base_url}/panel/api/clients/del/{email}", cookies=self.cookies, headers=headers)
+            if resp.status_code == 200 and resp.json().get('success'):
+                return True
+        except Exception:
+            pass
+
+        # 2. Fallback to legacy
         del_url = f"{self.base_url}/panel/api/inbounds/{self.server.panel_inbound_id}/delClient/{key.key_uuid}"
         try:
-            resp = self.client.post(del_url, cookies=self.cookies)
+            resp = self.client.post(del_url, cookies=self.cookies, headers=headers)
             return resp.status_code == 200
         except Exception as e:
             logger.error(f"Error deleting client on 3X-UI: {e}")
