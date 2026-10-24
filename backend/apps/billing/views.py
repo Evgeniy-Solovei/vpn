@@ -374,7 +374,7 @@ def yookassa_create_payment_view(request):
     shop_id = getattr(settings, 'YOOKASSA_SHOP_ID', '')
     secret_key = getattr(settings, 'YOOKASSA_SECRET_KEY', '')
     api_url = getattr(settings, 'YOOKASSA_API_URL', 'https://api.yookassa.ru/v3/payments')
-    site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
+    site_url = getattr(settings, 'SITE_URL', 'https://vpn.live-dev.by').rstrip('/')
     return_url = f"{site_url}/dashboard/?payment=yookassa_success&order={order_id}"
 
     payment_id = ""
@@ -382,6 +382,7 @@ def yookassa_create_payment_view(request):
 
     if shop_id and secret_key:
         idempotence_key = str(uuid.uuid4())
+        user_email = user.email or (f"user_{user.telegram_id}@live-dev.by" if user.telegram_id else f"{user.username}@live-dev.by")
         yoo_payload = {
             "amount": {
                 "value": f"{amount_rub:.2f}",
@@ -392,29 +393,33 @@ def yookassa_create_payment_view(request):
                 "type": "redirect",
                 "return_url": return_url
             },
-            "description": f"VPN live-dev: Подписка на {days} дн. ({user.username})",
+            "description": f"VPN live-dev: Подписка {days} дн. ({user.username})"[:128],
             "metadata": {
                 "order_id": order_id,
                 "user_id": str(user.id),
                 "username": user.username,
+                "telegram_id": str(user.telegram_id or ""),
                 "days": str(days)
-            }
-        }
-        # Self-employed receipt (optional customer email if available)
-        if user.email:
-            yoo_payload["receipt"] = {
-                "customer": {"email": user.email},
+            },
+            "receipt": {
+                "customer": {
+                    "email": user_email
+                },
                 "items": [
                     {
-                        "description": f"VPN live-dev подписка {days} дн.",
+                        "description": f"VPN live-dev: Подписка {days} дн."[:128],
                         "quantity": "1.00",
-                        "amount": {"value": f"{amount_rub:.2f}", "currency": "RUB"},
-                        "vat_code": 1,  # Без НДС для самозанятых
+                        "amount": {
+                            "value": f"{amount_rub:.2f}",
+                            "currency": "RUB"
+                        },
+                        "vat_code": 4,  # 4 = Без НДС (для самозанятых / УСН без НДС)
                         "payment_mode": "full_payment",
                         "payment_subject": "service"
                     }
                 ]
             }
+        }
 
         try:
             with httpx.Client(timeout=10.0) as client:
@@ -437,7 +442,7 @@ def yookassa_create_payment_view(request):
         except Exception as e:
             logger.exception("YooKassa API connection exception: %s", e)
 
-    # If mock/sandbox or API not configured, use local simulated YooKassa checkout
+    # If mock/sandbox or offline fallback
     if not confirmation_url:
         confirmation_url = f"{site_url}/billing/yookassa/mock-pay/{order_id}/"
 

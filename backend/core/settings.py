@@ -172,8 +172,8 @@ BEPAID_TEST_MODE = os.getenv('BEPAID_TEST_MODE', 'True').lower() in ('true', '1'
 BEPAID_CHECKOUT_URL = os.getenv('BEPAID_CHECKOUT_URL', 'https://checkout.bepaid.by/ctp/api/checkouts')
 
 # YooKassa Payment Settings (Russia / Self-employed / SBP / MIR / Cards)
-YOOKASSA_SHOP_ID = os.getenv('YOOKASSA_SHOP_ID', '')
-YOOKASSA_SECRET_KEY = os.getenv('YOOKASSA_SECRET_KEY', '')
+YOOKASSA_SHOP_ID = os.getenv('YOOKASSA_SHOP_ID', '1117513')
+YOOKASSA_SECRET_KEY = os.getenv('YOOKASSA_SECRET_KEY', 'test_zcpUH-plF40ePwCiabTOeufYwq8y1XTF2PYB3bmU1RA')
 YOOKASSA_TEST_MODE = os.getenv('YOOKASSA_TEST_MODE', 'True').lower() in ('true', '1')
 YOOKASSA_API_URL = os.getenv('YOOKASSA_API_URL', 'https://api.yookassa.ru/v3/payments')
 

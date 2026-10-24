@@ -6,7 +6,14 @@ from aiogram.filters import CommandStart, CommandObject
 from aiogram.types import Message, CallbackQuery
 
 from bot.config import BOT_TOKEN, WEB_API_URL, SITE_URL
-from bot.keyboards.inline import get_main_menu, get_back_menu, get_download_menu
+from bot.keyboards.inline import (
+    get_main_menu,
+    get_back_menu,
+    get_download_menu,
+    get_balance_menu,
+    get_yookassa_tariffs_menu,
+    get_yookassa_pay_button,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -166,11 +173,106 @@ async def cb_view_balance(call: CallbackQuery):
         f"• Текущий баланс: <b>{user_info.get('balance', 0)} ₽</b>\n"
         f"• Ежедневный тариф: <b>{user_info.get('daily_deduction', 3.50)} ₽ / сутки</b>\n"
         f"• Оплачено дней: <b>{user_info.get('days_left', 0)} дней</b>\n\n"
-        f"Для пополнения баланса перейдите в личный кабинет на сайте:\n"
-        f"👉 <a href='{SITE_URL}/billing/tariffs/'>Пополнить баланс онлайн</a> (СБП, Карты РФ, Крипта)"
+        f"👇 Выберите способ пополнения баланса:"
     )
-    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_back_menu(), disable_web_page_preview=True)
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_balance_menu(), disable_web_page_preview=True)
     await call.answer()
+
+
+@dp.callback_query(F.data == "pay_yookassa")
+async def cb_pay_yookassa(call: CallbackQuery):
+    text = (
+        f"🇷🇺 <b>Оплата через ЮKassa (РФ):</b>\n\n"
+        f"• Моментальное зачисление через <b>СБП (0%)</b>, карты МИР, Сбер, Т-Банк\n"
+        f"• Официальный фискальный чек для самозанятых (НПД)\n\n"
+        f"Выберите период подписки:"
+    )
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_yookassa_tariffs_menu())
+    await call.answer()
+
+
+@dp.callback_query(F.data.startswith("yoo_pay_"))
+async def cb_yoo_pay_amount(call: CallbackQuery):
+    amount_str = call.data.replace("yoo_pay_", "")
+    amount_map = {
+        "105": {"amount": 105, "days": 30},
+        "200": {"amount": 200, "days": 60},
+        "280": {"amount": 280, "days": 90},
+    }
+    cfg = amount_map.get(amount_str, {"amount": 105, "days": 30})
+    amount = cfg["amount"]
+    days = cfg["days"]
+
+    await call.answer("Генерируем платёжный счёт ЮKassa...")
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/billing/yookassa/create/",
+                json={
+                    "telegram_id": str(call.from_user.id),
+                    "amount": amount,
+                    "payment_method": "sbp"
+                },
+                headers={"Accept": "application/json"}
+            )
+            data = resp.json()
+            checkout_url = data.get("checkout_url")
+            if checkout_url:
+                text = (
+                    f"💳 <b>Счёт ЮKassa сформирован:</b>\n\n"
+                    f"• Тариф: <b>{days} дней доступа</b>\n"
+                    f"• Сумма к оплате: <b>{amount} ₽</b>\n"
+                    f"• Способы: <b>СБП (без комиссии), Карты МИР, Сбер, Т-Банк</b>\n\n"
+                    f"Нажмите кнопку ниже для безопасной оплаты на официальном шлюзе ЮKassa.\n"
+                    f"После завершения платежа баланс будет начислен автоматически мгновенно!"
+                )
+                await call.message.edit_text(
+                    text,
+                    parse_mode="HTML",
+                    reply_markup=get_yookassa_pay_button(checkout_url, amount, days),
+                    disable_web_page_preview=True
+                )
+                return
+        except Exception as e:
+            logger.error("Error creating YooKassa payment in bot: %s", e)
+
+    await call.message.edit_text(
+        "❌ Не удалось сформировать счёт ЮKassa. Попробуйте позже или используйте личный кабинет на сайте.",
+        reply_markup=get_back_menu()
+    )
+
+
+@dp.callback_query(F.data == "pay_bepaid")
+async def cb_pay_bepaid(call: CallbackQuery):
+    await call.answer("Генерируем платёж bePaid...")
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/billing/bepaid/checkout/",
+                json={"telegram_id": str(call.from_user.id)},
+                headers={"Accept": "application/json"}
+            )
+            data = resp.json()
+            checkout_url = data.get("checkout_url")
+            if checkout_url:
+                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                kb = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="🇧🇾 Оплатить 5.00 BYN (bePaid / ЕРИП)", url=checkout_url)],
+                    [InlineKeyboardButton(text="◀️ Назад к балансу", callback_data="view_balance")]
+                ])
+                text = (
+                    f"🇧🇾 <b>Оплата через bePaid (Беларусь):</b>\n\n"
+                    f"• Сумма: <b>5.00 BYN (~150 ₽)</b>\n"
+                    f"• Срок: <b>30 дней</b>\n"
+                    f"• Способы: <b>Белкарт, ЕРИП, Visa, Mastercard, МИР</b>\n\n"
+                    f"Нажмите кнопку ниже для безопасной оплаты:"
+                )
+                await call.message.edit_text(text, parse_mode="HTML", reply_markup=kb, disable_web_page_preview=True)
+                return
+        except Exception as e:
+            logger.error("Error creating bePaid payment in bot: %s", e)
+
+    await call.message.edit_text("❌ Ошибка при создании платежа bePaid.", reply_markup=get_back_menu())
 
 
 @dp.callback_query(F.data == "toggle_whitelist")

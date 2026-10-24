@@ -291,5 +291,19 @@ class BillingTestCase(TestCase):
         order.refresh_from_db()
         self.assertEqual(order.status, YooKassaOrder.Status.PAID)
 
+    def test_dashboard_yookassa_return_handling(self):
+        """Dashboard view handles payment=yookassa_success and displays friendly message."""
+        from apps.billing.models import YooKassaOrder
+        order = YooKassaOrder.objects.create(
+            order_id='LD-YK-RET123',
+            user=self.user,
+            amount_rub=Decimal('105.00'),
+            days=30,
+            status=YooKassaOrder.Status.PAID
+        )
+        resp = self.client.get(f"{reverse('dashboard')}?payment=yookassa_success&order={order.order_id}")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "успешно зачислена")
+
 
 

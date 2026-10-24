@@ -1,6 +1,30 @@
 from decimal import Decimal
 from django.db import models
+from django.conf import settings
 from apps.accounts.models import CustomUser
+
+
+def notify_telegram_user(user: CustomUser, text: str):
+    """Safely notifies the user via Telegram bot if they have a linked Telegram account."""
+    if not user or not user.telegram_id:
+        return
+    bot_token = getattr(settings, 'BOT_TOKEN', '')
+    if not bot_token:
+        return
+    try:
+        import httpx
+        with httpx.Client(timeout=4.0) as client:
+            client.post(
+                f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                json={
+                    "chat_id": str(user.telegram_id),
+                    "text": text,
+                    "parse_mode": "HTML",
+                    "disable_web_page_preview": True
+                }
+            )
+    except Exception:
+        pass
 
 class TariffPlan(models.Model):
     name = models.CharField(max_length=64, verbose_name="Название тарифа")
@@ -165,6 +189,22 @@ class PaymentOrder(models.Model):
                     daily_price = referrer.daily_deduction or Decimal('3.50')
                     referrer.balance += bonus_days * daily_price
                     referrer.save(update_fields=['balance'])
+                    notify_telegram_user(
+                        referrer,
+                        f"🎁 <b>Реферальный бонус!</b>\n\n"
+                        f"Ваш друг <b>{self.user.username}</b> пополнил баланс.\n"
+                        f"Вам начислено <b>+5 дней</b> бесплатного VPN (+{bonus_days * daily_price} ₽)!"
+                    )
+
+            # Send telegram notification to paying user
+            notify_telegram_user(
+                self.user,
+                f"🎉 <b>Оплата через bePaid успешно получена!</b>\n\n"
+                f"• Сумма: <b>{self.amount_byn} BYN</b> (+{self.amount_rub} ₽)\n"
+                f"• Добавлено дней: <b>+{self.days} дн.</b>\n"
+                f"• Баланс: <b>{self.user.balance} ₽</b> ({self.user.days_left} дн.)\n"
+                f"• Доступ активен. Приятного пользования 🚀"
+            )
 
     def __str__(self):
         return f"Заказ {self.order_id} ({self.user.username}, {self.amount_byn} BYN, {self.status})"
@@ -224,6 +264,22 @@ class YooKassaOrder(models.Model):
                     daily_price = referrer.daily_deduction or Decimal('3.50')
                     referrer.balance += bonus_days * daily_price
                     referrer.save(update_fields=['balance'])
+                    notify_telegram_user(
+                        referrer,
+                        f"🎁 <b>Реферальный бонус!</b>\n\n"
+                        f"Ваш друг <b>{self.user.username}</b> пополнил баланс через ЮKassa.\n"
+                        f"Вам начислено <b>+5 дней</b> бесплатного VPN (+{bonus_days * daily_price} ₽)!"
+                    )
+
+            # Send telegram notification to paying user
+            notify_telegram_user(
+                self.user,
+                f"🎉 <b>Оплата через ЮKassa успешно зачислена!</b>\n\n"
+                f"• Сумма: <b>{self.amount_rub} ₽</b>\n"
+                f"• Добавлено дней: <b>+{self.days} дн.</b>\n"
+                f"• Баланс: <b>{self.user.balance} ₽</b> ({self.user.days_left} дн.)\n"
+                f"• Доступ активен. Приятного пользования 🚀"
+            )
 
     def __str__(self):
         return f"ЮKassa {self.order_id} ({self.user.username}, {self.amount_rub} ₽, {self.status})"

@@ -225,7 +225,42 @@ def dashboard_view(request):
     referrals_count = user.referrals.count()
     referral_url = f"{settings.SITE_URL}/auth/register/?ref={user.referral_code}"
 
-    
+    # Handle payment return redirects (YooKassa / bePaid)
+    payment_status = request.GET.get('payment')
+    order_id = request.GET.get('order')
+    if payment_status == 'yookassa_success' and order_id:
+        from apps.billing.models import YooKassaOrder
+        order = YooKassaOrder.objects.filter(order_id=order_id, user=user).first()
+        if order:
+            if order.status == YooKassaOrder.Status.PAID:
+                messages.success(request, f"🎉 Оплата {order.amount_rub} ₽ через ЮKassa успешно зачислена! Добавлено +{order.days} дн. доступа.")
+            else:
+                shop_id = getattr(settings, 'YOOKASSA_SHOP_ID', '')
+                secret_key = getattr(settings, 'YOOKASSA_SECRET_KEY', '')
+                if shop_id and secret_key and order.payment_id:
+                    try:
+                        import httpx
+                        with httpx.Client(timeout=4.0) as client:
+                            resp = client.get(
+                                f"https://api.yookassa.ru/v3/payments/{order.payment_id}",
+                                auth=(str(shop_id), str(secret_key)),
+                                headers={'Accept': 'application/json'}
+                            )
+                            if resp.status_code == 200 and resp.json().get('status') == 'succeeded':
+                                order.complete_payment()
+                                messages.success(request, f"🎉 Оплата {order.amount_rub} ₽ через ЮKassa успешно зачислена! Добавлено +{order.days} дн. доступа.")
+                            else:
+                                messages.info(request, "Платёж через ЮKassa принят и обрабатывается банком.")
+                    except Exception as e:
+                        logger.warning("Error checking YooKassa status on return: %s", e)
+                        messages.info(request, "Платёж через ЮKassa обрабатывается банком.")
+                else:
+                    messages.info(request, "Платёж через ЮKassa принят в обработку.")
+    elif payment_status == 'success':
+        messages.success(request, "🎉 Оплата через bePaid успешно принята! Баланс пополнен.")
+    elif payment_status in ('failed', 'cancelled'):
+        messages.warning(request, "Платёж был отменён или не завершён. Средства не списаны.")
+
     return render(request, 'accounts/dashboard.html', {
         'user': user,
         'vpn_key': key,
