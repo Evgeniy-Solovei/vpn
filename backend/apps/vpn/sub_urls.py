@@ -1,6 +1,6 @@
-from django.urls import path
+from django.urls import re_path
 from . import views
 
 urlpatterns = [
-    path('<str:token>/', views.subscription_view, name='subscription'),
+    re_path(r'^(?P<token>[^/]+)/?$', views.subscription_view, name='subscription'),
 ]
