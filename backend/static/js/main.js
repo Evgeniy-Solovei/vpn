@@ -258,12 +258,15 @@ function highlightUserPlatformInModal() {
 }
 
 function initIncyDeeplinkFallback() {
-  document.querySelectorAll('a[href^="incy://"], a[href^="vless://"], .btn-smart-connect').forEach(link => {
+  document.querySelectorAll('a[href^="incy://"], a[href^="vless://"], .btn-smart-connect, #btn-incy-connect').forEach(link => {
     link.addEventListener('click', (e) => {
-      // Гарантированно остаёмся на текущей странице личного кабинета
-      if (e) e.preventDefault();
+      // 100% блокируем переход текущей страницы и открытие любых вкладок
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
 
-      const deeplinkUrl = link.getAttribute('href');
+      const deeplinkUrl = link.getAttribute('data-connect-url') || link.getAttribute('href');
       if (!deeplinkUrl) return;
 
       const isSub = deeplinkUrl.startsWith('incy://');
@@ -279,23 +282,20 @@ function initIncyDeeplinkFallback() {
         navigator.clipboard.writeText(copyVal).catch(() => {});
       }
 
-      showToast('✓ Ключ скопирован! Запускаем INCY...');
+      showToast('✓ Ключ скопирован в буфер! Запускаем INCY...');
 
-      let appOpened = false;
-      const onBlur = () => { appOpened = true; };
-      const onVisChange = () => {
-        if (document.hidden) appOpened = true;
-      };
-
-      window.addEventListener('blur', onBlur, { once: true });
-      window.addEventListener('pagehide', onBlur, { once: true });
-      document.addEventListener('visibilitychange', onVisChange);
-
-      // 2. Запускаем приложение через схему
+      // 2. Запускаем приложение через кастомный протокол
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent || '');
       if (isIOS) {
-        window.location.href = deeplinkUrl;
+        // На iOS открываем через временный клик, не трогая текущий URL страницы
+        const tempA = document.createElement('a');
+        tempA.href = deeplinkUrl;
+        tempA.style.display = 'none';
+        document.body.appendChild(tempA);
+        tempA.click();
+        setTimeout(() => { try { tempA.remove(); } catch (_) {} }, 2000);
       } else {
+        // На ПК / Mac / Android - через скрытый iframe
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
         iframe.src = deeplinkUrl;
@@ -305,20 +305,10 @@ function initIncyDeeplinkFallback() {
         }, 3000);
       }
 
-      // 3. Проверка: если приложение не запустилось (нет приложения на ПК/телефоне)
+      // 3. Подсказка через 1.5 сек (СТРОГО БЕЗ редиректов и БЕЗ новых вкладок!)
       setTimeout(() => {
-        window.removeEventListener('blur', onBlur);
-        window.removeEventListener('pagehide', onBlur);
-        document.removeEventListener('visibilitychange', onVisChange);
-
-        if (!appOpened && !document.hidden) {
-          // Приложение не найдено: остаёмся строго на текущей странице!
-          showToast('⚠️ INCY не установлено? Скачайте его в Шаге 1 выше');
-          highlightUserPlatformInModal();
-        } else {
-          showToast('✓ Приложение INCY открыто! Сервер успешно добавлен.');
-        }
-      }, 1400);
+        showToast('✓ Ключ в буфере! Если INCY открыто — сервер добавлен');
+      }, 1500);
     });
   });
 }
@@ -446,7 +436,11 @@ function initServerSwitcher() {
 
         // Update links & copy attributes
         const incyBtn = document.getElementById('btn-incy-connect');
-        if (incyBtn) incyBtn.href = data.vpn.vless_url || data.vpn.connect_url;
+        if (incyBtn) {
+          const newUrl = data.vpn.vless_url || data.vpn.connect_url;
+          incyBtn.setAttribute('data-connect-url', newUrl);
+          if (incyBtn.tagName === 'A') incyBtn.href = newUrl;
+        }
 
         const vlessBtn = document.getElementById('btn-copy-vless');
         if (vlessBtn) vlessBtn.setAttribute('data-copy', data.vpn.vless_url);
@@ -548,7 +542,11 @@ function initKeyRegeneration() {
       if (data.success) {
         showToast('Ключ успешно обновлен!');
         const incyBtn = document.getElementById('btn-incy-connect');
-        if (incyBtn) incyBtn.href = data.vless_url || data.connect_url;
+        if (incyBtn) {
+          const newUrl = data.vless_url || data.connect_url;
+          incyBtn.setAttribute('data-connect-url', newUrl);
+          if (incyBtn.tagName === 'A') incyBtn.href = newUrl;
+        }
 
         const copyBtn = document.getElementById('btn-copy-vless');
         if (copyBtn) copyBtn.setAttribute('data-copy', data.vless_url);
