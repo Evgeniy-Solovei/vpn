@@ -507,7 +507,7 @@ def get_user_devices_info(user, key=None) -> dict:
 
     if not existing_devices:
         from apps.accounts.models import DeviceAuthKey
-        auth_keys = DeviceAuthKey.objects.filter(user=user).order_by('-created_at')[:3]
+        auth_keys = DeviceAuthKey.objects.filter(user=user).exclude(user_agent__icontains='python-httpx').exclude(user_agent='').order_by('-created_at')[:5]
         for ak in auth_keys:
             plat, dname = detect_device_platform_and_name(ak.user_agent)
             import hashlib
@@ -526,7 +526,17 @@ def get_user_devices_info(user, key=None) -> dict:
                     'is_active': True
                 }
             )
-            existing_devices.append(dev)
+            if dev not in existing_devices:
+                existing_devices.append(dev)
+
+    # Deduplicate devices by ID
+    seen_ids = set()
+    unique_devices = []
+    for d in existing_devices:
+        if d.id not in seen_ids:
+            seen_ids.add(d.id)
+            unique_devices.append(d)
+    existing_devices = unique_devices
 
     # If still no devices but user has consumed traffic (> 0), register primary INCY device
     if not existing_devices and key and key.used_traffic_bytes > 0:
