@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.types import Message, CallbackQuery
 
-from bot.config import BOT_TOKEN, WEB_API_URL, SITE_URL
+from bot.config import BOT_TOKEN, WEB_API_URL, SITE_URL, SUPPORT_TELEGRAM
 from bot.keyboards.inline import (
     get_main_menu,
     get_back_menu,
@@ -376,12 +376,15 @@ async def cb_view_referrals(call: CallbackQuery):
 async def cb_support(call: CallbackQuery):
     text = (
         f"💬 <b>Служба поддержки VPN live-dev</b>\n\n"
-        f"Если у вас возникли сложности с подключением или оплатой, напишите нам:\n"
-        f"• Официальный канал новостей: @live_dev_news\n"
-        f"• Чат поддержки: @live_dev_support\n\n"
-        f"Мы отвечаем в течение 10–15 минут!"
+        f"Если у вас возникли сложности с подключением или оплатой, напишите нам в Telegram:\n\n"
+        f"👉 <b>@{SUPPORT_TELEGRAM}</b>"
     )
-    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_back_menu())
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💬 Написать в поддержку", url=f"https://t.me/{SUPPORT_TELEGRAM}")],
+        [InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")]
+    ])
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=kb)
     await call.answer()
 
 
