@@ -446,8 +446,8 @@ def detect_device_platform_and_name(ua: str) -> tuple[str, str]:
 
 
 def register_user_device(user, request=None, key=None, client_type="INCY") -> Optional[VPNDevice]:
-    """Registers or updates a VPNDevice entry for the user."""
-    if not user or not user.is_authenticated and not getattr(user, 'id', None):
+    """Registers or updates a VPNDevice entry for the user. Strictly 1 device per platform."""
+    if not user or (not user.is_authenticated and not getattr(user, 'id', None)):
         return None
 
     if not key:
@@ -465,9 +465,8 @@ def register_user_device(user, request=None, key=None, client_type="INCY") -> Op
 
     platform, device_name = detect_device_platform_and_name(ua)
 
-    import hashlib
-    raw_hash_input = f"{user.id}_{platform}_{ip or 'local'}_{ua[:50]}"
-    device_id = hashlib.sha256(raw_hash_input.encode('utf-8')).hexdigest()[:24]
+    # Strictly deterministic per user + platform to prevent duplicates
+    device_id = f"{user.id}_{platform}"
 
     device, created = VPNDevice.objects.get_or_create(
         user=user,
@@ -485,9 +484,12 @@ def register_user_device(user, request=None, key=None, client_type="INCY") -> Op
     if not created:
         device.last_active_at = timezone.now()
         device.is_active = True
+        device.device_name = f"{device_name} ({client_type})"
         if ip:
             device.ip_address = ip
-        device.save(update_fields=['last_active_at', 'is_active', 'ip_address'])
+        if ua:
+            device.user_agent = ua
+        device.save(update_fields=['last_active_at', 'is_active', 'device_name', 'ip_address', 'user_agent'])
 
     return device
 
@@ -495,14 +497,14 @@ def register_user_device(user, request=None, key=None, client_type="INCY") -> Op
 def get_user_devices_info(user, key=None) -> dict:
     """
     Returns active connected devices, slots used, and details for user.
-    Synchronizes between 3X-UI traffic, DeviceAuthKey web sessions, and VPNDevice records.
+    Guarantees no duplicate devices by enforcing 1 slot per platform.
     """
     if not key:
         key = VPNKey.objects.filter(user=user).first()
 
     max_devices = getattr(key, 'max_devices', 5) or 5
 
-    # If no devices registered yet, inspect DeviceAuthKeys or existing VPN usage
+    # If no devices registered yet, inspect DeviceAuthKeys
     existing_devices = list(VPNDevice.objects.filter(user=user, is_active=True).order_by('-last_active_at'))
 
     if not existing_devices:
@@ -510,9 +512,7 @@ def get_user_devices_info(user, key=None) -> dict:
         auth_keys = DeviceAuthKey.objects.filter(user=user).exclude(user_agent__icontains='python-httpx').exclude(user_agent='').order_by('-created_at')[:5]
         for ak in auth_keys:
             plat, dname = detect_device_platform_and_name(ak.user_agent)
-            import hashlib
-            raw_hash = f"{user.id}_{plat}_{ak.ip_address or 'web'}"
-            dev_id = hashlib.sha256(raw_hash.encode('utf-8')).hexdigest()[:24]
+            dev_id = f"{user.id}_{plat}"
             dev, _ = VPNDevice.objects.get_or_create(
                 user=user,
                 device_id=dev_id,
@@ -529,13 +529,19 @@ def get_user_devices_info(user, key=None) -> dict:
             if dev not in existing_devices:
                 existing_devices.append(dev)
 
-    # Deduplicate devices by ID
-    seen_ids = set()
+    # Strictly deduplicate devices by platform: 1 Mac, 1 iPhone, etc.
+    seen_platforms = set()
     unique_devices = []
     for d in existing_devices:
-        if d.id not in seen_ids:
-            seen_ids.add(d.id)
+        if d.platform not in seen_platforms:
+            seen_platforms.add(d.platform)
             unique_devices.append(d)
+        else:
+            # Delete stale duplicate record from DB
+            try:
+                d.delete()
+            except Exception:
+                pass
     existing_devices = unique_devices
 
     # If still no devices but user has consumed traffic (> 0), register primary INCY device
@@ -543,7 +549,7 @@ def get_user_devices_info(user, key=None) -> dict:
         dev = VPNDevice.objects.create(
             user=user,
             key=key,
-            device_id=f"default_incy_{user.id}",
+            device_id=f"{user.id}_ios",
             device_name="Apple iPhone (INCY)",
             platform="ios",
             client_type="INCY",

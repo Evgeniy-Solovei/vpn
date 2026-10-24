@@ -528,13 +528,36 @@ def update_custom_whitelist_api(request):
             server = get_or_create_default_server()
             key = VPNKey.objects.create(user=user, server=server)
 
-        domains_text = data.get('domains', '')
-        key.custom_whitelist = domains_text.strip()
-        key.save(update_fields=['custom_whitelist', 'updated_at'])
+        action = data.get('action')
+        if action == 'toggle_ru_by':
+            key.whitelist_enabled = not key.whitelist_enabled
+            key.save(update_fields=['whitelist_enabled', 'updated_at'])
+            msg = 'Обход сайтов РФ и РБ (.ru, .by) ' + ('ВКЛЮЧЕН' if key.whitelist_enabled else 'ВЫКЛЮЧЕН')
+        elif action == 'clear':
+            key.custom_whitelist = ""
+            key.save(update_fields=['custom_whitelist', 'updated_at'])
+            msg = 'Список персональных сайтов очищен'
+        elif action == 'append':
+            raw_new = str(data.get('domain', '')).strip().lower()
+            current_domains = key.get_custom_domains()
+            for part in raw_new.replace(',', '\n').split('\n'):
+                d = part.strip()
+                if d and d not in current_domains:
+                    current_domains.append(d)
+            key.custom_whitelist = "\n".join(current_domains)
+            key.save(update_fields=['custom_whitelist', 'updated_at'])
+            msg = f'Сайт {raw_new} успешно добавлен в белый список!'
+        else:
+            domains_text = data.get('domains', '')
+            key.custom_whitelist = domains_text.strip()
+            key.save(update_fields=['custom_whitelist', 'updated_at'])
+            msg = 'Список сайтов-исключений сохранен!'
 
         return JsonResponse({
             'success': True,
-            'message': 'Список сайтов-исключений сохранен!',
+            'message': msg,
+            'whitelist_enabled': key.whitelist_enabled,
+            'custom_whitelist': key.custom_whitelist,
             'custom_domains': key.get_custom_domains(),
             **build_user_response(user)
         })

@@ -634,6 +634,39 @@ function initCustomWhitelist() {
   const textarea = document.getElementById('custom-whitelist-input');
   if (!saveBtn || !textarea) return;
 
+  const btnBy = document.getElementById('preset-add-by');
+  const btnRu = document.getElementById('preset-add-ru');
+  const btnClear = document.getElementById('preset-clear-whitelist');
+
+  if (btnBy) {
+    btnBy.addEventListener('click', () => {
+      const cur = textarea.value.trim();
+      const byRule = '*.by';
+      if (!cur.includes(byRule)) {
+        textarea.value = cur ? cur + '\n' + byRule : byRule;
+        showToast('✓ Добавлено правило *.by в список');
+      }
+    });
+  }
+
+  if (btnRu) {
+    btnRu.addEventListener('click', () => {
+      const cur = textarea.value.trim();
+      const ruRules = '*.ru\n*.рф\n*.su';
+      if (!cur.includes('*.ru')) {
+        textarea.value = cur ? cur + '\n' + ruRules : ruRules;
+        showToast('✓ Добавлены правила *.ru, *.рф в список');
+      }
+    });
+  }
+
+  if (btnClear) {
+    btnClear.addEventListener('click', () => {
+      textarea.value = '';
+      showToast('Список очищен (нажмите «Сохранить»)');
+    });
+  }
+
   saveBtn.addEventListener('click', async () => {
     const domains = textarea.value;
     saveBtn.disabled = true;

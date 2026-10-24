@@ -58,7 +58,7 @@ def get_main_menu(vpn_data: dict, user_data: dict, devices_data: dict = None, tr
             ),
             InlineKeyboardButton(
                 text=wl_text,
-                callback_data="toggle_whitelist"
+                callback_data="view_whitelist"
             )
         ],
         [
@@ -147,6 +147,32 @@ def get_traffic_menu() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")
         ]
     ])
+
+
+def get_whitelist_menu(whitelist_enabled: bool, custom_domains_count: int) -> InlineKeyboardMarkup:
+    ru_by_btn = "🇷🇺 🇧🇾 Режим .ru и .by: 🟢 НАПРЯМУЮ" if whitelist_enabled else "🇷🇺 🇧🇾 Режим .ru и .by: ⚪ ЧЕРЕЗ VPN"
+    toggle_btn = "🛡️ Выключить белый список" if whitelist_enabled else "🛡️ Включить белый список"
+
+    buttons = [
+        [
+            InlineKeyboardButton(text=ru_by_btn, callback_data="toggle_ru_by")
+        ],
+        [
+            InlineKeyboardButton(text="➕ Добавить сайт в исключения", callback_data="add_wl_site")
+        ]
+    ]
+    if custom_domains_count > 0:
+        buttons.append([
+            InlineKeyboardButton(text=f"🗑️ Очистить мои сайты ({custom_domains_count})", callback_data="clear_wl_sites")
+        ])
+    buttons.append([
+        InlineKeyboardButton(text=toggle_btn, callback_data="toggle_whitelist_quick")
+    ])
+    buttons.append([
+        InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")
+    ])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
 
 
 def get_back_menu() -> InlineKeyboardMarkup:

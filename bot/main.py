@@ -19,6 +19,7 @@ from bot.keyboards.inline import (
     get_referrals_menu,
     get_servers_menu,
     get_traffic_menu,
+    get_whitelist_menu,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
@@ -391,24 +392,87 @@ async def cb_pay_bepaid(call: CallbackQuery):
     await call.message.edit_text("❌ Ошибка при создании платежа bePaid.", reply_markup=get_back_menu())
 
 
-@dp.callback_query(F.data == "toggle_whitelist")
-async def cb_toggle_whitelist(call: CallbackQuery):
+@dp.callback_query(F.data.in_(["view_whitelist", "toggle_whitelist"]))
+async def cb_view_whitelist(call: CallbackQuery):
+    data = await sync_user_with_backend(call.from_user.id, call.from_user.username)
+    vpn_info = data.get('vpn', {})
+    whitelist_active = vpn_info.get('whitelist_enabled', True)
+    custom_domains = vpn_info.get('custom_domains', [])
+
+    status_str = "🟢 <b>ВКЛЮЧЕН</b> (ресурсы РФ и РБ идут напрямую)" if whitelist_active else "⚪ <b>ВЫКЛЮЧЕН</b> (весь трафик через VPN)"
+    ru_by_str = "🟢 <b>Все сайты .ru и .by</b> открываются напрямую без VPN" if whitelist_active else "⚪ Сайты .ru и .by идут через зарубежный сервер"
+
+    dom_lines = []
+    if custom_domains:
+        for idx, dom in enumerate(custom_domains[:15], 1):
+            dom_lines.append(f"  {idx}. <code>{dom}</code>")
+        custom_str = "📋 <b>Ваши персональные сайты-исключения:</b>\n" + "\n".join(dom_lines)
+    else:
+        custom_str = "📋 <b>Ваши персональные сайты:</b> <i>пока нет (все сайты .ru и .by уже встроены по умолчанию)</i>"
+
+    text = (
+        f"🛡️ <b>Управление Белым списком сайтов (Split-Tunneling)</b>\n\n"
+        f"Сайты из белого списка открываются <b>напрямую на полной скорости вашего интернета</b> без шифрования и задержек.\n\n"
+        f"• Режим: {status_str}\n"
+        f"• Обход РФ и РБ: {ru_by_str}\n\n"
+        f"{custom_str}\n\n"
+        f"💡 <i>Банки (Сбер, Т-Банк, Беларусбанк), Госуслуги, Ozon, WB и сервисы Яндекса не блокируются и работают напрямую!</i>\n\n"
+        f"👇 Нажмите <b>«➕ Добавить сайт в исключения»</b>, чтобы внести свой домен:"
+    )
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_whitelist_menu(whitelist_active, len(custom_domains)))
+    await call.answer()
+
+
+@dp.callback_query(F.data.in_(["toggle_ru_by", "toggle_whitelist_quick"]))
+async def cb_toggle_ru_by(call: CallbackQuery):
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
             resp = await client.post(
-                f"{WEB_API_URL}/vpn/toggle-whitelist/",
-                json={"telegram_id": str(call.from_user.id)}
+                f"{WEB_API_URL}/vpn/custom-whitelist/",
+                json={"telegram_id": str(call.from_user.id), "action": "toggle_ru_by"}
             )
             res_data = resp.json()
             is_active = res_data.get('whitelist_enabled')
-            msg = "Белый список ВКЛ: Госуслуги и банки идут напрямую!" if is_active else "Белый список ВЫКЛ: весь трафик через VPN"
+            msg = "✓ Обход .ru и .by ВКЛЮЧЕН (напрямую)!" if is_active else "✓ Обход .ru и .by ВЫКЛЮЧЕН (через VPN)"
             await call.answer(msg, show_alert=True)
         except Exception as e:
             logger.error(f"Error toggling whitelist: {e}")
             await call.answer("Ошибка при переключении", show_alert=True)
+    return await cb_view_whitelist(call)
 
-    # Refresh menu
-    await cb_main_menu(call)
+
+@dp.callback_query(F.data == "clear_wl_sites")
+async def cb_clear_wl_sites(call: CallbackQuery):
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/vpn/custom-whitelist/",
+                json={"telegram_id": str(call.from_user.id), "action": "clear"}
+            )
+            await call.answer("✓ Список персональных сайтов очищен!", show_alert=True)
+        except Exception as e:
+            logger.error(f"Error clearing whitelist: {e}")
+            await call.answer("Ошибка при очистке списка", show_alert=True)
+    return await cb_view_whitelist(call)
+
+
+@dp.callback_query(F.data == "add_wl_site")
+async def cb_add_wl_site(call: CallbackQuery):
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="◀️ Назад к белому списку", callback_data="view_whitelist")]
+    ])
+    text = (
+        f"➕ <b>Добавление сайта в белый список</b>\n\n"
+        f"Просто <b>отправьте мне в чат</b> домен или адрес сайта, который нужно открывать <b>напрямую мимо VPN</b>.\n\n"
+        f"Например:\n"
+        f"• <code>mycompany.com</code>\n"
+        f"• <code>game-server.net</code>\n"
+        f"• <code>work-portal.by</code>\n\n"
+        f"<i>(Можно отправить сразу несколько сайтов через запятую или пробел)</i>"
+    )
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=kb)
+    await call.answer()
 
 
 @dp.callback_query(F.data == "buy_turbo")
@@ -682,6 +746,41 @@ async def cmd_promo(message: Message):
         except Exception as e:
             logger.error(f"Error activating promo in bot: {e}")
             await message.answer("⚠️ Ошибка при активации промокода. Попробуйте позже.")
+
+
+@dp.message(F.text & ~F.text.startswith("/"))
+async def handle_user_text_message(message: Message):
+    text = (message.text or "").strip()
+    # Check if text looks like a domain or URL to whitelist
+    words = text.replace(",", " ").split()
+    has_domain = any("." in w and len(w) > 3 and not w.startswith("/") for w in words)
+    if has_domain and len(text) < 500:
+        clean_text = text.replace("http://", "").replace("https://", "").strip()
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                resp = await client.post(
+                    f"{WEB_API_URL}/vpn/custom-whitelist/",
+                    json={"telegram_id": str(message.from_user.id), "action": "append", "domain": clean_text}
+                )
+                res_data = resp.json()
+                if res_data.get('success'):
+                    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                    kb = InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(text="🛡️ Открыть Белый список", callback_data="view_whitelist")],
+                        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="main_menu")]
+                    ])
+                    await message.answer(
+                        f"✅ <b>Сайт(ы) успешно добавлены в белый список!</b>\n\n"
+                        f"Домены: <code>{clean_text}</code>\n\n"
+                        f"Они будут открываться <b>напрямую без VPN</b> на полной скорости вашего интернета.",
+                        parse_mode="HTML",
+                        reply_markup=kb
+                    )
+                    return
+            except Exception as e:
+                logger.error(f"Error appending domain via chat: {e}")
+
+    await cmd_start(message, CommandObject(command="start", args=None))
 
 
 async def main():
