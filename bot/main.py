@@ -4,6 +4,8 @@ import httpx
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, CommandObject, Command
 from aiogram.types import Message, CallbackQuery
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 
 from bot.config import BOT_TOKEN, WEB_API_URL, SITE_URL, SUPPORT_TELEGRAM
 from bot.keyboards.inline import (
@@ -18,7 +20,7 @@ from bot.keyboards.inline import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-bot = Bot(token=BOT_TOKEN)
+bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
 
@@ -136,6 +138,7 @@ async def cmd_start(message: Message, command: CommandObject):
 
     await message.answer(
         welcome_text,
+        parse_mode="HTML",
         reply_markup=get_main_menu(vpn_info, user_info)
     )
 
