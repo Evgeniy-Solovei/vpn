@@ -14,8 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBuyTraffic();
   initCustomWhitelist();
   initPromoCode();
-  initBePaid();
-  initYooKassa();
+  initPaymentModal();
   initModals();
   initGuideTabs();
   initTelegramLink();
@@ -678,82 +677,130 @@ function initPromoCode() {
 }
 
 // ==========================================
-// 8.7. BEPAID CHECKOUT (BELARUS)
+// 8.7. DYNAMIC CHECKOUT MODAL (YOOKASSA & BEPAID)
 // ==========================================
-function initBePaid() {
-  const btn = document.getElementById('btn-bepaid-pay');
-  if (!btn) return;
+function initPaymentModal() {
+  const payModal = document.getElementById('pay-modal');
+  if (!payModal) return;
 
-  btn.addEventListener('click', async () => {
-    btn.disabled = true;
-    const oldText = btn.textContent;
-    btn.textContent = 'Подключение к bePaid...';
+  let selectedPkgId = null;
+  let selectedMethod = 'yookassa';
+  let priceRub = '105';
+  let priceByn = '5.00';
 
-    try {
-      const res = await fetch('/billing/bepaid/checkout/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken')
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({})
-      });
-      const data = await res.json();
-      if (data.success && data.checkout_url) {
-        window.location.href = data.checkout_url;
-      } else {
-        showToast(data.error || 'Ошибка создания платежа bePaid');
-        btn.disabled = false;
-        btn.textContent = oldText;
-      }
-    } catch (e) {
-      console.error(e);
-      showToast('Ошибка соединения');
-      btn.disabled = false;
-      btn.textContent = oldText;
+  const updateSubmitButton = () => {
+    const btn = document.getElementById('btn-submit-pay');
+    if (!btn) return;
+    if (selectedMethod === 'bepaid') {
+      btn.textContent = `🇧🇾 Оплатить ${priceByn} BYN через bePaid`;
+    } else {
+      btn.textContent = `🇷🇺 Оплатить ${priceRub} ₽ через ЮKassa`;
     }
+  };
+
+  // Pre-select initial package
+  const firstPkg = payModal.querySelector('.package-select-card.selected') || payModal.querySelector('.package-select-card');
+  if (firstPkg) {
+    firstPkg.classList.add('selected');
+    selectedPkgId = firstPkg.getAttribute('data-pkg-id');
+    priceRub = firstPkg.getAttribute('data-price-rub') || '105';
+    priceByn = firstPkg.getAttribute('data-price-byn') || '5.00';
+    updateSubmitButton();
+  }
+
+  // Package select cards click
+  payModal.querySelectorAll('.package-select-card').forEach(card => {
+    card.addEventListener('click', () => {
+      payModal.querySelectorAll('.package-select-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedPkgId = card.getAttribute('data-pkg-id');
+      priceRub = card.getAttribute('data-price-rub') || '105';
+      priceByn = card.getAttribute('data-price-byn') || '5.00';
+      updateSubmitButton();
+    });
   });
-}
 
-// ==========================================
-// 8.8. YOOKASSA CHECKOUT (RUSSIA / SELF-EMPLOYED)
-// ==========================================
-function initYooKassa() {
-  const btn = document.getElementById('btn-yookassa-pay');
-  if (!btn) return;
+  // Method select tabs click
+  payModal.querySelectorAll('.pay-method-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      payModal.querySelectorAll('.pay-method-tab').forEach(t => t.classList.remove('selected'));
+      tab.classList.add('selected');
+      selectedMethod = tab.getAttribute('data-method') || 'yookassa';
+      updateSubmitButton();
+    });
+  });
 
-  btn.addEventListener('click', async () => {
-    btn.disabled = true;
-    const oldText = btn.textContent;
-    btn.textContent = 'Подключение к ЮKassa...';
-
-    try {
-      const res = await fetch('/billing/yookassa/create/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken'),
-          'Accept': 'application/json'
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({ amount: 105, payment_method: 'sbp' })
+  // Quick buttons on dashboard
+  const ruBtn = document.getElementById('btn-yookassa-pay');
+  if (ruBtn) {
+    ruBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      selectedMethod = 'yookassa';
+      payModal.querySelectorAll('.pay-method-tab').forEach(t => {
+        t.classList.toggle('selected', t.getAttribute('data-method') === 'yookassa');
       });
-      const data = await res.json();
-      if (data.success && data.checkout_url) {
-        window.location.href = data.checkout_url;
-      } else {
-        showToast(data.error || 'Ошибка создания платежа ЮKassa');
-        btn.disabled = false;
-        btn.textContent = oldText;
+      updateSubmitButton();
+      payModal.classList.add('active');
+    });
+  }
+
+  const byBtn = document.getElementById('btn-bepaid-pay');
+  if (byBtn) {
+    byBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      selectedMethod = 'bepaid';
+      payModal.querySelectorAll('.pay-method-tab').forEach(t => {
+        t.classList.toggle('selected', t.getAttribute('data-method') === 'bepaid');
+      });
+      updateSubmitButton();
+      payModal.classList.add('active');
+    });
+  }
+
+  // Submit payment
+  const submitBtn = document.getElementById('btn-submit-pay');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', async () => {
+      submitBtn.disabled = true;
+      const oldText = submitBtn.textContent;
+      submitBtn.textContent = 'Создание безопасного платежа...';
+
+      const endpoint = selectedMethod === 'bepaid' 
+        ? '/billing/bepaid/checkout/' 
+        : '/billing/yookassa/create/';
+
+      const payload = {
+        package_id: selectedPkgId,
+        payment_method: 'sbp'
+      };
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Accept': 'application/json'
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success && data.checkout_url) {
+          window.location.href = data.checkout_url;
+        } else {
+          showToast(data.error || 'Ошибка создания платежа');
+          submitBtn.disabled = false;
+          submitBtn.textContent = oldText;
+        }
+      } catch (e) {
+        console.error('Payment checkout error:', e);
+        showToast('Ошибка соединения');
+        submitBtn.disabled = false;
+        submitBtn.textContent = oldText;
       }
-    } catch (e) {
-      console.error(e);
-      showToast('Ошибка соединения');
-      btn.disabled = false;
-      btn.textContent = oldText;
-    }
-  });
+    });
+  }
 }
 
 // ==========================================

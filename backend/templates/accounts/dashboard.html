@@ -113,13 +113,13 @@
             {{ user.balance }} <span class="balance-currency">₽</span>
           </div>
         </div>
-        <a href="{% url 'tariffs' %}" class="btn btn-primary" style="padding: 0.55rem 1.15rem; font-size: 0.85rem;">
+        <button type="button" class="btn btn-primary" data-modal-target="pay-modal" style="padding: 0.55rem 1.15rem; font-size: 0.85rem;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
           Пополнить
-        </a>
+        </button>
       </div>
 
       <div style="background: rgba(255, 255, 255, 0.035); border: 1px solid var(--border-subtle); border-radius: 0.95rem; padding: 0.9rem 1.1rem; margin-bottom: 1rem;">
@@ -157,10 +157,10 @@
 
       <!-- Regional Payment Quick Buttons (Russia & Belarus for Self-employed) -->
       <div class="quick-pay-grid">
-        <button type="button" id="btn-yookassa-pay" class="btn btn-secondary" style="font-size: 0.76rem; border-color: rgba(139, 92, 246, 0.35); color: #c084fc; justify-content: center; padding: 0.55rem 0.4rem; text-align: center;" title="Оплата в РФ через ЮKassa: СБП, МИР, Сбер, Т-Банк">
+        <button type="button" id="btn-yookassa-pay" data-modal-target="pay-modal" data-region="ru" class="btn btn-secondary" style="font-size: 0.76rem; border-color: rgba(139, 92, 246, 0.35); color: #c084fc; justify-content: center; padding: 0.55rem 0.4rem; text-align: center;" title="Оплата в РФ через ЮKassa: СБП, МИР, Сбер, Т-Банк">
           🇷🇺 ЮKassa (СБП / МИР)
         </button>
-        <button type="button" id="btn-bepaid-pay" class="btn btn-secondary" style="font-size: 0.76rem; border-color: rgba(16, 185, 129, 0.35); color: #34d399; justify-content: center; padding: 0.55rem 0.4rem; text-align: center;" title="Оплата в РБ через bePaid: Белкарт, ЕРИП, Visa, Mastercard">
+        <button type="button" id="btn-bepaid-pay" data-modal-target="pay-modal" data-region="by" class="btn btn-secondary" style="font-size: 0.76rem; border-color: rgba(16, 185, 129, 0.35); color: #34d399; justify-content: center; padding: 0.55rem 0.4rem; text-align: center;" title="Оплата в РБ через bePaid: Белкарт, ЕРИП, Visa, Mastercard">
           🇧🇾 bePaid (РБ / ЕРИП)
         </button>
       </div>
@@ -412,6 +412,82 @@
 <!-- ==========================================
      MODALS
      ========================================== -->
+
+<!-- Payment & Tariffs Top-up Modal -->
+<div class="modal-overlay" id="pay-modal">
+  <div class="modal-body" style="max-width: 500px; padding: 1.75rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; color: #34d399;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+            <line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+        </div>
+        <div>
+          <h3 style="font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0;">Пополнение и тарифы</h3>
+          <span style="font-size: 0.75rem; color: #34d399; font-weight: 600;">Цены и дни обновляются автоматически</span>
+        </div>
+      </div>
+      <button type="button" class="btn btn-secondary modal-close" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;">✕</button>
+    </div>
+
+    <!-- Step 1: Select Package -->
+    <div style="margin-bottom: 1.25rem;">
+      <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem;">
+        1. Выберите период подписки
+      </div>
+      <div class="package-select-grid" id="modal-package-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem;">
+        {% for pkg in packages %}
+          <div class="package-select-card {% if pkg.is_featured or forloop.first and not pkg.is_featured %}selected{% endif %}" 
+               data-pkg-id="{{ pkg.id }}" 
+               data-pkg-days="{{ pkg.days }}" 
+               data-price-rub="{{ pkg.price_rub|floatformat:0 }}" 
+               data-price-byn="{{ pkg.price_byn }}"
+               style="cursor: pointer; background: rgba(255, 255, 255, 0.03); border: 2px solid {% if pkg.is_featured %}var(--accent-emerald){% else %}var(--border-subtle){% endif %}; border-radius: 12px; padding: 0.85rem 0.75rem; text-align: center; position: relative; transition: all 0.2s ease;">
+            {% if pkg.badge %}
+              <span style="position: absolute; top: -8px; right: 8px; font-size: 0.65rem; background: var(--accent-emerald); color: #000; font-weight: 800; padding: 0.1rem 0.45rem; border-radius: 999px;">{{ pkg.badge }}</span>
+            {% endif %}
+            <div style="font-size: 0.92rem; font-weight: 800; color: #fff;">{{ pkg.name }}</div>
+            <div style="font-size: 1.2rem; font-weight: 800; color: #34d399; margin: 0.2rem 0;">{{ pkg.price_rub|floatformat:0 }} ₽</div>
+            <div style="font-size: 0.72rem; color: var(--text-dim);">{{ pkg.price_byn }} BYN • {{ pkg.daily_rub }} ₽/день</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Step 2: Payment Method -->
+    <div style="margin-bottom: 1.25rem;">
+      <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem;">
+        2. Способ оплаты
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+        <button type="button" class="btn btn-secondary pay-method-tab selected" data-method="yookassa" style="border-color: rgba(139, 92, 246, 0.4); text-align: left; padding: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.3rem;">🇷🇺</span>
+          <div>
+            <div style="font-weight: 700; color: #fff; font-size: 0.82rem;">ЮKassa (РФ)</div>
+            <div style="font-size: 0.68rem; color: var(--text-dim);">СБП 0%, МИР, СберPay</div>
+          </div>
+        </button>
+        <button type="button" class="btn btn-secondary pay-method-tab" data-method="bepaid" style="border-color: rgba(16, 185, 129, 0.4); text-align: left; padding: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.3rem;">🇧🇾</span>
+          <div>
+            <div style="font-weight: 700; color: #fff; font-size: 0.82rem;">bePaid (РБ)</div>
+            <div style="font-size: 0.68rem; color: var(--text-dim);">Белкарт, ЕРИП, Visa</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Submit Payment Button -->
+    <button type="button" id="btn-submit-pay" class="btn btn-primary btn-block" style="padding: 0.9rem; font-size: 1rem; font-weight: 800; justify-content: center; margin-bottom: 0.75rem;">
+      💳 Перейти к оплате
+    </button>
+    <div style="font-size: 0.72rem; color: var(--text-dim); text-align: center;">
+      Официальный платёж с фискальным чеком • Мгновенное продление доступа
+    </div>
+  </div>
+</div>
 
 <!-- Smart Connect Modal (INCY 1-Click) -->
 <div class="modal-overlay" id="connect-modal">

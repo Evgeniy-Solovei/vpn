@@ -404,6 +404,12 @@ def switch_server_api(request):
             key.server = server
             key.save()
 
+        from apps.vpn.services import ensure_key_in_panel
+        try:
+            ensure_key_in_panel(key)
+        except Exception:
+            pass
+
         res_data = build_user_response(user)
         res_data['success'] = True
         return JsonResponse(res_data)

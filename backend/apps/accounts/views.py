@@ -222,9 +222,10 @@ def dashboard_view(request):
         server = get_or_create_default_server()
         key = VPNKey.objects.create(user=user, server=server)
 
-    from apps.vpn.services import ensure_key_in_panel, sync_key_traffic
+    from apps.vpn.services import ensure_key_in_panel, ensure_key_in_all_active_servers, sync_key_traffic
     try:
         ensure_key_in_panel(key)
+        ensure_key_in_all_active_servers(key)
         sync_key_traffic(key)
     except Exception:
         pass
@@ -276,10 +277,16 @@ def dashboard_view(request):
     elif payment_status in ('failed', 'cancelled'):
         messages.warning(request, "Платёж был отменён или не завершён. Средства не списаны.")
 
+    from apps.billing.models import SubscriptionPackage, TariffPlan
+    packages = SubscriptionPackage.get_active_packages()
+    plans = TariffPlan.objects.filter(is_active=True)
+
     return render(request, 'accounts/dashboard.html', {
         'user': user,
         'vpn_key': key,
         'servers': servers,
+        'packages': packages,
+        'plans': plans,
         'referrals_count': referrals_count,
         'referral_url': referral_url,
         'is_telegram_linked': bool(user.telegram_id),

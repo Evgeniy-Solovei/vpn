@@ -148,7 +148,7 @@ class BillingTestCase(TestCase):
         order.refresh_from_db()
         self.assertEqual(order.status, PaymentOrder.Status.PAID)
         self.user.refresh_from_db()
-        self.assertEqual(self.user.balance, initial_balance + Decimal('150.00'))
+        self.assertEqual(self.user.balance, initial_balance + order.amount_rub)
 
     def test_promo_code_inactive_rejected(self):
         """Inactive promo codes cannot be redeemed."""

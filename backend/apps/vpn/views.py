@@ -28,6 +28,13 @@ def subscription_view(request, token):
             status=402
         )
 
+    # Ensure key UUID is registered across all active servers
+    from .services import ensure_key_in_all_active_servers
+    try:
+        ensure_key_in_all_active_servers(key)
+    except Exception:
+        pass
+
     # Collect active servers
     from urllib.parse import quote
     from .models import COUNTRY_FLAGS

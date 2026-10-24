@@ -39,6 +39,37 @@ def tariffs_view(request):
         plans = TariffPlan.objects.filter(is_active=True)
 
     packages = SubscriptionPackage.get_active_packages()
+
+    if request.headers.get('Accept') == 'application/json' or request.GET.get('format') == 'json':
+        return JsonResponse({
+            'success': True,
+            'plans': [
+                {
+                    'id': p.id,
+                    'name': p.name,
+                    'code': p.code,
+                    'daily_price': float(p.daily_price),
+                    'speed_mbps': p.speed_mbps,
+                    'description': p.description,
+                    'is_featured': p.is_featured,
+                }
+                for p in plans
+            ],
+            'packages': [
+                {
+                    'id': pkg.id,
+                    'name': pkg.name,
+                    'days': pkg.days,
+                    'price_rub': float(pkg.price_rub),
+                    'price_byn': float(pkg.price_byn),
+                    'daily_rub': float(pkg.daily_rub),
+                    'badge': pkg.badge,
+                    'is_featured': pkg.is_featured,
+                }
+                for pkg in packages
+            ]
+        })
+
     user = request.user if request.user.is_authenticated else None
     return render(request, 'billing/tariffs.html', {'plans': plans, 'packages': packages, 'user': user})
 
@@ -193,9 +224,40 @@ def bepaid_checkout_view(request):
     checkout_api_url = getattr(settings, 'BEPAID_CHECKOUT_URL', 'https://checkout.bepaid.by/ctp/api/checkouts')
 
     order_id = f"LD-{uuid.uuid4().hex[:10].upper()}"
-    days = 30
-    amount_byn = Decimal('5.00')   # 5.00 BYN (~150 RUB)
-    amount_rub = Decimal('150.00')
+
+    # Dynamic package extraction from SubscriptionPackage
+    packages = SubscriptionPackage.get_active_packages()
+    package_id = None
+    days_req = None
+    if request.content_type == 'application/json' and request.body:
+        try:
+            req_data = json.loads(request.body.decode('utf-8'))
+            package_id = req_data.get('package_id')
+            days_req = req_data.get('days')
+        except Exception:
+            pass
+    else:
+        package_id = request.POST.get('package_id')
+        days_req = request.POST.get('days')
+
+    pkg = None
+    if package_id:
+        pkg = packages.filter(id=package_id).first()
+    elif days_req:
+        pkg = packages.filter(days=days_req).first()
+
+    if not pkg:
+        pkg = packages.filter(is_featured=True).first() or packages.first()
+
+    if pkg:
+        days = pkg.days
+        amount_byn = pkg.price_byn
+        amount_rub = pkg.price_rub
+    else:
+        days = 30
+        amount_byn = Decimal('5.00')
+        amount_rub = Decimal('150.00')
+
     amount_cents = int(amount_byn * 100)
 
     site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
@@ -367,28 +429,53 @@ def yookassa_create_payment_view(request):
         return redirect('login')
 
     # Read params from POST form or JSON
-    amount_str = '105'
+    package_id = None
+    days_req = None
+    amount_str = None
     payment_method = 'sbp'
+
     if request.content_type == 'application/json' and request.body:
         try:
             payload_data = json.loads(request.body.decode('utf-8'))
-            amount_str = str(payload_data.get('amount', '105'))
+            package_id = payload_data.get('package_id')
+            days_req = payload_data.get('days')
+            amount_str = payload_data.get('amount')
             payment_method = payload_data.get('payment_method', 'sbp')
         except Exception:
             pass
     else:
-        amount_str = request.POST.get('amount', '105')
+        package_id = request.POST.get('package_id')
+        days_req = request.POST.get('days')
+        amount_str = request.POST.get('amount')
         payment_method = request.POST.get('payment_method', 'sbp')
 
-    try:
-        amount_rub = Decimal(amount_str)
-        if amount_rub < Decimal('10'):
-            amount_rub = Decimal('10')
-    except Exception:
-        amount_rub = Decimal('105.00')
+    packages = SubscriptionPackage.get_active_packages()
+    pkg = None
+    if package_id:
+        pkg = packages.filter(id=package_id).first()
+    elif days_req:
+        pkg = packages.filter(days=days_req).first()
 
-    daily_price = user.daily_deduction or Decimal('3.50')
-    days = max(1, int(amount_rub / daily_price))
+    if pkg:
+        amount_rub = pkg.price_rub
+        days = pkg.days
+    elif amount_str:
+        try:
+            amount_rub = Decimal(str(amount_str))
+            if amount_rub < Decimal('10'):
+                amount_rub = Decimal('10')
+        except Exception:
+            amount_rub = Decimal('105.00')
+        daily_price = user.daily_deduction or Decimal('3.50')
+        days = max(1, int(amount_rub / daily_price))
+    else:
+        pkg = packages.filter(is_featured=True).first() or packages.first()
+        if pkg:
+            amount_rub = pkg.price_rub
+            days = pkg.days
+        else:
+            amount_rub = Decimal('105.00')
+            days = 30
 
     order_id = f"LD-YK-{uuid.uuid4().hex[:10].upper()}"
     shop_id = getattr(settings, 'YOOKASSA_SHOP_ID', '')

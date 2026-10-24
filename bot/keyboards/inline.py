@@ -129,13 +129,13 @@ def get_yookassa_pay_button(checkout_url: str, amount: int, days: int) -> Inline
 def get_download_menu() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="🍏 INCY для iPhone / iPad (App Store)", url="https://apps.apple.com/app/incy/id6477873703"),
+            InlineKeyboardButton(text="🍏 INCY для iPhone / iPad (App Store)", url="https://apps.apple.com/app/incy/id6756943388"),
         ],
         [
             InlineKeyboardButton(text="🤖 INCY для Android (Google Play)", url="https://play.google.com/store/apps/details?id=llc.itdev.incy"),
         ],
         [
-            InlineKeyboardButton(text="💻 INCY для ПК и Mac (Официальный сайт)", url="https://incy.app"),
+            InlineKeyboardButton(text="💻 INCY для ПК и Mac (Официальный сайт)", url="https://incy.app/skachat/"),
         ],
         [
             InlineKeyboardButton(text="◀️ Назад в меню", callback_data="main_menu")

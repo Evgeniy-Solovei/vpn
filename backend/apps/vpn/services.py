@@ -387,13 +387,37 @@ def ensure_key_in_panel(key: VPNKey):
         return False
 
 
-def sync_all_keys_to_panel() -> int:
-    """Ensures all active keys are registered in their servers' 3X-UI inbound."""
+def ensure_key_in_all_active_servers(key: VPNKey) -> int:
+    """
+    Ensures client key UUID is registered across ALL active VPN servers with panels.
+    Guarantees seamless multi-server subscription support (/sub/<token>) and instant server switching.
+    """
+    if not key or not key.user:
+        return 0
     synced = 0
-    for key in VPNKey.objects.filter(is_active=True).select_related('server', 'user'):
-        if key.server and key.server.panel_url:
-            if ensure_key_in_panel(key):
+    active_servers = VPNServer.objects.filter(is_active=True).exclude(panel_url__isnull=True).exclude(panel_url='')
+    for srv in active_servers:
+        try:
+            svc = ThreeXUIService(srv)
+            if svc.add_client(key):
                 synced += 1
+        except Exception as e:
+            logger.debug(f"Error registering key on server {srv.clean_name}: {e}")
+    return synced
+
+
+def sync_all_keys_to_panel() -> int:
+    """Ensures all active keys are registered across all active 3X-UI inbounds."""
+    synced = 0
+    active_servers = list(VPNServer.objects.filter(is_active=True).exclude(panel_url__isnull=True).exclude(panel_url=''))
+    for key in VPNKey.objects.filter(is_active=True).select_related('server', 'user'):
+        for srv in active_servers:
+            try:
+                svc = ThreeXUIService(srv)
+                if svc.add_client(key):
+                    synced += 1
+            except Exception:
+                pass
     return synced
 
 
