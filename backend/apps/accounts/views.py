@@ -1,4 +1,6 @@
 import logging
+import hmac
+import hashlib
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -314,6 +316,111 @@ def magic_login_view(request, token):
 
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
     messages.success(request, f"Добро пожаловать, {user.username}! Вы успешно вошли через Telegram.")
+    response = redirect('dashboard')
+    return apply_persistent_auth(request, response, user, remember=True, days=90)
+
+
+def telegram_auth_callback_view(request):
+    """
+    Handles official Telegram Login Widget callback.
+    Authenticates user, creates account if needed, or links Telegram to current session.
+    """
+    auth_data = dict(request.GET.items())
+    check_hash = auth_data.get('hash')
+    if not check_hash:
+        messages.error(request, "Некорректные данные авторизации Telegram.")
+        return redirect('login')
+
+    bot_token = getattr(settings, 'BOT_TOKEN', '')
+    if not bot_token:
+        messages.error(request, "Telegram-авторизация временно недоступна.")
+        return redirect('login')
+
+    # Verify Telegram signature
+    data_check = []
+    for k, v in sorted(auth_data.items()):
+        if k != 'hash':
+            data_check.append(f"{k}={v}")
+    data_check_string = "\n".join(data_check)
+    secret_key = hashlib.sha256(bot_token.encode()).digest()
+    expected_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(expected_hash, check_hash):
+        messages.error(request, "Ошибка проверки подлинности данных Telegram.")
+        return redirect('login')
+
+    telegram_id = str(auth_data.get('id', '')).strip()
+    telegram_username = (auth_data.get('username') or '').strip()
+    first_name = (auth_data.get('first_name') or '').strip()
+
+    # Scenario 1: User is already logged in on website and linking Telegram
+    if request.user.is_authenticated:
+        user = request.user
+        existing = CustomUser.objects.filter(telegram_id=telegram_id).exclude(id=user.id).first()
+        if existing:
+            messages.warning(request, f"Этот Telegram-аккаунт уже привязан к пользователю {existing.username}.")
+            return redirect('dashboard')
+
+        user.telegram_id = telegram_id
+        if telegram_username:
+            user.telegram_username = telegram_username
+        if not user.telegram_bonus_claimed:
+            user.telegram_bonus_claimed = True
+            user.balance += Decimal("7.00")  # +2 days bonus
+            messages.success(request, "🎉 Telegram успешно привязан! Вам начислено +2 дня бесплатного VPN (+7.00 ₽).")
+        else:
+            messages.success(request, "Telegram успешно привязан к вашему аккаунту.")
+        user.save()
+        return redirect('dashboard')
+
+    # Scenario 2: User logging in via Telegram widget
+    user = CustomUser.objects.filter(telegram_id=telegram_id).first()
+    if not user and telegram_username:
+        user = CustomUser.objects.filter(username=telegram_username).first()
+        if user and not user.telegram_id:
+            user.telegram_id = telegram_id
+            user.save()
+
+    if not user:
+        # Create new user for Telegram visitor
+        base_username = telegram_username or f"tg_{telegram_id}"
+        username = base_username
+        counter = 1
+        while CustomUser.objects.filter(username=username).exists():
+            username = f"{base_username}_{counter}"
+            counter += 1
+
+        user = CustomUser.objects.create(
+            username=username,
+            telegram_id=telegram_id,
+            telegram_username=telegram_username,
+            first_name=first_name,
+            balance=Decimal("10.50"),  # 3 days trial
+            daily_deduction=Decimal("3.50"),
+            telegram_bonus_claimed=True,
+        )
+        user.set_unusable_password()
+        user.save()
+
+        # Generate VPNKey
+        from apps.vpn.models import VPNKey
+        from apps.vpn.services import get_or_create_default_server, ThreeXUIService
+        server = get_or_create_default_server()
+        key = VPNKey.objects.create(
+            user=user,
+            server=server,
+            traffic_limit_gb=200,
+            max_devices=5,
+        )
+        try:
+            service = ThreeXUIService(server)
+            service.add_client(key)
+        except Exception:
+            pass
+
+        messages.success(request, f"Добро пожаловать в VPN live-dev! Вам начислено 3 дня бесплатного доступа.")
+
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
     response = redirect('dashboard')
     return apply_persistent_auth(request, response, user, remember=True, days=90)
 

@@ -56,13 +56,36 @@
       </div>
 
       <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.25rem;">
-        <span>Войти в кабинет</span>
+        <span>Войти по паролю</span>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="5" y1="12" x2="19" y2="12"/>
           <polyline points="12 5 19 12 12 19"/>
         </svg>
       </button>
     </form>
+
+    <!-- Fast Telegram Login Divider -->
+    <div style="display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0 1.25rem;">
+      <div style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08);"></div>
+      <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Или мгновенно через Telegram</span>
+      <div style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08);"></div>
+    </div>
+
+    <!-- Telegram Login Block -->
+    <div style="text-align: center; background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 0.85rem; padding: 1.15rem; margin-bottom: 1.25rem;">
+      <div style="margin-bottom: 0.85rem;">
+        <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                data-telegram-login="{{ BOT_USERNAME }}" 
+                data-size="large" 
+                data-radius="10" 
+                data-auth-url="{% url 'telegram_auth_callback' %}" 
+                data-request-access="write"></script>
+      </div>
+
+      <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
+        Или откройте бота <a href="https://t.me/{{ BOT_USERNAME }}" target="_blank" style="color: #38bdf8; font-weight: 700; text-decoration: underline;">@{{ BOT_USERNAME }}</a> и нажмите <strong>«💻 Войти на сайте (ПК)»</strong> для входа в 1 клик.
+      </div>
+    </div>
 
     <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
       Ещё нет аккаунта? <a href="{% url 'register' %}" style="color: var(--accent-emerald); text-decoration: none; font-weight: 600;">Зарегистрироваться</a>

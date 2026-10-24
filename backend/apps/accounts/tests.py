@@ -455,5 +455,32 @@ class AccountsTestCase(TestCase):
         # User is authenticated
         self.assertEqual(int(self.client.session['_auth_user_id']), user.id)
 
+    def test_telegram_auth_callback(self):
+        """Telegram widget authorization logs in existing user or creates new."""
+        import hmac
+        import hashlib
+        from django.conf import settings
+
+        bot_token = getattr(settings, 'BOT_TOKEN', '') or 'test_bot_token'
+        with self.settings(BOT_TOKEN=bot_token):
+            auth_data = {
+                'id': '987654321',
+                'first_name': 'TestTelegram',
+                'username': 'tg_tester',
+                'auth_date': '1700000000',
+            }
+            data_check = [f"{k}={v}" for k, v in sorted(auth_data.items())]
+            data_check_string = "\n".join(data_check)
+            secret_key = hashlib.sha256(bot_token.encode()).digest()
+            auth_data['hash'] = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+
+            resp = self.client.get(reverse('telegram_auth_callback'), auth_data)
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp.url, reverse('dashboard'))
+
+            created = User.objects.get(telegram_id='987654321')
+            self.assertEqual(created.telegram_username, 'tg_tester')
+            self.assertEqual(int(self.client.session['_auth_user_id']), created.id)
+
 
 
