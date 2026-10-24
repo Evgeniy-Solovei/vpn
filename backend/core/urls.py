@@ -23,6 +23,7 @@ urlpatterns = [
     path('auth/', include('apps.accounts.urls')),
     path('dashboard/', include('apps.accounts.dashboard_urls')),
     path('billing/', include('apps.billing.urls')),
+    path('tariffs/', billing_views.tariffs_view, name='root_tariffs'),
     path('legal/', billing_views.legal_view, name='root_legal'),
     path('requisites/', billing_views.legal_view, name='root_requisites'),
     path('terms/', billing_views.legal_view, name='root_terms'),
