@@ -7,19 +7,22 @@ from django.conf import settings
 from apps.accounts.models import CustomUser
 
 COUNTRY_FLAGS = {
-    'NL': '🇳🇱',
+    'FR': '🇫🇷',
     'DE': '🇩🇪',
+    'NL': '🇳🇱',
+    'US': '🇺🇸',
+    'GB': '🇬🇧',
     'FI': '🇫🇮',
     'SE': '🇸🇪',
-    'US': '🇺🇸',
+    'ES': '🇪🇸',
+    'PL': '🇵🇱',
     'TR': '🇹🇷',
     'KZ': '🇰🇿',
-    'PL': '🇵🇱',
-    'GB': '🇬🇧',
     'RU': '🇷🇺',
     'BY': '🇧🇾',
-    'FR': '🇫🇷',
     'CH': '🇨🇭',
+    'SG': '🇸🇬',
+    'AE': '🇦🇪',
 }
 
 class VPNServer(models.Model):
@@ -248,7 +251,13 @@ class VPNKey(models.Model):
 
 
     def get_vless_url(self) -> str:
-        tag = quote(f"LiveDev-{self.server.country_code}-{self.user.username}")
+        flag = COUNTRY_FLAGS.get(self.server.country_code, '🌐')
+        clean_country = self.server.country_name or "Франция"
+        clean_city = self.server.city or "Париж"
+        location = f"{clean_country}, {clean_city}".strip(', ')
+        username = getattr(self.user, 'username', '')
+        tag_text = f"{flag} {location} • live-dev ({username})" if username else f"{flag} {location} • live-dev"
+        tag = quote(tag_text)
         # VLESS XTLS Reality Vision link
         url = (
             f"vless://{self.key_uuid}@{self.server.ip}:{self.server.port}"

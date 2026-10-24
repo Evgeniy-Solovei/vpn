@@ -29,12 +29,18 @@ def subscription_view(request, token):
         )
 
     # Collect active servers
-    servers = VPNServer.objects.filter(is_active=True)
+    from urllib.parse import quote
+    from .models import COUNTRY_FLAGS
+    servers = VPNServer.objects.filter(is_active=True).order_by('order', 'id')
     vless_links = []
     for s in servers:
-        temp_key = key
-        # generate link for each server
-        tag = f"LiveDev-{s.country_code}-{user.username}"
+        flag = COUNTRY_FLAGS.get(s.country_code, '🌐')
+        clean_country = s.country_name or "Франция"
+        clean_city = s.city or "Париж"
+        location = f"{clean_country}, {clean_city}".strip(', ')
+        username = getattr(user, 'username', '')
+        tag_text = f"{flag} {location} • live-dev ({username})" if username else f"{flag} {location} • live-dev"
+        tag = quote(tag_text)
         vless_link = (
             f"vless://{key.key_uuid}@{s.ip}:{s.port}"
             f"?type=tcp"
