@@ -377,7 +377,7 @@ function initServerSwitcher() {
 
         // Update links & copy attributes
         const incyBtn = document.getElementById('btn-incy-connect');
-        if (incyBtn) incyBtn.href = data.vpn.connect_url || data.vpn.incy_url;
+        if (incyBtn) incyBtn.href = data.vpn.vless_url || data.vpn.connect_url;
 
         const vlessBtn = document.getElementById('btn-copy-vless');
         if (vlessBtn) vlessBtn.setAttribute('data-copy', data.vpn.vless_url);
@@ -439,7 +439,7 @@ function initKeyRegeneration() {
       if (data.success) {
         showToast('Ключ успешно обновлен!');
         const incyBtn = document.getElementById('btn-incy-connect');
-        if (incyBtn) incyBtn.href = data.connect_url || data.incy_url;
+        if (incyBtn) incyBtn.href = data.vless_url || data.connect_url;
 
         const copyBtn = document.getElementById('btn-copy-vless');
         if (copyBtn) copyBtn.setAttribute('data-copy', data.vless_url);
