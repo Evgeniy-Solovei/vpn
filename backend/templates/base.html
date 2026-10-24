@@ -114,17 +114,29 @@
 
     <!-- Footer -->
     <footer style="border-top: 1px solid var(--border-subtle); padding: 2rem 0; margin-top: 3.5rem; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(12px);">
-      <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; font-size: 0.85rem; color: var(--text-dim);">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          © 2026 <strong style="color: #fff; font-family: var(--font-brand);">VPN <span style="color: var(--accent-cyan); text-transform: lowercase;">live-dev</span></strong> (vpn.live-dev.by) • Свободный интернет для РФ и РБ
+      <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            © 2026 <strong style="color: #fff; font-family: var(--font-brand);">VPN <span style="color: var(--accent-cyan); text-transform: lowercase;">live-dev</span></strong> (vpn.live-dev.by) • Свободный интернет для РФ и РБ
+          </div>
+          <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+            <a href="{% url 'tariffs' %}" style="color: var(--text-muted); text-decoration: none;">Тарифы</a>
+            <a href="{% url 'legal' %}" style="color: #34d399; font-weight: 600; text-decoration: none;">Реквизиты и оферта</a>
+            <a href="/miniapp/" style="color: var(--text-muted); text-decoration: none;">Mini App</a>
+            <a href="https://t.me/{{ BOT_USERNAME }}" target="_blank" style="color: var(--text-muted); text-decoration: none;">Telegram бот</a>
+            <button type="button" data-modal-target="support-modal" style="background: none; border: none; padding: 0; color: #34d399; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
+              <span>💬 Поддержка</span>
+            </button>
+          </div>
         </div>
-        <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
-          <a href="/miniapp/" style="color: var(--text-muted); text-decoration: none;">Mini App</a>
-          <a href="https://t.me/{{ BOT_USERNAME }}" target="_blank" style="color: var(--text-muted); text-decoration: none;">Telegram бот</a>
-          <a href="{% url 'tariffs' %}" style="color: var(--text-muted); text-decoration: none;">Тарифы</a>
-          <button type="button" data-modal-target="support-modal" style="background: none; border: none; padding: 0; color: #34d399; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
-            <span>💬 Поддержка</span>
-          </button>
+
+        <div style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; font-size: 0.76rem; color: var(--text-dim);">
+          <div>
+            🏛️ Плательщик налога на проф. доход (Самозанятый): <strong>Соловей Евгений Викторович</strong> • ИНН: <strong style="color: #34d399;">971305191960</strong> • <a href="mailto:live-dev@mail.ru" style="color: var(--text-muted); text-decoration: none;">live-dev@mail.ru</a>
+          </div>
+          <div>
+            🛡️ Официальный эквайринг ЮKassa (СБП 0%, МИР, Visa, Mastercard) • Гарантия возврата 14 дней
+          </div>
         </div>
       </div>
     </footer>

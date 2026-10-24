@@ -12,4 +12,7 @@ urlpatterns = [
     path('yookassa/create/', views.yookassa_create_payment_view, name='yookassa_create'),
     path('yookassa/webhook/', views.yookassa_webhook_view, name='yookassa_webhook'),
     path('yookassa/mock-pay/<str:order_id>/', views.yookassa_mock_pay_view, name='yookassa_mock_pay'),
+    path('legal/', views.legal_view, name='legal'),
+    path('requisites/', views.legal_view, name='requisites'),
+    path('terms/', views.legal_view, name='terms'),
 ]

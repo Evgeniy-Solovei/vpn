@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 from django.views.static import serve as static_serve
 from django.contrib.staticfiles.views import serve as staticfiles_serve
+from apps.billing import views as billing_views
 
 def robust_static_serve(request, path):
     try:
@@ -22,6 +23,9 @@ urlpatterns = [
     path('auth/', include('apps.accounts.urls')),
     path('dashboard/', include('apps.accounts.dashboard_urls')),
     path('billing/', include('apps.billing.urls')),
+    path('legal/', billing_views.legal_view, name='root_legal'),
+    path('requisites/', billing_views.legal_view, name='root_requisites'),
+    path('terms/', billing_views.legal_view, name='root_terms'),
     path('vpn/', include('apps.vpn.urls')),
     path('sub/', include('apps.vpn.sub_urls')),
     path('api/', include('apps.api.urls')),

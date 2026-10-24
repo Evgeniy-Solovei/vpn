@@ -305,5 +305,21 @@ class BillingTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "успешно зачислена")
 
+    def test_legal_page_renders_requisites(self):
+        """Legal and requisites page renders 54-FZ requisites and INN."""
+        resp = self.client.get(reverse('legal'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "971305191960")
+        self.assertContains(resp, "Соловей Евгений Викторович")
+        self.assertContains(resp, "live-dev@mail.ru")
+        self.assertContains(resp, "Публичная оферта")
+
+    def test_tariffs_page_publicly_viewable(self):
+        """Tariffs page is publicly accessible without login for payment provider moderation."""
+        self.client.logout()
+        resp = self.client.get(reverse('tariffs'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Тарифы и пополнение баланса")
+
 
 

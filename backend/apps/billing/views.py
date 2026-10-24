@@ -16,7 +16,6 @@ from .models import TariffPlan, Transaction, PromoCode, PaymentOrder, YooKassaOr
 
 logger = logging.getLogger(__name__)
 
-@login_required
 def tariffs_view(request):
     plans = TariffPlan.objects.filter(is_active=True)
     if not plans.exists():
@@ -39,7 +38,24 @@ def tariffs_view(request):
         )
         plans = TariffPlan.objects.filter(is_active=True)
 
-    return render(request, 'billing/tariffs.html', {'plans': plans, 'user': request.user})
+    user = request.user if request.user.is_authenticated else None
+    return render(request, 'billing/tariffs.html', {'plans': plans, 'user': user})
+
+
+def legal_view(request):
+    """
+    Public legal information page required by YooKassa, bePaid, and 54-FZ:
+    Merchant details (ИНН, ФИО самозанятого), Public Offer, Payment methods,
+    Delivery terms, and Refund policy.
+    """
+    return render(request, 'billing/legal.html', {
+        'inn': '971305191960',
+        'fio': 'Соловей Евгений Викторович',
+        'status': 'Плательщик налога на профессиональный доход (Самозанятый РФ)',
+        'support_email': getattr(settings, 'EMAIL_HOST_USER', 'live-dev@mail.ru') or 'live-dev@mail.ru',
+        'bot_username': getattr(settings, 'BOT_USERNAME', 'live_vpn_bot'),
+        'site_url': getattr(settings, 'SITE_URL', 'https://vpn.live-dev.by')
+    })
 
 
 @login_required

@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% block title %}Реквизиты, Публичная оферта и условия возврата — VPN live-dev{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 860px; padding-top: 2rem; padding-bottom: 4rem;">
+
+  <!-- Header -->
+  <div style="text-align: center; margin-bottom: 2.5rem;">
+    <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); padding: 0.35rem 0.9rem; border-radius: 9999px; margin-bottom: 1rem;">
+      <span style="font-size: 0.85rem; color: #34d399; font-weight: 700;">Юридическая информация и оферта</span>
+    </div>
+    <h1 style="font-size: 2rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; margin-bottom: 0.5rem;">
+      Реквизиты исполнителя и условия обслуживания
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 620px; margin: 0 auto;">
+      Официальная информация для клиентов и платёжных систем (ЮKassa, bePaid) в соответствии с законодательством РФ и РБ
+    </p>
+  </div>
+
+  <!-- 1. Merchant Requisites Card -->
+  <div class="glass-card" style="padding: 1.75rem; margin-bottom: 1.75rem; border-color: rgba(16, 185, 129, 0.35);">
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+      <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(16, 185, 129, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+        🏛️
+      </div>
+      <div>
+        <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">Реквизиты самозанятого</h2>
+        <span style="font-size: 0.8rem; color: #34d399;">Исполнитель услуг по настоящему договору</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; font-size: 0.9rem;">
+      <div style="background: rgba(255,255,255,0.03); padding: 0.9rem 1.1rem; border-radius: 0.75rem; border: 1px solid var(--border-subtle);">
+        <span style="color: var(--text-dim); font-size: 0.78rem; display: block; text-transform: uppercase; letter-spacing: 0.04em;">ФИО исполнителя</span>
+        <strong style="color: #fff; font-size: 1rem;">Соловей Евгений Викторович</strong>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.03); padding: 0.9rem 1.1rem; border-radius: 0.75rem; border: 1px solid var(--border-subtle);">
+        <span style="color: var(--text-dim); font-size: 0.78rem; display: block; text-transform: uppercase; letter-spacing: 0.04em;">ИНН плательщика НПД</span>
+        <strong style="color: #34d399; font-size: 1.05rem; font-family: monospace; letter-spacing: 0.05em;">971305191960</strong>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.03); padding: 0.9rem 1.1rem; border-radius: 0.75rem; border: 1px solid var(--border-subtle);">
+        <span style="color: var(--text-dim); font-size: 0.78rem; display: block; text-transform: uppercase; letter-spacing: 0.04em;">Правовой статус</span>
+        <strong style="color: #fff;">Плательщик налога на проф. доход (Самозанятый)</strong>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.03); padding: 0.9rem 1.1rem; border-radius: 0.75rem; border: 1px solid var(--border-subtle);">
+        <span style="color: var(--text-dim); font-size: 0.78rem; display: block; text-transform: uppercase; letter-spacing: 0.04em;">Email для обращений</span>
+        <a href="mailto:live-dev@mail.ru" style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;">live-dev@mail.ru</a>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.03); padding: 0.9rem 1.1rem; border-radius: 0.75rem; border: 1px solid var(--border-subtle);">
+        <span style="color: var(--text-dim); font-size: 0.78rem; display: block; text-transform: uppercase; letter-spacing: 0.04em;">Telegram поддержка</span>
+        <a href="https://t.me/{{ bot_username }}" target="_blank" style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;">@{{ bot_username }}</a>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.03); padding: 0.9rem 1.1rem; border-radius: 0.75rem; border: 1px solid var(--border-subtle);">
+        <span style="color: var(--text-dim); font-size: 0.78rem; display: block; text-transform: uppercase; letter-spacing: 0.04em;">Официальный сайт</span>
+        <strong style="color: #fff;">vpn.live-dev.by</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Services & Pricing -->
+  <div class="glass-card" style="padding: 1.75rem; margin-bottom: 1.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+      <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+        ⚡
+      </div>
+      <div>
+        <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">Описание услуг и тарифы</h2>
+        <span style="font-size: 0.8rem; color: var(--text-dim);">Цифровые услуги персонального VPN-туннелирования</span>
+      </div>
+    </div>
+
+    <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.25rem;">
+      Исполнитель предоставляет Заказчику возмездные цифровые услуги по обеспечению защищённого персонального зашифрованного интернет-канала по современному протоколу <strong>VLESS Reality</strong> (маскировка трафика под легитимный HTTPS, защита от блокировок и перехвата персональных данных в публичных Wi-Fi сетях).
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 0.85rem 1rem; border-radius: 0.75rem; text-align: center;">
+        <div style="color: var(--text-dim); font-size: 0.8rem;">Тариф 7 дней</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">25 ₽</div>
+        <div style="font-size: 0.75rem; color: #34d399;">3.57 ₽ / день</div>
+      </div>
+
+      <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.4); padding: 0.85rem 1rem; border-radius: 0.75rem; text-align: center;">
+        <div style="color: #34d399; font-size: 0.8rem; font-weight: 700;">Тариф 30 дней (Хит)</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">105 ₽</div>
+        <div style="font-size: 0.75rem; color: #34d399;">3.50 ₽ / день</div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 0.85rem 1rem; border-radius: 0.75rem; text-align: center;">
+        <div style="color: var(--text-dim); font-size: 0.8rem;">Тариф 60 дней</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">200 ₽</div>
+        <div style="font-size: 0.75rem; color: #34d399;">3.33 ₽ / день</div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 0.85rem 1rem; border-radius: 0.75rem; text-align: center;">
+        <div style="color: var(--text-dim); font-size: 0.8rem;">Тариф 90 дней</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">280 ₽</div>
+        <div style="font-size: 0.75rem; color: #34d399;">3.11 ₽ / день</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Payment Methods & Security -->
+  <div class="glass-card" style="padding: 1.75rem; margin-bottom: 1.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+      <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(139, 92, 246, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+        💳
+      </div>
+      <div>
+        <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">Способы и безопасность оплаты</h2>
+        <span style="font-size: 0.8rem; color: #c084fc;">Официальный интернет-эквайринг ЮKassa и bePaid</span>
+      </div>
+    </div>
+
+    <div style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+      <p style="margin-bottom: 0.75rem;">
+        Оплата заказов осуществляется в безналичном порядке через защищённые платёжные шлюзы:
+      </p>
+      <ul style="padding-left: 1.25rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+        <li><strong>В Российской Федерации:</strong> через платёжный сервис <strong>ЮKassa (ООО НКО «ЮМани»)</strong>. Поддерживаются: СБП (Система быстрых платежей, комиссия 0%), банковские карты МИР, Visa, Mastercard любых банков РФ, SberPay, T-Pay, ЮMoney.</li>
+        <li><strong>В Республике Беларусь:</strong> через платёжный сервис <strong>bePaid</strong>. Поддерживаются: карты Белкарт, Visa, Mastercard, система расчётов ЕРИП.</li>
+      </ul>
+      <p style="margin: 0; font-size: 0.85rem; color: var(--text-dim); background: rgba(0,0,0,0.25); padding: 0.75rem 1rem; border-radius: 0.5rem; border-left: 3px solid #34d399;">
+        🔒 <strong>Безопасность платежей:</strong> Все платежи обрабатываются по защищённому протоколу TLS с обязательной аутентификацией 3-D Secure. Сервис VPN live-dev не собирает, не обрабатывает и не сохраняет данные банковских карт пользователей. Электронные чеки формируются в соответствии с Федеральным законом № 54-ФЗ и направляются плательщику.
+      </p>
+    </div>
+  </div>
+
+  <!-- 4. Delivery & Terms of Service -->
+  <div class="glass-card" style="padding: 1.75rem; margin-bottom: 1.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+      <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(245, 158, 11, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+        📦
+      </div>
+      <div>
+        <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">Сроки и порядок оказания услуг (доставка)</h2>
+        <span style="font-size: 0.8rem; color: #fbbf24;">Моментальное предоставление доступа</span>
+      </div>
+    </div>
+
+    <div style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+      <p style="margin-bottom: 0.75rem;">
+        Услуга является полностью цифровой (электронной). Физическая доставка материальных носителей не осуществляется.
+      </p>
+      <p style="margin-bottom: 0.75rem;">
+        <strong>Момент исполнения услуги:</strong> сразу после подтверждения успешной оплаты банком (в течение <strong>5–10 секунд</strong>) на сервере автоматически генерируется уникальный криптографический VLESS-ключ и активируется оплаченный период подписки.
+      </p>
+      <p style="margin: 0;">
+        Ключ доступа и подробные инструкции по настройке на устройствах (iOS, Android, Windows, macOS, Android TV) немедленно отображаются в <a href="{% url 'dashboard' %}" style="color: var(--accent-cyan); font-weight: 700;">Личном кабинете</a> и дублируются в Telegram-боте <a href="https://t.me/{{ bot_username }}" target="_blank" style="color: var(--accent-cyan); font-weight: 700;">@{{ bot_username }}</a>.
+      </p>
+    </div>
+  </div>
+
+  <!-- 5. Refund Policy -->
+  <div class="glass-card" style="padding: 1.75rem; margin-bottom: 1.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+      <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(239, 68, 68, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+        🔄
+      </div>
+      <div>
+        <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">Условия возврата денежных средств</h2>
+        <span style="font-size: 0.8rem; color: #f87171;">14-дневная гарантия возврата при технических неполадках</span>
+      </div>
+    </div>
+
+    <div style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+      <p style="margin-bottom: 0.75rem;">
+        1. Заказчик вправе отказаться от оплаченных услуг и запросить полный или пропорциональный возврат денежных средств в течение <strong>14 календарных дней</strong> с даты оплаты в случае невозможности получения услуги по техническим причинам со стороны Исполнителя, которые не удалось устранить службе технической поддержки.
+      </p>
+      <p style="margin-bottom: 0.75rem;">
+        2. Для оформления возврата Заказчик направляет заявление в произвольной форме на адрес электронной почты <strong>live-dev@mail.ru</strong> или через Telegram-бот <strong>@{{ bot_username }}</strong> с указанием логина/email аккаунта, номера заказа и описания возникшей проблемы.
+      </p>
+      <p style="margin: 0;">
+        3. Заявление рассматривается в течение 24 часов. Возврат денежных средств осуществляется на ту же банковскую карту или счёт, с которого был совершён платёж, в срок от <strong>1 до 10 рабочих дней</strong> (точный срок зависит от банка-эмитента карты плательщика).
+      </p>
+    </div>
+  </div>
+
+  <!-- 6. Public Offer Agreement (Text) -->
+  <div class="glass-card" style="padding: 1.75rem;">
+    <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">Публичная оферта (Пользовательское соглашение)</h2>
+    <span style="font-size: 0.78rem; color: var(--text-dim); display: block; margin-bottom: 1.25rem;">Действующая редакция от 24 октября 2026 года</span>
+
+    <div style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; max-height: 380px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 1.25rem; border-radius: 0.75rem; border: 1px solid var(--border-subtle);">
+      <p><strong>1. Общие положения</strong><br>
+      Настоящий документ является официальным предложением (публичной офертой в соответствии со ст. 437 Гражданского кодекса РФ) плательщика налога на профессиональный доход Соловья Евгения Викторовича (ИНН 971305191960), именуемого в дальнейшем «Исполнитель», любому физическому лицу, именуемому в дальнейшем «Заказчик», заключить договор об оказании цифровых услуг связи и туннелирования на условиях, изложенных в настоящей оферте.</p>
+
+      <p><strong>2. Акцепт оферты</strong><br>
+      Полным и безоговорочным акцептом условий настоящей Оферты является регистрация на сайте vpn.live-dev.by, в Telegram-боте @{{ bot_username }} и/или оплата услуг Исполнителя.</p>
+
+      <p><strong>3. Предмет соглашения</strong><br>
+      Исполнитель обязуется предоставить Заказчику доступ к аппаратно-программному комплексу защищённого персонального туннелирования данных по протоколу VLESS Reality на выбранный Заказчиком срок, а Заказчик обязуется оплатить услугу согласно действующим тарифам.</p>
+
+      <p><strong>4. Политика конфиденциальности и No-Logs</strong><br>
+      Исполнитель придерживается строгой политики отсутствия ведения логов (No-Logs Policy). Серверы VPN live-dev не сохраняют историю посещаемых сайтов, DNS-запросов и передаваемых Заказчиком данных. Для функционирования сервиса собираются только технические данные аккаунта (логин, email, срок действия подписки).</p>
+
+      <p><strong>5. Ограничение ответственности</strong><br>
+      Заказчик обязуется использовать предоставляемый сервис исключительно в законных целях. Запрещается использование сервиса для распространения вредоносного ПО, проведения сетевых атак, спам-рассылок и нарушения законодательства страны нахождения сервера и Заказчика.</p>
+
+      <p><strong>6. Контакты и поддержка</strong><br>
+      Email: live-dev@mail.ru<br>
+      Telegram: @{{ bot_username }}<br>
+      ИНН: 971305191960, Самозанятый Соловей Е.В.</p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
