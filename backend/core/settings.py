@@ -18,7 +18,8 @@ DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 ALLOWED_HOSTS = ['*'] if DEBUG else [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'vpn.live-dev.by,localhost,127.0.0.1,web').split(',') if h.strip()]
 
 DOMAIN = os.getenv('DOMAIN', 'vpn.live-dev.by')
-SITE_URL = os.getenv('SITE_URL', 'http://vpn.live-dev.by')
+SITE_URL = os.getenv('SITE_URL', 'https://vpn.live-dev.by')
+ADMIN_URL_PATH = os.getenv('ADMIN_URL_PATH', 'management-hq').strip('/')
 
 try:
     import corsheaders

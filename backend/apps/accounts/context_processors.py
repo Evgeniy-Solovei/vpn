@@ -9,4 +9,5 @@ def site_settings(request):
         'SITE_URL': site_url,
         'BOT_USERNAME': getattr(settings, 'BOT_USERNAME', 'live_vpn_bot'),
         'GOOGLE_CLIENT_ID': getattr(settings, 'GOOGLE_CLIENT_ID', ''),
+        'ADMIN_URL_PATH': getattr(settings, 'ADMIN_URL_PATH', 'management-hq').strip('/'),
     }

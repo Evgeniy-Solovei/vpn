@@ -6,6 +6,7 @@ from django.views.generic import RedirectView
 from django.views.static import serve as static_serve
 from django.contrib.staticfiles.views import serve as staticfiles_serve
 from apps.billing import views as billing_views
+from apps.accounts import views as accounts_views
 
 def robust_static_serve(request, path):
     try:
@@ -18,8 +19,17 @@ def miniapp_serve(request, path=''):
         path = 'index.html'
     return static_serve(request, path, document_root=settings.BASE_DIR.parent / 'miniapp')
 
+admin_path = getattr(settings, 'ADMIN_URL_PATH', 'management-hq').strip('/')
+
+# Strict superuser enforcement: only active superusers can access admin panel
+admin.site.has_permission = lambda request: bool(request.user.is_active and request.user.is_superuser)
+admin.site.site_header = "VPN live-dev | Панель управления"
+admin.site.site_title = "VPN live-dev Admin"
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Standard /admin/ is deliberately disabled and returns 404 for security
+    path('admin/', accounts_views.custom_404_handler),
+    path(f'{admin_path}/', admin.site.urls),
     path('auth/', include('apps.accounts.urls')),
     path('dashboard/', include('apps.accounts.dashboard_urls')),
     path('billing/', include('apps.billing.urls')),
