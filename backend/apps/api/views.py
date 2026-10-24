@@ -64,6 +64,7 @@ def build_user_response(user, is_new=False):
         'traffic': {
             'used_gb': key.used_traffic_gb,
             'limit_gb': key.traffic_limit_gb,
+            'is_unlimited': getattr(key, 'is_unlimited', True),
             'percent': key.traffic_percent,
             'left_gb': key.traffic_left_gb,
             'reset_date': key.traffic_reset_date.strftime('%d.%m.%Y') if key.traffic_reset_date else None,

@@ -146,8 +146,8 @@ class VPNKey(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Активен")
     
     # Fair Usage Policy (FUP) & Traffic Management (Pooled across all servers)
-    used_traffic_bytes = models.BigIntegerField(default=18253611008, verbose_name="Использованный трафик (байт)")
-    traffic_limit_gb = models.PositiveIntegerField(default=200, verbose_name="Лимит скоростного трафика (ГБ)")
+    used_traffic_bytes = models.BigIntegerField(default=0, verbose_name="Использованный трафик (байт)")
+    traffic_limit_gb = models.PositiveIntegerField(default=0, verbose_name="Лимит скоростного трафика (0 = Безлимит)")
     traffic_reset_date = models.DateField(default=get_default_reset_date, verbose_name="Дата следующего сброса квоты")
     is_throttled = models.BooleanField(default=False, verbose_name="Скорость ограничена (FUP)")
     custom_whitelist = models.TextField(blank=True, default="", verbose_name="Пользовательские домены-исключения")
@@ -171,7 +171,13 @@ class VPNKey(models.Model):
 
     @property
     def traffic_left_gb(self) -> float:
+        if not self.traffic_limit_gb:
+            return 0.0
         return max(0.0, round(self.traffic_limit_gb - self.used_traffic_gb, 1))
+
+    @property
+    def is_unlimited(self) -> bool:
+        return self.traffic_limit_gb == 0
 
     @property
     def current_speed_mbps(self) -> int:

@@ -35,13 +35,13 @@ def get_main_menu(vpn_data: dict, user_data: dict) -> InlineKeyboardMarkup:
                 callback_data="toggle_whitelist"
             ),
             InlineKeyboardButton(
-                text="⚡ +50 ГБ Турбо (30 ₽)",
-                callback_data="buy_turbo"
+                text="🌍 Сменить локацию",
+                web_app=WebAppInfo(url=f"{TELEGRAM_WEBAPP_URL}#servers")
             )
         ],
         [
             InlineKeyboardButton(
-                text="📲 Скачать INCY",
+                text="📲 Скачать приложение",
                 callback_data="download_app"
             ),
             InlineKeyboardButton(
