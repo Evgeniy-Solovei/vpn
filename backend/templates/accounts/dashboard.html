@@ -193,13 +193,16 @@
         <div style="display: flex; align-items: center; gap: 0.5rem;">
           <span style="font-size: 1.1rem;">📱</span>
           <div>
-            <div style="font-size: 0.82rem; font-weight: 700; color: #fff;">Лимит устройств</div>
-            <div style="font-size: 0.72rem; color: var(--text-dim);">Телефон, ПК, планшет, Smart TV</div>
+            <div style="font-size: 0.82rem; font-weight: 700; color: #fff;">Подключено устройств</div>
+            <div style="font-size: 0.72rem; color: var(--text-dim);">iPhone, ПК, планшет, Smart TV</div>
           </div>
         </div>
-        <span class="status-pill pill-emerald" style="font-size: 0.75rem; padding: 0.2rem 0.6rem;">
-          до {{ vpn_key.max_devices|default:5 }} устройств
-        </span>
+        <div style="text-align: right;">
+          <span class="status-pill pill-emerald" style="font-size: 0.75rem; padding: 0.2rem 0.6rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #34d399;"></span>
+            {% if vpn_key.used_traffic_bytes > 0 %}1{% else %}0{% endif %} из {{ vpn_key.max_devices|default:5 }} в сети
+          </span>
+        </div>
       </div>
 
       <!-- Quick Action Buttons -->
