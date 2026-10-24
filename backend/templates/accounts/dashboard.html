@@ -222,7 +222,7 @@
       </div>
 
       <div style="margin-top: 0.85rem; font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; justify-content: space-between;">
-        <span>Клиенты: <strong>Streisand</strong>, <strong>Hiddify</strong>, <strong>v2rayNG</strong></span>
+        <span>Приложение: <strong>INCY</strong></span>
         <button type="button" class="btn btn-secondary" data-copy="{{ vpn_key.get_sub_url }}" style="padding: 0.25rem 0.55rem; font-size: 0.72rem;">
           🔗 Подписка
         </button>
@@ -428,124 +428,62 @@
      MODALS
      ========================================== -->
 
-<!-- Smart Multi-Option Connect Modal -->
+<!-- Smart Connect Modal (INCY 1-Click) -->
 <div class="modal-overlay" id="connect-modal">
-  <div class="modal-body" style="max-width: 620px; max-height: 90vh; overflow-y: auto; padding: 1.5rem;">
+  <div class="modal-body" style="max-width: 480px; padding: 1.75rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
       <div style="display: flex; align-items: center; gap: 0.6rem;">
-        <span style="font-size: 1.5rem;">⚡</span>
+        <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; color: #34d399;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
         <div>
-          <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">Подключение VPN live-dev</h3>
-          <span style="font-size: 0.75rem; color: var(--accent-emerald);">Выберите наиболее удобный для вас вариант</span>
+          <h3 style="font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0;">Подключение в приложении INCY</h3>
+          <span style="font-size: 0.75rem; color: #34d399; font-weight: 600;">2 простых шага без ручных настроек</span>
         </div>
       </div>
       <button type="button" class="btn btn-secondary modal-close" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;">✕</button>
     </div>
 
-    <!-- OPTION 1: IN-BROWSER / PAC (NO APPS AT ALL) -->
-    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.4rem;">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <span style="font-size: 1.3rem;">🌐</span>
-          <span style="font-weight: 800; color: #fff; font-size: 0.95rem;">Способ 1: Прямо в браузере (БЕЗ программ)</span>
-        </div>
-        <span style="font-size: 0.7rem; background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 700;">Самый простой</span>
+    <!-- Step 1: Download INCY -->
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1rem 1.15rem; margin-bottom: 0.85rem;">
+      <div style="font-size: 0.85rem; font-weight: 800; color: #fff; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span style="width: 22px; height: 22px; border-radius: 50%; background: rgba(16,185,129,0.2); color: #34d399; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">1</span>
+        Шаг 1: Скачайте бесплатное приложение INCY
       </div>
-
-      <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 0.85rem;">
-        Не нужно ничего скачивать! Вставьте эту ссылку в настройки сети вашего устройства или браузера. Заблокированные ресурсы откроются сами, а банки РФ и РБ продолжат работать напрямую:
-      </p>
-
-      <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
-        <input type="text" readonly value="{{ vpn_key.get_pac_url }}" class="form-input" style="font-size: 0.78rem; font-family: var(--font-mono); background: rgba(0,0,0,0.4); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.3);">
-        <button type="button" class="btn btn-primary" data-copy="{{ vpn_key.get_pac_url }}" style="padding: 0.5rem 1rem; font-size: 0.8rem; white-space: nowrap;">
-          📋 Скопировать
-        </button>
-      </div>
-
-      <details style="font-size: 0.78rem; color: var(--text-dim); background: rgba(0,0,0,0.25); padding: 0.5rem 0.75rem; border-radius: 6px;">
-        <summary style="cursor: pointer; color: #34d399; font-weight: 600;">Куда вставить ссылку за 10 секунд?</summary>
-        <div style="margin-top: 0.5rem; line-height: 1.5; color: var(--text-muted);">
-          • <strong>iPhone / iPad:</strong> «Настройки» → «Wi-Fi» → «(i)» у сети → «Настройка прокси» → «Автоматически» → вставьте ссылку.<br>
-          • <strong>Mac:</strong> «Системные настройки» → «Сеть» → «Wi-Fi» → «Подробнее» → «Прокси» → «Автоматическая настройка (PAC)» → вставьте ссылку.<br>
-          • <strong>Windows:</strong> «Параметры» → «Сеть и интернет» → «Прокси-сервер» → «Использовать сценарий настройки» → вставьте ссылку.
-        </div>
-      </details>
-    </div>
-
-    <!-- OPTION 2: SMART APPS -->
-    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem;">
-      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem;">
-        <span style="font-size: 1.3rem;">⚡</span>
-        <span style="font-weight: 800; color: #fff; font-size: 0.95rem;">Способ 2: Через бесплатное приложение в 1 клик</span>
-      </div>
-
-      <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 1rem;">
-        Скачайте проверенный бесплатный клиент по прямой ссылке, затем нажмите кнопку добавления ключа:
-      </p>
-
-      <!-- iOS Store & Scheme -->
-      <div style="margin-bottom: 0.85rem; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
-        <div style="font-size: 0.8rem; font-weight: 700; color: #fff; margin-bottom: 0.45rem;">🍏 Для iPhone / iPad (iOS):</div>
-        <div class="smart-connect-btns" style="margin-bottom: 0.5rem;">
-          <a href="https://apps.apple.com/app/id6450534064" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.5rem 0.65rem; text-align: center;">
-            📥 1. Скачать Streisand
-          </a>
-          <a href="https://apps.apple.com/app/id6446814690" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.5rem 0.65rem; text-align: center;">
-            📥 1. Скачать V2Box
-          </a>
-        </div>
-        <div class="smart-connect-btns">
-          <a href="{{ vpn_key.get_streisand_url }}" class="btn btn-primary" style="font-size: 0.78rem; padding: 0.5rem 0.65rem; text-align: center; background: rgba(56, 189, 248, 0.2); border-color: #38bdf8; color: #38bdf8;">
-            ⚡ 2. Открыть в Streisand
-          </a>
-          <a href="{{ vpn_key.get_v2box_url }}" class="btn btn-primary" style="font-size: 0.78rem; padding: 0.5rem 0.65rem; text-align: center; background: rgba(167, 139, 250, 0.2); border-color: #a78bfa; color: #c4b5fd;">
-            ⚡ 2. Открыть в V2Box
-          </a>
-        </div>
-      </div>
-
-      <!-- Android Store & Scheme -->
-      <div style="margin-bottom: 0.85rem; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
-        <div style="font-size: 0.8rem; font-weight: 700; color: #fff; margin-bottom: 0.45rem;">🤖 Для Android:</div>
-        <div class="smart-connect-btns" style="margin-bottom: 0.5rem;">
-          <a href="https://play.google.com/store/apps/details?id=com.v2ray.ang" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.5rem 0.65rem; text-align: center;">
-            📥 1. Скачать v2rayNG
-          </a>
-          <a href="https://play.google.com/store/apps/details?id=app.hiddify.com" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.5rem 0.65rem; text-align: center;">
-            📥 1. Скачать Hiddify
-          </a>
-        </div>
-        <a href="{{ vpn_key.get_hiddify_url }}" class="btn btn-primary btn-block" style="font-size: 0.78rem; padding: 0.5rem 0.65rem; text-align: center; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399;">
-          ⚡ 2. Открыть в Hiddify в 1 клик
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+        <a href="https://apps.apple.com/app/incy/id6477873703" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.6rem; justify-content: center;">
+          🍏 App Store (iOS)
+        </a>
+        <a href="https://play.google.com/store/apps/details?id=llc.itdev.incy" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.6rem; justify-content: center;">
+          🤖 Google Play
         </a>
       </div>
-
-      <!-- Desktop Windows / Mac -->
-      <div>
-        <div style="font-size: 0.8rem; font-weight: 700; color: #fff; margin-bottom: 0.45rem;">💻 Для Windows / macOS:</div>
-        <div class="smart-connect-btns">
-          <a href="https://github.com/hiddify/hiddify-next/releases" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.5rem 0.65rem; text-align: center;">
-            📥 1. Скачать Hiddify (ПК)
-          </a>
-          <a href="{{ vpn_key.get_hiddify_url }}" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.5rem 0.65rem; text-align: center; color: #38bdf8;">
-            ⚡ 2. Добавить в Hiddify
-          </a>
-        </div>
-      </div>
     </div>
 
-    <!-- OPTION 3: MANUAL COPY & QR -->
-    <div class="smart-connect-btns" style="margin-bottom: 1.25rem;">
-      <button type="button" class="btn btn-secondary" data-copy="{{ vpn_key.get_vless_url }}" style="font-size: 0.8rem;">
+    <!-- Step 2: 1-Click Connect -->
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 1rem 1.15rem; margin-bottom: 1rem;">
+      <div style="font-size: 0.85rem; font-weight: 800; color: #fff; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span style="width: 22px; height: 22px; border-radius: 50%; background: #10b981; color: #000; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">2</span>
+        Шаг 2: Нажмите для моментального подключения
+      </div>
+      <a href="{{ vpn_key.get_incy_url }}" class="btn btn-primary btn-block" style="font-size: 0.95rem; font-weight: 700; padding: 0.85rem; justify-content: center; text-decoration: none;">
+        ⚡ Подключить в приложении INCY
+      </a>
+    </div>
+
+    <!-- Fallback / advanced -->
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+      <button type="button" class="btn btn-secondary" data-copy="{{ vpn_key.get_vless_url }}" style="flex: 1; font-size: 0.78rem; justify-content: center;">
         📋 Скопировать ключ VLESS
       </button>
-      <button type="button" class="btn btn-secondary" data-modal-target="qr-modal" style="font-size: 0.8rem;">
-        📱 Показать QR-код
+      <button type="button" class="btn btn-secondary" data-modal-target="qr-modal" style="flex: 1; font-size: 0.78rem; justify-content: center;">
+        📱 QR-код
       </button>
     </div>
 
-    <button type="button" class="btn btn-secondary btn-block modal-close">Закрыть</button>
+    <button type="button" class="btn btn-secondary btn-block modal-close" style="font-size: 0.85rem;">Закрыть</button>
   </div>
 </div>
 
@@ -833,9 +771,9 @@
         <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
           <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(16,185,129,0.18); color: #34d399; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">1</div>
           <div>
-            <strong style="color: #fff;">Установите проверенное приложение:</strong>
+            <strong style="color: #fff;">Шаг 1: Скачайте INCY</strong>
             <p style="margin: 0.2rem 0 0 0;">
-              Скачайте <a href="https://apps.apple.com/app/id6450534064" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; font-weight: 700; text-decoration: underline;">Streisand из App Store</a> (быстрый и бесплатный) или <a href="https://apps.apple.com/app/id6446814690" target="_blank" rel="noopener noreferrer" style="color: #a78bfa; font-weight: 700; text-decoration: underline;">V2Box из App Store</a>.
+              Установите бесплатное приложение <a href="https://apps.apple.com/app/incy/id6477873703" target="_blank" rel="noopener noreferrer" style="color: #34d399; font-weight: 700; text-decoration: underline;">INCY из App Store</a>.
             </p>
           </div>
         </div>
@@ -843,9 +781,9 @@
         <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
           <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(16,185,129,0.18); color: #34d399; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">2</div>
           <div>
-            <strong style="color: #fff;">Подключение в 1 клик:</strong>
+            <strong style="color: #fff;">Шаг 2: Подключение в 1 клик</strong>
             <p style="margin: 0.2rem 0 0 0;">
-              Нажмите кнопку <a href="{{ vpn_key.get_streisand_url }}" style="color: #38bdf8; font-weight: 700; text-decoration: underline;">«Открыть в Streisand»</a> или <a href="{{ vpn_key.get_v2box_url }}" style="color: #a78bfa; font-weight: 700; text-decoration: underline;">«Открыть в V2Box»</a> — настройки импортируются мгновенно!
+              Нажмите кнопку <a href="{{ vpn_key.get_incy_url }}" style="color: #34d399; font-weight: 700; text-decoration: underline;">«Подключить в приложении INCY»</a> — сервер добавится автоматически.
             </p>
           </div>
         </div>
@@ -854,7 +792,7 @@
           <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(16,185,129,0.18); color: #34d399; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">3</div>
           <div>
             <strong style="color: #fff;">Готово к работе:</strong>
-            <p style="margin: 0.2rem 0 0 0;">В приложении включите соединение. Протокол <strong>VLESS Reality</strong> замаскирован под обычный HTTPS — блокировки провайдеров и РКН бессильны.</p>
+            <p style="margin: 0.2rem 0 0 0;">В приложении включите тумблер. Протокол <strong>VLESS Reality</strong> замаскирован под чистый трафик — блокировки провайдеров и РКН бессильны.</p>
           </div>
         </div>
       </div>
@@ -870,9 +808,9 @@
         <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
           <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(6,182,212,0.18); color: #38bdf8; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">1</div>
           <div>
-            <strong style="color: #fff;">Установите клиент:</strong>
+            <strong style="color: #fff;">Шаг 1: Скачайте INCY</strong>
             <p style="margin: 0.2rem 0 0 0;">
-              Скачайте <a href="https://play.google.com/store/apps/details?id=com.v2ray.ang" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; font-weight: 700; text-decoration: underline;">v2rayNG из Google Play</a> или <a href="https://play.google.com/store/apps/details?id=app.hiddify.com" target="_blank" rel="noopener noreferrer" style="color: #34d399; font-weight: 700; text-decoration: underline;">Hiddify из Google Play</a>.
+              Установите бесплатное приложение <a href="https://play.google.com/store/apps/details?id=llc.itdev.incy" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; font-weight: 700; text-decoration: underline;">INCY из Google Play</a>.
             </p>
           </div>
         </div>
@@ -880,15 +818,15 @@
         <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
           <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(6,182,212,0.18); color: #38bdf8; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">2</div>
           <div>
-            <strong style="color: #fff;">Импорт ключа в 1 клик:</strong>
-            <p style="margin: 0.2rem 0 0 0;">Нажмите кнопку <a href="{{ vpn_key.get_hiddify_url }}" style="color: #34d399; font-weight: 700; text-decoration: underline;">«Добавить в Hiddify»</a> или скопируйте VLESS-ключ и нажмите значок «+» в приложении.</p>
+            <strong style="color: #fff;">Шаг 2: Моментальный импорт</strong>
+            <p style="margin: 0.2rem 0 0 0;">Нажмите кнопку <a href="{{ vpn_key.get_incy_url }}" style="color: #38bdf8; font-weight: 700; text-decoration: underline;">«Подключить в приложении INCY»</a> — конфигурация импортируется автоматически.</p>
           </div>
         </div>
 
         <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
           <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(6,182,212,0.18); color: #38bdf8; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">3</div>
           <div>
-            <strong style="color: #fff;">Раздельное туннелирование (Smart Bypass):</strong>
+            <strong style="color: #fff;">Раздельное туннелирование:</strong>
             <p style="margin: 0.2rem 0 0 0;">Банковские приложения (Сбер, Т-Банк, Госуслуги) продолжат открываться напрямую на полной скорости без лишней капчи.</p>
           </div>
         </div>
@@ -905,16 +843,8 @@
         <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
           <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(139,92,246,0.18); color: #c4b5fd; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">1</div>
           <div>
-            <strong style="color: #fff;">Способ 1: Программа Hiddify / v2rayN</strong>
-            <p style="margin: 0.2rem 0 0 0;">Установите <a href="https://github.com/hiddify/hiddify-next/releases" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; font-weight: 700; text-decoration: underline;">Hiddify для Windows / macOS (GitHub)</a>. Скопируйте ссылку подписки или VLESS-ключ и нажмите <em>«Новый профиль из буфера»</em>. Скорость до 500 Мб/с, пинг от 12 ms.</p>
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-          <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(139,92,246,0.18); color: #c4b5fd; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">2</div>
-          <div>
-            <strong style="color: #fff;">Способ 2: Браузерный PAC без установки ПО</strong>
-            <p style="margin: 0.2rem 0 0 0;">Не хотите ставить программы? Откройте карточку «PAC-скрипт» в кабинете, скопируйте URL и вставьте в настройки сети вашей ОС. YouTube и соцсети заработают автоматически.</p>
+            <strong style="color: #fff;">Приложение INCY для ПК</strong>
+            <p style="margin: 0.2rem 0 0 0;">Скачайте <a href="https://incy.app" target="_blank" rel="noopener noreferrer" style="color: #c4b5fd; font-weight: 700; text-decoration: underline;">INCY для Windows / macOS с официального сайта</a>. Скопируйте ссылку подписки или VLESS-ключ и нажмите <em>«+»</em>. Скорость до 1 Гбит/с.</p>
           </div>
         </div>
       </div>
@@ -931,7 +861,7 @@
           <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(245,158,11,0.18); color: #fbbf24; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">1</div>
           <div>
             <strong style="color: #fff;">Smart TV за 1 минуту (Allow LAN):</strong>
-            <p style="margin: 0.2rem 0 0 0;">В приложении INCY / Hiddify на смартфоне включите опцию <strong>«Поделиться в локальной сети (Allow LAN)»</strong>. В настройках Wi-Fi на телевизоре укажите IP телефона — YouTube 4K на ТВ заработает сразу!</p>
+            <p style="margin: 0.2rem 0 0 0;">В приложении INCY на смартфоне включите опцию <strong>«Поделиться в локальной сети (Allow LAN)»</strong>. В настройках Wi-Fi на телевизоре укажите IP телефона — YouTube 4K на ТВ заработает сразу!</p>
           </div>
         </div>
 

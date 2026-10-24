@@ -110,7 +110,7 @@ class VPNTestCase(TestCase):
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Быстрое подключение VLESS Reality")
-        self.assertContains(resp, self.key.get_streisand_url())
+        self.assertContains(resp, self.key.get_incy_url())
 
     def test_check_server_health_detects_online_status(self):
         """Mocked TCP connect marks server online and saves measured ping."""

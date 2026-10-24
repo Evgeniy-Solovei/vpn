@@ -159,10 +159,10 @@ async def cb_view_key(call: CallbackQuery):
         f"🔗 <b>Ссылка на автообновляемую подписку:</b>\n"
         f"<code>{sub_url}</code>\n\n"
         f"📱 <b>Лимит:</b> до {max_dev} устройств одновременно (телефон, ПК, планшет, Smart TV)\n\n"
-        f"💡 <b>Как подключить:</b>\n"
-        f"1. Скачайте клиент: <b>Streisand</b> (iOS), <b>v2rayNG</b> (Android), <b>Hiddify</b> (ПК/Mac) или <b>Happ</b>\n"
-        f"2. Скопируйте ключ выше и нажмите в приложении <b>«+» → «Добавить из буфера»</b>\n"
-        f"3. Нажмите кнопку подключения (ВКЛ) 🚀"
+        f"💡 <b>Как подключить за 2 шага:</b>\n"
+        f"1. Установите приложение <b>INCY</b> (кнопка ниже)\n"
+        f"2. Нажмите <b>«⚡ Подключить в 1 клик (INCY)»</b> для моментальной настройки\n"
+        f"<i>(Либо скопируйте ключ выше и вставьте в INCY через «+»)</i> 🚀"
     )
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     kb = InlineKeyboardMarkup(inline_keyboard=[
