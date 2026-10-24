@@ -84,20 +84,22 @@
         <span style="color: #fff;">Войти через Google</span>
       </a>
 
-      <!-- Telegram Widget & Bot Login -->
-      <div style="text-align: center; background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 0.85rem; padding: 1rem;">
-        <div style="margin-bottom: 0.65rem;">
-          <script async src="https://telegram.org/js/telegram-widget.js?22" 
-                  data-telegram-login="{{ BOT_USERNAME }}" 
-                  data-size="large" 
-                  data-radius="10" 
-                  data-auth-url="{% url 'telegram_auth_callback' %}" 
-                  data-request-access="write"></script>
-        </div>
+      <!-- Telegram Direct Button & Widget -->
+      <a href="https://t.me/{{ BOT_USERNAME }}?start=login" target="_blank" class="btn btn-secondary btn-block" style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.75rem; font-size: 0.9rem; font-weight: 700; text-decoration: none; border: 1px solid rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.12); color: #38bdf8; border-radius: 0.75rem;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+        <span>⚡ Войти через Telegram в 1 клик</span>
+      </a>
 
-        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
-          Или в боте <a href="https://t.me/{{ BOT_USERNAME }}" target="_blank" style="color: #38bdf8; font-weight: 700; text-decoration: underline;">@{{ BOT_USERNAME }}</a> нажмите <strong>«💻 Войти на сайте (ПК)»</strong>.
-        </div>
+      <div style="text-align: center; margin-top: 0.15rem;">
+        <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                data-telegram-login="{{ BOT_USERNAME }}" 
+                data-size="large" 
+                data-radius="10" 
+                data-auth-url="{% url 'telegram_auth_callback' %}" 
+                data-request-access="write"></script>
       </div>
     </div>
 

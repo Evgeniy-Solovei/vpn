@@ -80,7 +80,36 @@ async def cmd_start(message: Message, command: CommandObject):
                 logger.error(f"Error linking account: {e}")
                 await message.answer("⚠️ Ошибка соединения с сервером при привязке аккаунта.", parse_mode="HTML")
 
-    ref_code = raw_arg if raw_arg and not raw_arg.startswith('link_') else None
+    # Handle One-Click Web Login Deep Link
+    if raw_arg == 'login':
+        await sync_user_with_backend(telegram_id, username)
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                resp = await client.post(
+                    f"{WEB_API_URL}/tg/generate-magic-link/",
+                    json={"telegram_id": str(telegram_id)}
+                )
+                res_data = resp.json()
+                if res_data.get('success'):
+                    login_url = res_data.get('login_url')
+                    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                    kb = InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(text="🚀 Войти в личный кабинет на сайте", url=login_url)]
+                    ])
+                    await message.answer(
+                        f"💻 <b>Вход в личный кабинет VPN live-dev</b>\n\n"
+                        f"Нажмите кнопку ниже, чтобы мгновенно войти в кабинет на компьютере без пароля:\n\n"
+                        f"👉 <a href=\"{login_url}\"><b>Войти в личный кабинет &rarr;</b></a>\n\n"
+                        f"⏳ <i>Ссылка защищена и действует 15 минут.</i>",
+                        parse_mode="HTML",
+                        reply_markup=kb,
+                        disable_web_page_preview=True
+                    )
+                    return
+            except Exception as e:
+                logger.error(f"Error login deep link: {e}")
+
+    ref_code = raw_arg if raw_arg and not raw_arg.startswith('link_') and raw_arg != 'login' else None
 
     data = await sync_user_with_backend(telegram_id, username, ref_code)
     user_info = data.get('user', {})
