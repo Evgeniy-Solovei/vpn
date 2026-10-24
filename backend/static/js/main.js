@@ -200,56 +200,118 @@ function initCopyButtons() {
 
 function getAppStoreInfo() {
   const ua = navigator.userAgent || navigator.vendor || window.opera || '';
+  const platform = navigator.platform || '';
 
-  // iOS (iPhone, iPad, iPod)
-  if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+  // 1. iOS (iPhone, iPad, iPod)
+  if (/iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
     return {
+      platform: 'ios',
       storeName: 'App Store (iOS)',
-      storeUrl: 'https://apps.apple.com/app/incy/id6756943388'
+      storeUrl: 'https://apps.apple.com/app/incy/id6756943388',
+      selector: '.btn-store-ios'
     };
   }
 
-  // Android
+  // 2. Android
   if (/android/i.test(ua)) {
     return {
+      platform: 'android',
       storeName: 'Google Play',
-      storeUrl: 'https://play.google.com/store/apps/details?id=llc.itdev.incy'
+      storeUrl: 'https://play.google.com/store/apps/details?id=llc.itdev.incy',
+      selector: '.btn-store-android'
     };
   }
 
-  // macOS
-  if (/Macintosh|Mac OS X/i.test(ua)) {
+  // 3. macOS
+  if (/Macintosh|Mac OS X/i.test(ua) && !(/iPad|iPhone|iPod/.test(ua))) {
     return {
+      platform: 'mac',
       storeName: 'App Store (Mac)',
-      storeUrl: 'https://apps.apple.com/app/incy/id6756943388'
+      storeUrl: 'https://apps.apple.com/app/happ-proxy-utility/id6504287215',
+      selector: '.btn-store-mac'
     };
   }
 
-  // Windows / Linux / other PC
+  // 4. Windows / Linux / other PC
   return {
-    storeName: 'маркет приложений',
-    storeUrl: 'https://incy.app/skachat/'
+    platform: 'windows',
+    storeName: 'сайт INCY для Windows',
+    storeUrl: 'https://incy.app/skachat/',
+    selector: '.btn-store-windows'
   };
+}
+
+function highlightUserPlatformInModal() {
+  const store = getAppStoreInfo();
+  const targetBtn = document.querySelector(store.selector);
+  if (targetBtn && !targetBtn.dataset.tagged) {
+    targetBtn.dataset.tagged = 'true';
+    targetBtn.classList.add('store-btn-active');
+    const tag = document.createElement('span');
+    tag.textContent = ' (ваше)';
+    tag.style.color = '#34d399';
+    tag.style.fontWeight = '800';
+    tag.style.fontSize = '0.72rem';
+    tag.style.marginLeft = '4px';
+    targetBtn.appendChild(tag);
+  }
 }
 
 function initIncyDeeplinkFallback() {
   document.querySelectorAll('a[href^="incy://"], a[href^="vless://"], .btn-smart-connect').forEach(link => {
     link.addEventListener('click', () => {
-      const isSub = link.getAttribute('href') && link.getAttribute('href').startsWith('incy://');
+      const deeplinkUrl = link.getAttribute('href');
+      if (!deeplinkUrl) return;
+
+      const isSub = deeplinkUrl.startsWith('incy://');
       const vlessBtn = document.getElementById('btn-copy-vless') || document.querySelector('[data-copy^="vless://"]');
       const subBtn = document.querySelector('[data-copy*="/sub/"]');
       
       const copyVal = isSub 
         ? (subBtn ? subBtn.getAttribute('data-copy') : '') 
-        : (vlessBtn ? vlessBtn.getAttribute('data-copy') : '');
+        : (vlessBtn ? vlessBtn.getAttribute('data-copy') : deeplinkUrl);
 
+      // 1. Копируем ключ в буфер обмена сразу
       if (copyVal && navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(copyVal).then(() => {
-          showToast(isSub ? '✓ Подписка скопирована! Запускаем INCY...' : '✓ Ключ VLESS скопирован! Запускаем VPN...');
-        }).catch(() => {});
-      } else {
-        showToast('Запускаем приложение...');
+        navigator.clipboard.writeText(copyVal).catch(() => {});
       }
+
+      const store = getAppStoreInfo();
+      showToast('Запускаем приложение...');
+
+      let appOpened = false;
+      const onBlur = () => { appOpened = true; };
+      const onVisChange = () => {
+        if (document.hidden) appOpened = true;
+      };
+
+      window.addEventListener('blur', onBlur, { once: true });
+      window.addEventListener('pagehide', onBlur, { once: true });
+      document.addEventListener('visibilitychange', onVisChange);
+
+      // 2. Пытаемся открыть установленное приложение
+      window.location.href = deeplinkUrl;
+
+      // 3. Проверка: если приложение не открылось в течение 1.3 сек (нет приложения на ПК/телефоне)
+      setTimeout(() => {
+        window.removeEventListener('blur', onBlur);
+        window.removeEventListener('pagehide', onBlur);
+        document.removeEventListener('visibilitychange', onVisChange);
+
+        if (!appOpened && !document.hidden) {
+          showToast(`⚠️ Приложение не найдено. Открываем ${store.storeName}...`);
+          highlightUserPlatformInModal();
+
+          setTimeout(() => {
+            const storeWin = window.open(store.storeUrl, '_blank', 'noopener,noreferrer');
+            if (!storeWin || storeWin.closed || typeof storeWin.closed === 'undefined') {
+              window.location.href = store.storeUrl;
+            }
+          }, 350);
+        } else {
+          showToast('✓ Приложение открыто! Сервер успешно добавлен.');
+        }
+      }, 1300);
     });
   });
 }
@@ -703,7 +765,12 @@ function initModals() {
 
       const targetId = trigger.getAttribute('data-modal-target');
       const modal = document.getElementById(targetId);
-      if (modal) modal.classList.add('active');
+      if (modal) {
+        modal.classList.add('active');
+        if (targetId === 'connect-modal') {
+          highlightUserPlatformInModal();
+        }
+      }
     });
   });
 

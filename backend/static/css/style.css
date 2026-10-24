@@ -1140,4 +1140,11 @@ input, button, select, textarea {
   }
 }
 
+.store-btn-active {
+  border: 2px solid #10b981 !important;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.45) !important;
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #fff !important;
+}
+
 
