@@ -10,8 +10,11 @@
       Введите ваш логин или email и пароль для доступа к ключам и управлению VPN.
     </p>
 
-    <form method="post" action="{% url 'login' %}" novalidate>
+    <form method="post" action="{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}" novalidate>
       {% csrf_token %}
+      {% if request.GET.next %}
+        <input type="hidden" name="next" value="{{ request.GET.next }}">
+      {% endif %}
 
       {% if form.non_field_errors %}
         <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem;">

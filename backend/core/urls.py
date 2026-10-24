@@ -5,6 +5,8 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 from django.views.static import serve as static_serve
 from django.contrib.staticfiles.views import serve as staticfiles_serve
+from django.http import HttpResponseRedirect
+from urllib.parse import quote
 from apps.billing import views as billing_views
 from apps.accounts import views as accounts_views
 
@@ -26,9 +28,41 @@ admin.site.has_permission = lambda request: bool(request.user.is_active and requ
 admin.site.site_header = "VPN live-dev | Панель управления"
 admin.site.site_title = "VPN live-dev Admin"
 
+orig_admin_view = admin.site.admin_view
+
+def secure_admin_view(view, cacheable=False):
+    def inner(request, *args, **kwargs):
+        if not admin.site.has_permission(request):
+            if request.user.is_authenticated:
+                return HttpResponseRedirect("/dashboard/")
+            next_path = quote(request.get_full_path())
+            return HttpResponseRedirect(f"/auth/login/?next={next_path}")
+        return orig_admin_view(view, cacheable)(request, *args, **kwargs)
+    return inner
+
+admin.site.admin_view = secure_admin_view
+
+def secure_admin_login(request, extra_context=None):
+    if request.user.is_authenticated:
+        if request.user.is_superuser:
+            return HttpResponseRedirect(f"/{admin_path}/")
+        return HttpResponseRedirect("/dashboard/")
+    next_path = quote(request.get_full_path())
+    return HttpResponseRedirect(f"/auth/login/?next={next_path}")
+
+def secure_admin_permission_denied(request, extra_context=None):
+    return HttpResponseRedirect("/dashboard/")
+
+def secure_admin_logout(request, extra_context=None):
+    return HttpResponseRedirect("/auth/logout/")
+
+admin.site.login = secure_admin_login
+admin.site.permission_denied = secure_admin_permission_denied
+admin.site.logout = secure_admin_logout
+
 urlpatterns = [
-    # Standard /admin/ is deliberately disabled and returns 404 for security
-    path('admin/', accounts_views.custom_404_handler),
+    # Standard /admin/ is deliberately redirected/disabled for security
+    re_path(r'^admin(/.*)?$', accounts_views.custom_404_handler),
     path(f'{admin_path}/', admin.site.urls),
     path('auth/', include('apps.accounts.urls')),
     path('dashboard/', include('apps.accounts.dashboard_urls')),
@@ -44,6 +78,8 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/dashboard/', permanent=False)),
     re_path(r'^static/(?P<path>.*)$', robust_static_serve, name='static_files'),
     re_path(r'^media/(?P<path>.*)$', static_serve, {'document_root': settings.MEDIA_ROOT}, name='media_files'),
+    # Catch-all: Any unmatched route redirects to login or dashboard via custom_404_handler
+    re_path(r'^.*$', accounts_views.custom_404_handler),
 ]
 
 handler500 = 'apps.accounts.views.custom_500_handler'

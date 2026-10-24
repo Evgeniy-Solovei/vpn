@@ -326,14 +326,43 @@ class AccountsTestCase(TestCase):
         self.assertIn("Invalid cryptographic key", incident.error_message)
 
     def test_custom_404_html_and_api(self):
-        """Custom 404 handler returns stylized HTML for web and JSON for API."""
-        # Web 404
+        """Unknown URLs redirect unauthenticated to login and authenticated to dashboard; API returns JSON 404."""
+        # Anonymous web request redirects to login
         resp = self.client.get('/some-random-unknown-page-path-987/')
-        self.assertEqual(resp.status_code, 404)
-        self.assertContains(resp, "Страница не найдена", status_code=404)
-        self.assertContains(resp, "404", status_code=404)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/auth/login/', resp.headers.get('Location', ''))
 
-        # API 404
+        # Anonymous admin attempts redirect to login
+        resp_admin = self.client.get('/admin/')
+        self.assertEqual(resp_admin.status_code, 302)
+        self.assertIn('/auth/login/', resp_admin.headers.get('Location', ''))
+
+        # Anonymous request to secret admin path redirects to login
+        from django.conf import settings
+        admin_slug = getattr(settings, 'ADMIN_URL_PATH', 'management-hq').strip('/')
+        resp_sec_admin = self.client.get(f'/{admin_slug}/')
+        self.assertEqual(resp_sec_admin.status_code, 302)
+        self.assertIn('/auth/login/', resp_sec_admin.headers.get('Location', ''))
+
+        # Authenticated normal user request to unknown route redirects to dashboard
+        normal_user = User.objects.create_user(username='normtester', email='normtester@test.com', password='PassWord123!')
+        self.client.force_login(normal_user)
+        resp_auth = self.client.get('/some-random-unknown-page-path-987/')
+        self.assertEqual(resp_auth.status_code, 302)
+        self.assertEqual(resp_auth.headers.get('Location'), '/dashboard/')
+
+        # Authenticated normal user to secret admin is blocked and redirected to dashboard
+        resp_auth_admin = self.client.get(f'/{admin_slug}/')
+        self.assertEqual(resp_auth_admin.status_code, 302)
+        self.assertEqual(resp_auth_admin.headers.get('Location'), '/dashboard/')
+
+        # Superuser can access secret admin
+        superuser = User.objects.create_superuser(username='supertest', email='supertest@test.com', password='PassWord123!')
+        self.client.force_login(superuser)
+        resp_superuser = self.client.get(f'/{admin_slug}/')
+        self.assertEqual(resp_superuser.status_code, 200)
+
+        # API 404 remains JSON
         resp_api = self.client.get('/api/some-unknown-endpoint-route/')
         self.assertEqual(resp_api.status_code, 404)
         data = resp_api.json()

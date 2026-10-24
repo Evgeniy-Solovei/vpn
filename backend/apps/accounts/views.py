@@ -113,7 +113,10 @@ def login_view(request):
             user = form.cleaned_data['user']
             remember_me = form.cleaned_data.get('remember_me', True)
             login(request, user)
-            next_url = request.GET.get('next', 'dashboard')
+            next_url = request.POST.get('next') or request.GET.get('next') or 'dashboard'
+            from django.utils.http import url_has_allowed_host_and_scheme
+            if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+                next_url = 'dashboard'
             response = redirect(next_url)
             return apply_persistent_auth(request, response, user, remember=remember_me, days=90)
     else:
@@ -625,6 +628,11 @@ def custom_404_handler(request, exception=None):
             'error': 'Not Found',
             'message': 'Запрашиваемый ресурс не найден.'
         }, status=404)
-    return render(request, '404.html', status=404)
+    if request.path.startswith('/sub/'):
+        return HttpResponse('Subscription not found', status=404, content_type='text/plain')
+
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    return redirect('login')
 
 
