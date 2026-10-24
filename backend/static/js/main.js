@@ -205,7 +205,7 @@ function getAppStoreInfo() {
   if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
     return {
       storeName: 'App Store (iOS)',
-      storeUrl: 'https://apps.apple.com/app/incy/id6477873703'
+      storeUrl: 'https://apps.apple.com/app/incy/id6756943388'
     };
   }
 
@@ -221,53 +221,35 @@ function getAppStoreInfo() {
   if (/Macintosh|Mac OS X/i.test(ua)) {
     return {
       storeName: 'App Store (Mac)',
-      storeUrl: 'https://apps.apple.com/app/incy/id6477873703'
+      storeUrl: 'https://apps.apple.com/app/incy/id6756943388'
     };
   }
 
   // Windows / Linux / other PC
   return {
     storeName: 'маркет приложений',
-    storeUrl: 'https://incy.app'
+    storeUrl: 'https://incy.app/skachat/'
   };
 }
 
 function initIncyDeeplinkFallback() {
-  document.querySelectorAll('a[href^="incy://"], .btn-smart-connect').forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const deeplinkUrl = link.getAttribute('href');
-      if (!deeplinkUrl) return;
-
-      const store = getAppStoreInfo();
-
-      // Automatically copy VLESS key to clipboard so once installed, key is ready
+  document.querySelectorAll('a[href^="incy://"], a[href^="vless://"], .btn-smart-connect').forEach(link => {
+    link.addEventListener('click', () => {
+      const isSub = link.getAttribute('href') && link.getAttribute('href').startsWith('incy://');
       const vlessBtn = document.getElementById('btn-copy-vless') || document.querySelector('[data-copy^="vless://"]');
-      const vlessUrl = vlessBtn ? vlessBtn.getAttribute('data-copy') : '';
-      if (vlessUrl && navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(vlessUrl).catch(() => {});
+      const subBtn = document.querySelector('[data-copy*="/sub/"]');
+      
+      const copyVal = isSub 
+        ? (subBtn ? subBtn.getAttribute('data-copy') : '') 
+        : (vlessBtn ? vlessBtn.getAttribute('data-copy') : '');
+
+      if (copyVal && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(copyVal).then(() => {
+          showToast(isSub ? '✓ Подписка скопирована! Запускаем INCY...' : '✓ Ключ VLESS скопирован! Запускаем VPN...');
+        }).catch(() => {});
+      } else {
+        showToast('Запускаем приложение...');
       }
-
-      let appOpened = false;
-      const onBlur = () => { appOpened = true; };
-      window.addEventListener('blur', onBlur, { once: true });
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) appOpened = true;
-      }, { once: true });
-
-      // 1. Try launching the installed application
-      window.location.href = deeplinkUrl;
-
-      // 2. If app didn't launch within 1.2s -> redirect to appropriate Store
-      setTimeout(() => {
-        window.removeEventListener('blur', onBlur);
-        if (!appOpened && !document.hidden) {
-          showToast(`Перенаправляем в ${store.storeName} для скачивания...`);
-          setTimeout(() => {
-            window.location.href = store.storeUrl;
-          }, 350);
-        }
-      }, 1200);
     });
   });
 }
