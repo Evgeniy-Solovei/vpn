@@ -36,7 +36,7 @@ DIRECT_DOMAINS = [
 ]
 
 def get_or_create_default_server() -> VPNServer:
-    server = VPNServer.objects.filter(is_active=True).first()
+    server = VPNServer.objects.filter(is_active=True).order_by('order', 'id').first()
     if not server:
         from django.conf import settings
         server = VPNServer.objects.create(
