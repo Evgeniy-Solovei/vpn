@@ -71,30 +71,12 @@
 </div>
 
 <script>
-  // Automatic Telegram Mini App Seamless Auth & Forwarding
-  document.addEventListener('DOMContentLoaded', async function() {
+  // Automatic Telegram Mini App Forwarding
+  document.addEventListener('DOMContentLoaded', function() {
     var tg = window.Telegram && window.Telegram.WebApp;
     var tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
     if (tgUser && tgUser.id) {
-      try {
-        var res = await fetch('/api/tg/sync/', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          credentials: 'same-origin',
-          body: JSON.stringify({
-            telegram_id: tgUser.id,
-            telegram_username: tgUser.username,
-            first_name: tgUser.first_name,
-            ref_code: tg?.initDataUnsafe?.start_param || null
-          })
-        });
-        var data = await res.json();
-        if (data.success) {
-          window.location.replace('/dashboard/?tg=1');
-        }
-      } catch (e) {
-        console.error('TG auto-sync error:', e);
-      }
+      window.location.replace('/miniapp/');
     }
   });
 </script>

@@ -21,6 +21,13 @@ def build_user_response(user, is_new=False):
     else:
         server = key.server
 
+    from apps.vpn.services import sync_key_traffic, ensure_key_in_panel
+    try:
+        sync_key_traffic(key)
+        ensure_key_in_panel(key)
+    except Exception:
+        pass
+
     site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by')
     referral_url = f"{site_url}/auth/register/?ref={user.referral_code}"
 
@@ -62,6 +69,8 @@ def build_user_response(user, is_new=False):
             'pac_url': f"{site_url}/vpn/pac/{key.sub_token}/",
         },
         'traffic': {
+            'used_bytes': key.used_traffic_bytes,
+            'used_display': key.traffic_display,
             'used_gb': key.used_traffic_gb,
             'limit_gb': key.traffic_limit_gb,
             'is_unlimited': getattr(key, 'is_unlimited', True),

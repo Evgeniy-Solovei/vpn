@@ -162,7 +162,7 @@ XS_SHARING_ALLOWED_METHODS = ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE']
 
 # Telegram Bot Config
 BOT_TOKEN = os.getenv('BOT_TOKEN', '')
-BOT_USERNAME = os.getenv('BOT_USERNAME', 'vpn_livedev_bot')
+BOT_USERNAME = os.getenv('BOT_USERNAME', 'live_vpn_bot')
 TELEGRAM_WEBAPP_URL = os.getenv('TELEGRAM_WEBAPP_URL', f'{SITE_URL}/miniapp/')
 
 # bePaid Payment Settings (Belarus / Belkart / ERIP / CIS)

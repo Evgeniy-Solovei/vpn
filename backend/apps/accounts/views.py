@@ -22,18 +22,20 @@ def apply_persistent_auth(request, response, user, remember=True, days=90):
     """
     Caches authentication for 90 days.
     Sets 90-day session expiry and attaches a persistent 90-day DeviceAuthKey cookie.
+    Uses SameSite=None + Secure=True on HTTPS for seamless Telegram WebView support.
     """
     cookie_name = getattr(settings, 'DEVICE_KEY_COOKIE_NAME', 'vpn_device_key')
     if remember:
         request.session.set_expiry(days * 24 * 3600)
         device_key = DeviceAuthKey.issue_key(user, request=request, days=days)
+        is_sec = request.is_secure()
         response.set_cookie(
             cookie_name,
             device_key.key,
             max_age=days * 24 * 3600,
             httponly=True,
-            samesite='Lax',
-            secure=request.is_secure()
+            samesite='None' if is_sec else 'Lax',
+            secure=is_sec
         )
         logger.info(f"Issued 90-day device key for {user.username}")
     else:
@@ -195,8 +197,12 @@ def password_reset_confirm_view(request, uidb64, token):
         return render(request, 'accounts/password_reset_confirm.html', {'validlink': False})
 
 
-@login_required
 def dashboard_view(request):
+    if not request.user.is_authenticated:
+        if request.GET.get('tg') == '1':
+            return redirect('miniapp')
+        return redirect(f"{settings.LOGIN_URL}?next={request.get_full_path()}")
+
     user = request.user
     
     # Get or create VPN key (preserve selected server)

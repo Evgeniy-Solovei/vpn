@@ -57,9 +57,10 @@ def subscription_view(request, token):
     response['profile-update-interval'] = '12'
     response['content-disposition'] = f'attachment; filename="vpn-livedev-{user.username}.txt"'
     
-    # Subscription info header: upload=0; download=0; total=100GB; expire=timestamp
+    # Subscription info header: upload=0; download=bytes; total=bytes; expire=timestamp
     days_seconds = user.days_left * 86400
-    response['subscription-userinfo'] = f"upload=0; download=10485760; total=107374182400; expire={days_seconds}"
+    total_bytes = (key.traffic_limit_gb * (1024 ** 3)) if key.traffic_limit_gb else 0
+    response['subscription-userinfo'] = f"upload=0; download={key.used_traffic_bytes}; total={total_bytes}; expire={days_seconds}"
     return response
 
 

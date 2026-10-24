@@ -140,6 +140,8 @@ class ApiTestCase(TestCase):
             password='password123',
             balance=Decimal('50.00')
         )
+        server = VPNServer.objects.create(name='Test Server', ip='1.2.3.4', port=443)
+        VPNKey.objects.create(user=user, server=server, traffic_limit_gb=200)
         self.client.force_login(user)
         resp = self.client.post(reverse('api_buy_traffic'))
         self.assertEqual(resp.status_code, 200)

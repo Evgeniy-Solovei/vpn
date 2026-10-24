@@ -46,14 +46,21 @@ async def cmd_start(message: Message, command: CommandObject):
 
     server_title = vpn_info.get('server_name') or '🇫🇷 Франция • Париж'
     ping_ms = vpn_info.get('ping_ms', 38)
-    speed_desc = vpn_info.get('speed_description') or '1 Gbps • Безлимит ∞'
+    used_display = traffic_info.get('used_display', '0.0 МБ')
+    is_unlimited = traffic_info.get('is_unlimited', True) or not traffic_info.get('limit_gb')
+
+    if is_unlimited:
+        traffic_line = f"• Трафик: <b>{used_display}</b> (Безлимит ∞)"
+    else:
+        traffic_line = f"• Трафик: <b>{traffic_info.get('used_gb', 0)} / {traffic_info.get('limit_gb', 0)} ГБ</b>"
 
     welcome_text = (
         f"👋 <b>Добро пожаловать в VPN live-dev!</b>\n\n"
         f"⚡ <b>Быстрый и защищенный VPN без блокировок для РФ и РБ.</b>\n"
         f"• Протокол нового поколения: <b>VLESS Reality</b> (маскировка под чистый трафик)\n"
         f"• Активная локация: <b>{server_title}</b> (Пинг: {ping_ms} ms)\n"
-        f"• Скорость и квота: <b>{speed_desc}</b>\n"
+        f"• Скорость: <b>1 Gbps</b>\n"
+        f"{traffic_line}\n"
         f"• Белый список РФ: <b>Госуслуги, Сбер, Т-Банк и маркетплейсы работают напрямую!</b>\n\n"
         f"💰 Ваш баланс: <b>{user_info.get('balance', 15.0)} ₽</b> (хватит на {user_info.get('days_left', 3)} дн.)\n\n"
         f"👇 <i>Нажмите «Подключить в 1 клик» для моментальной настройки приложения INCY:</i>"
@@ -71,16 +78,24 @@ async def cb_main_menu(call: CallbackQuery):
     data = await sync_user_with_backend(call.from_user.id, call.from_user.username)
     user_info = data.get('user', {})
     vpn_info = data.get('vpn', {})
+    traffic_info = data.get('traffic', {})
 
     server_title = vpn_info.get('server_name') or '🇫🇷 Франция • Париж'
     ping_ms = vpn_info.get('ping_ms', 38)
-    speed_desc = vpn_info.get('speed_description') or '1 Gbps • Безлимит ∞'
+    used_display = traffic_info.get('used_display', '0.0 МБ')
+    is_unlimited = traffic_info.get('is_unlimited', True) or not traffic_info.get('limit_gb')
+
+    if is_unlimited:
+        traffic_line = f"• Трафик: <b>{used_display}</b> (Безлимит ∞)"
+    else:
+        traffic_line = f"• Трафик: <b>{traffic_info.get('used_gb', 0)} / {traffic_info.get('limit_gb', 0)} ГБ</b>"
 
     text = (
         f"🏠 <b>Главное меню VPN live-dev</b>\n\n"
         f"• Баланс: <b>{user_info.get('balance', 0)} ₽</b> (на {user_info.get('days_left', 0)} дн.)\n"
         f"• Активная локация: <b>{server_title}</b> ({ping_ms} ms)\n"
-        f"• Скорость и квота: <b>{speed_desc}</b>\n"
+        f"• Скорость: <b>1 Gbps</b>\n"
+        f"{traffic_line}\n"
         f"• Белый список РФ: {'<b>ВКЛ (банки напрямую)</b>' if vpn_info.get('whitelist_enabled') else '<b>ВЫКЛ (весь трафик в VPN)</b>'}"
     )
     await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_main_menu(vpn_info, user_info))

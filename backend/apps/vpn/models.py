@@ -164,6 +164,18 @@ class VPNKey(models.Model):
         return round(self.used_traffic_bytes / (1024 ** 3), 1)
 
     @property
+    def traffic_display(self) -> str:
+        if self.used_traffic_bytes < 1024 * 1024:
+            kb = round(self.used_traffic_bytes / 1024, 1)
+            return f"{kb} КБ"
+        elif self.used_traffic_bytes < 1024 * 1024 * 1024:
+            mb = round(self.used_traffic_bytes / (1024 ** 2), 1)
+            return f"{mb} МБ"
+        else:
+            gb = round(self.used_traffic_bytes / (1024 ** 3), 2)
+            return f"{gb} ГБ"
+
+    @property
     def traffic_percent(self) -> int:
         if not self.traffic_limit_gb:
             return 0

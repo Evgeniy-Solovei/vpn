@@ -27,11 +27,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const startParam = tg?.initDataUnsafe?.start_param || null;
 
   if (tgUser && tgUser.id) {
-    // 1. We are inside Telegram WebApp
+    // 1. Inside Telegram WebApp - authenticate and render natively
     try {
       const res = await fetch('/api/tg/sync/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           telegram_id: tgUser.id,
           telegram_username: tgUser.username,
@@ -41,16 +42,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       const data = await res.json();
       if (data.success) {
-        // Seamlessly forward to the Unified Native Mini App Dashboard
-        window.location.replace('/dashboard/?tg=1');
+        userData = data.user;
+        vpnData = data.vpn;
+        trafficData = data.traffic;
+        renderUI();
         return;
       } else {
-        showError(data.error || 'Ошибка синхронизации Telegram');
+        showError(data.error || 'Ошибка синхронизации профиля');
       }
-
     } catch (err) {
       console.error('Error syncing TG WebApp:', err);
-      showError('Не удалось подключиться к API сервера.');
+      showError('Не удалось подключиться к серверу. Попробуйте обновить страницу.');
     }
   } else {
     // 2. Opened in standard browser (Desktop / Mobile outside TG)
@@ -71,7 +73,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         const data = await res.json();
         if (data.success) {
-          window.location.replace('/dashboard/?tg=1');
+          userData = data.user;
+          vpnData = data.vpn;
+          trafficData = data.traffic;
+          renderUI();
+          if (browserBanner) browserBanner.style.display = 'flex';
           return;
         } else {
           alert('Ошибка входа в демо: ' + (data.error || 'попробуйте позже'));
@@ -93,7 +99,11 @@ async function checkWebSession() {
     const data = await res.json();
 
     if (data.authenticated && data.success) {
-      window.location.replace('/dashboard/?tg=1');
+      userData = data.user;
+      vpnData = data.vpn;
+      trafficData = data.traffic;
+      renderUI();
+      if (browserBanner) browserBanner.style.display = 'flex';
       return;
     } else {
       // User is not authenticated in browser
@@ -125,19 +135,24 @@ function renderUI() {
   document.getElementById('server-name').textContent = vpnData.server_name;
   document.getElementById('server-ping').textContent = `${vpnData.ping_ms} ms`;
 
-  // Traffic & Speed FUP Limits
+  // Traffic & Speed Display
   if (trafficData) {
     const trafficVal = document.getElementById('miniapp-traffic-val');
-    if (trafficVal) trafficVal.textContent = `${trafficData.used_gb} / ${trafficData.limit_gb} ГБ`;
-
     const trafficLeft = document.getElementById('miniapp-traffic-left');
-    if (trafficLeft) trafficLeft.textContent = `Осталось ${trafficData.left_gb} ГБ`;
-
     const trafficBar = document.getElementById('miniapp-traffic-bar');
-    if (trafficBar) trafficBar.style.width = `${trafficData.percent}%`;
-
     const speedBadge = document.getElementById('miniapp-speed-badge');
-    if (speedBadge) speedBadge.textContent = `⚡ ${trafficData.current_speed}`;
+
+    if (trafficData.is_unlimited || !trafficData.limit_gb) {
+      if (trafficVal) trafficVal.textContent = trafficData.used_display || (trafficData.used_gb > 0 ? `${trafficData.used_gb} ГБ` : '0.0 МБ');
+      if (trafficLeft) trafficLeft.textContent = 'Безлимит ∞';
+      if (trafficBar) trafficBar.style.width = '100%';
+      if (speedBadge) speedBadge.textContent = '⚡ 1 Gbps';
+    } else {
+      if (trafficVal) trafficVal.textContent = `${trafficData.used_gb} / ${trafficData.limit_gb} ГБ`;
+      if (trafficLeft) trafficLeft.textContent = `Осталось ${trafficData.left_gb} ГБ`;
+      if (trafficBar) trafficBar.style.width = `${Math.min(100, Math.max(5, trafficData.percent))}%`;
+      if (speedBadge) speedBadge.textContent = `⚡ ${trafficData.current_speed || '500 Мб/с'}`;
+    }
   }
 
 
@@ -327,10 +342,6 @@ function renderUI() {
       } catch (err) {
         console.error(err);
         showFeedback('Ошибка соединения');
-        btnSubmitPayRu.disabled = false;
-        btnSubmitPayRu.textContent = oldText;
-      }
-    };
         btnSubmitPayRu.disabled = false;
         btnSubmitPayRu.textContent = oldText;
       }

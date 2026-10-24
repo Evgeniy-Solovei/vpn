@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 import re
@@ -310,4 +311,90 @@ def check_all_servers_health_and_failover() -> dict:
         'results': results,
         'migrated_users_count': migrated_count
     }
+
+
+def sync_traffic_from_3xui() -> int:
+    """
+    Syncs real traffic statistics from 3X-UI SQLite for all clients into VPNKey.
+    Reads directly from /etc/x-ui/x-ui.db on Linux server.
+    """
+    import sqlite3
+    db_path = '/etc/x-ui/x-ui.db'
+    if not os.path.exists(db_path):
+        return 0
+
+    try:
+        conn = sqlite3.connect(db_path, timeout=5)
+        cur = conn.cursor()
+        cur.execute("SELECT email, up, down FROM client_traffics")
+        rows = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        logger.warning(f"Could not read client_traffics: {e}")
+        return 0
+
+    updated = 0
+    for email, up, down in rows:
+        total_bytes = (up or 0) + (down or 0)
+        parts = email.rsplit('_', 1)
+        key = None
+        if len(parts) == 2 and parts[1].isdigit():
+            user_id = int(parts[1])
+            key = VPNKey.objects.filter(user_id=user_id).first()
+        if not key:
+            key = VPNKey.objects.filter(user__username=email).first()
+
+        if key and key.used_traffic_bytes != total_bytes:
+            key.used_traffic_bytes = total_bytes
+            key.check_and_update_throttle()
+            key.save(update_fields=['used_traffic_bytes', 'is_throttled', 'updated_at'])
+            updated += 1
+
+    return updated
+
+
+def sync_key_traffic(key: VPNKey):
+    """Sync traffic for a single key from 3X-UI SQLite."""
+    import sqlite3
+    db_path = '/etc/x-ui/x-ui.db'
+    if not os.path.exists(db_path) or not key or not getattr(key, 'user', None):
+        return
+    email = f"{key.user.username}_{key.user.id}"
+    try:
+        conn = sqlite3.connect(db_path, timeout=2)
+        cur = conn.cursor()
+        cur.execute("SELECT up, down FROM client_traffics WHERE email=?", (email,))
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            total = (row[0] or 0) + (row[1] or 0)
+            if key.used_traffic_bytes != total:
+                key.used_traffic_bytes = total
+                key.save(update_fields=['used_traffic_bytes', 'updated_at'])
+    except Exception as e:
+        logger.debug(f"Error syncing key traffic: {e}")
+
+
+def ensure_key_in_panel(key: VPNKey):
+    """Ensures client key UUID is registered in 3X-UI inbound on the server."""
+    if not key or not key.server or not key.server.panel_url:
+        return False
+    try:
+        svc = ThreeXUIService(key.server)
+        return svc.add_client(key)
+    except Exception as e:
+        logger.debug(f"Error in ensure_key_in_panel: {e}")
+        return False
+
+
+def sync_all_keys_to_panel() -> int:
+    """Ensures all active keys are registered in their servers' 3X-UI inbound."""
+    synced = 0
+    for key in VPNKey.objects.filter(is_active=True).select_related('server', 'user'):
+        if key.server and key.server.panel_url:
+            if ensure_key_in_panel(key):
+                synced += 1
+    return synced
+
+
 
