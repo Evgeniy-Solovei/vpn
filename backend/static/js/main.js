@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBackgroundCanvas();
   initPasswordToggles();
   initCopyButtons();
+  initIncyDeeplinkFallback();
   initWhitelistToggle();
   initKeyRegeneration();
   initAutopayToggle();
@@ -193,6 +194,33 @@ function initCopyButtons() {
       }).catch(err => {
         console.error('Copy failed:', err);
       });
+    });
+  });
+}
+
+function initIncyDeeplinkFallback() {
+  document.querySelectorAll('a[href^="incy://"]').forEach(link => {
+    link.addEventListener('click', () => {
+      let appOpened = false;
+      const onBlur = () => { appOpened = true; };
+      window.addEventListener('blur', onBlur, { once: true });
+
+      const vlessBtn = document.getElementById('btn-copy-vless') || document.querySelector('[data-copy^="vless://"]');
+      const vlessUrl = vlessBtn ? vlessBtn.getAttribute('data-copy') : '';
+
+      setTimeout(() => {
+        window.removeEventListener('blur', onBlur);
+        if (!appOpened && document.hasFocus()) {
+          showToast('⚠️ Приложение INCY не установлено? Скачайте его в Шаге 1 или скопируйте ключ VLESS');
+          if (vlessUrl && navigator.clipboard) {
+            navigator.clipboard.writeText(vlessUrl).then(() => {
+              setTimeout(() => {
+                showToast('✓ Ключ VLESS скопирован в буфер для любого VPN-клиента!');
+              }, 1400);
+            }).catch(() => {});
+          }
+        }
+      }, 1500);
     });
   });
 }
