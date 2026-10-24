@@ -299,6 +299,7 @@ def generate_telegram_link_code_view(request):
     return JsonResponse({
         'success': True,
         'code': code_obj.code,
+        'bot_username': bot_username,
         'bot_url': bot_url,
         'is_linked': bool(request.user.telegram_id),
         'telegram_username': request.user.telegram_username or '',
@@ -363,18 +364,29 @@ def telegram_auth_callback_view(request):
         user = request.user
         existing = CustomUser.objects.filter(telegram_id=telegram_id).exclude(id=user.id).first()
         if existing:
-            messages.warning(request, f"Этот Telegram-аккаунт уже привязан к пользователю {existing.username}.")
-            return redirect('dashboard')
+            is_bot_account = (
+                not existing.has_usable_password() or
+                existing.email.startswith('tg_') or
+                existing.username.startswith('tg_') or
+                existing.email.endswith('@live-dev.by')
+            )
+            if is_bot_account:
+                from apps.accounts.services import merge_users
+                user = merge_users(target_user=user, source_user=existing)
+            else:
+                messages.warning(request, f"Этот Telegram-аккаунт уже привязан к основному пользователю {existing.username}.")
+                return redirect('dashboard')
+        else:
+            user.telegram_id = telegram_id
+            if telegram_username:
+                user.telegram_username = telegram_username
 
-        user.telegram_id = telegram_id
-        if telegram_username:
-            user.telegram_username = telegram_username
         if not user.telegram_bonus_claimed:
             user.telegram_bonus_claimed = True
             user.balance += Decimal("7.00")  # +2 days bonus
-            messages.success(request, "🎉 Telegram успешно привязан! Вам начислено +2 дня бесплатного VPN (+7.00 ₽).")
+            messages.success(request, f"🎉 Telegram успешно привязан! Аккаунты объединены, вам начислено +2 дня бесплатного VPN (+7.00 ₽).")
         else:
-            messages.success(request, "Telegram успешно привязан к вашему аккаунту.")
+            messages.success(request, f"Telegram успешно привязан к аккаунту {user.username}!")
         user.save()
         return redirect('dashboard')
 

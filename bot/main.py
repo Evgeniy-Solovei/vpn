@@ -2,7 +2,7 @@ import asyncio
 import logging
 import httpx
 from aiogram import Bot, Dispatcher, F
-from aiogram.filters import CommandStart, CommandObject
+from aiogram.filters import CommandStart, CommandObject, Command
 from aiogram.types import Message, CallbackQuery
 
 from bot.config import BOT_TOKEN, WEB_API_URL, SITE_URL, SUPPORT_TELEGRAM
@@ -140,9 +140,59 @@ async def cmd_start(message: Message, command: CommandObject):
 
     await message.answer(
         welcome_text,
-        parse_mode="HTML",
         reply_markup=get_main_menu(vpn_info, user_info)
     )
+
+
+@dp.message(Command("link"))
+async def cmd_link(message: Message, command: CommandObject):
+    telegram_id = message.from_user.id
+    username = message.from_user.username
+    link_code = (command.args or "").strip()
+
+    if not link_code:
+        await message.answer(
+            "ℹ️ <b>Привязка Telegram к сайту</b>\n\n"
+            "Чтобы привязать Telegram и получить <b>+2 дня бесплатно</b>:\n"
+            "1. В личном кабинете на сайте нажмите кнопку <b>«⚡ Забрать +2 дня в Telegram»</b>\n"
+            "2. Или скопируйте 16-значный код и отправьте:\n"
+            "<code>/link ВАШ_КОД</code>",
+            parse_mode="HTML"
+        )
+        return
+
+    if link_code.startswith("link_"):
+        link_code = link_code[5:].strip()
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/tg/link-account/",
+                json={
+                    "code": link_code,
+                    "telegram_id": str(telegram_id),
+                    "telegram_username": username or ""
+                }
+            )
+            res_data = resp.json()
+            if res_data.get('success'):
+                data = await sync_user_with_backend(telegram_id, username)
+                user_info = data.get('user', {})
+                vpn_info = data.get('vpn', {})
+                bonus_text = "\n🎁 <b>Вам начислено +2 дня бесплатного VPN!</b>\n" if res_data.get('bonus_awarded') else ""
+                msg_text = (
+                    f"🎉 <b>Telegram успешно привязан и объединен с аккаунтом {res_data.get('username')}!</b>\n"
+                    f"{bonus_text}\n"
+                    f"💰 Ваш единый баланс: <b>{res_data.get('new_balance')} ₽</b> (на {res_data.get('days_left')} дн.)\n\n"
+                    f"⚡ <b>Все данные объединены:</b> вход на сайте (по логину/паролю, Google или в 1 клик) и бот теперь работают как единое целое!"
+                )
+                await message.answer(msg_text, parse_mode="HTML", reply_markup=get_main_menu(vpn_info, user_info))
+            else:
+                err_msg = res_data.get('error', 'Не удалось привязать аккаунт')
+                await message.answer(f"⚠️ <b>Ошибка привязки:</b> {err_msg}", parse_mode="HTML")
+        except Exception as e:
+            logger.error(f"Error in cmd_link: {e}")
+            await message.answer("⚠️ Ошибка соединения с сервером при привязке аккаунта.", parse_mode="HTML")
 
 
 @dp.callback_query(F.data == "main_menu")

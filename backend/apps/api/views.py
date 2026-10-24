@@ -225,18 +225,27 @@ def tg_link_account_view(request):
 
         user = link_code.user
 
-        # Ensure this telegram_id is not already linked to ANOTHER user
+        # If this telegram_id is already linked to another user, safely merge if it is a bot shadow account!
         existing = CustomUser.objects.filter(telegram_id=telegram_id).exclude(id=user.id).first()
         if existing:
-            return JsonResponse({
-                'success': False,
-                'error': f'Этот Telegram (@{telegram_username or telegram_id}) уже привязан к аккаунту {existing.username}.'
-            }, status=400)
-
-        # Link account
-        user.telegram_id = telegram_id
-        if telegram_username:
-            user.telegram_username = telegram_username
+            is_bot_account = (
+                not existing.has_usable_password() or
+                existing.email.startswith('tg_') or
+                existing.username.startswith('tg_') or
+                existing.email.endswith('@live-dev.by')
+            )
+            if is_bot_account:
+                from apps.accounts.services import merge_users
+                user = merge_users(target_user=user, source_user=existing)
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Этот Telegram (@{telegram_username or telegram_id}) уже привязан к основному веб-аккаунту {existing.username}.'
+                }, status=400)
+        else:
+            user.telegram_id = telegram_id
+            if telegram_username:
+                user.telegram_username = telegram_username
 
         bonus_awarded = False
         if not user.telegram_bonus_claimed:

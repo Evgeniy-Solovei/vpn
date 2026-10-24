@@ -529,5 +529,54 @@ class AccountsTestCase(TestCase):
                 self.assertEqual(created.email, 'googler@example.com')
                 self.assertEqual(int(self.client.session['_auth_user_id']), created.id)
 
+    def test_merge_users_service(self):
+        """merge_users combines balances, keys, and telegram data into the target user."""
+        from apps.accounts.services import merge_users
+        from apps.vpn.models import VPNKey
+        from apps.vpn.services import get_or_create_default_server
+
+        server = get_or_create_default_server()
+        target = User.objects.create_user(username='webmaster', email='web@example.com', password='pass', balance=Decimal('10.00'))
+        source = User.objects.create_user(username='tg_555', email='tg_555@live-dev.by', telegram_id='555666', telegram_username='tgmaster', balance=Decimal('50.00'))
+        key_source = VPNKey.objects.create(user=source, server=server)
+
+        merged = merge_users(target_user=target, source_user=source)
+        self.assertEqual(merged.id, target.id)
+        self.assertEqual(merged.balance, Decimal('60.00'))
+        self.assertEqual(merged.telegram_id, '555666')
+        self.assertEqual(merged.telegram_username, 'tgmaster')
+        self.assertFalse(User.objects.filter(username='tg_555').exists())
+
+        key_source.refresh_from_db()
+        self.assertEqual(key_source.user_id, target.id)
+
+    def test_tg_link_account_api_merges_duplicate_bot_account(self):
+        """API tg/link-account/ successfully merges when telegram_id is already in DB."""
+        import json
+        from apps.accounts.models import TelegramLinkCode
+        target = User.objects.create_user(username='webuser12', email='web12@example.com', password='pass', balance=Decimal('5.00'))
+        source = User.objects.create_user(username='tg_99887711', email='tg_99887711@live-dev.by', telegram_id='99887711', telegram_username='telebotter', balance=Decimal('20.00'))
+        source.set_unusable_password()
+        source.save()
+        
+        link_code = TelegramLinkCode.create_for_user(target)
+        payload = {
+            'code': link_code.code,
+            'telegram_id': '99887711',
+            'telegram_username': 'telebotter'
+        }
+        resp = self.client.post('/api/tg/link-account/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data.get('success'))
+
+        target.refresh_from_db()
+        self.assertEqual(target.telegram_id, '99887711')
+        self.assertEqual(target.telegram_username, 'telebotter')
+        # 5.00 + 20.00 + 7.00 (bonus) = 32.00
+        self.assertEqual(target.balance, Decimal('32.00'))
+        self.assertFalse(User.objects.filter(username='tg_99887711').exists())
+
+
 
 

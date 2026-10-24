@@ -82,13 +82,15 @@
         </p>
       </div>
     </div>
-    <button type="button" class="btn btn-primary" id="btn-link-telegram" style="background: linear-gradient(135deg, #0284c7, #38bdf8); border: none; padding: 0.65rem 1.25rem; font-size: 0.88rem; box-shadow: 0 0 20px rgba(56, 189, 248, 0.35); white-space: nowrap;">
-      <span>⚡ Забрать +2 дня в Telegram</span>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="5" y1="12" x2="19" y2="12"/>
-        <polyline points="12 5 19 12 12 19"/>
-      </svg>
-    </button>
+    <div id="telegram-link-actions" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+      <button type="button" class="btn btn-primary" id="btn-link-telegram" style="background: linear-gradient(135deg, #0284c7, #38bdf8); border: none; padding: 0.65rem 1.25rem; font-size: 0.88rem; box-shadow: 0 0 20px rgba(56, 189, 248, 0.35); white-space: nowrap;">
+        <span>⚡ Забрать +2 дня в Telegram</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+    </div>
   </div>
   {% elif is_telegram_linked %}
   <div style="margin-bottom: 1.25rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 0.75rem; padding: 0.6rem 1rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem;">

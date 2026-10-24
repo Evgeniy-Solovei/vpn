@@ -713,37 +713,76 @@ function getCookie(name) {
   return cookieValue;
 }
 
-// Telegram Link (+2 days bonus)
+// Telegram Link (+2 days bonus & Account Unification)
 function initTelegramLink() {
   const btn = document.getElementById('btn-link-telegram');
+  const container = document.getElementById('telegram-link-actions');
   if (!btn) return;
 
   btn.addEventListener('click', async () => {
     btn.disabled = true;
-    const oldHtml = btn.innerHTML;
-    btn.innerHTML = '<span>Создание ссылки...</span>';
+    btn.innerHTML = '<span>⚡ Подготовка ссылки...</span>';
 
     try {
       const res = await fetch('/auth/telegram-link-code/');
       const data = await res.json();
       if (data.success && data.bot_url) {
-        showToast('Открываем Telegram для подтверждения...');
+        // Try popup / new tab
         window.open(data.bot_url, '_blank');
-        btn.innerHTML = '<span>⚡ Открыто в Telegram</span>';
 
-        setTimeout(() => {
-          window.location.reload();
-        }, 7000);
+        // Provide clickable button in container so even if browser blocked popup, user has 100% guarantee
+        if (container) {
+          container.innerHTML = `
+            <a href="${data.bot_url}" target="_blank" class="btn btn-primary" style="background: linear-gradient(135deg, #0284c7, #38bdf8); border: none; padding: 0.65rem 1.25rem; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 0 20px rgba(56, 189, 248, 0.35); border-radius: 0.75rem;">
+              <span>👉 Открыть бота @${data.bot_username || 'live_vpn_bot'}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <div style="font-size: 0.74rem; color: #38bdf8; margin-top: 0.35rem; text-align: right;">
+              Или команда в боте: <code style="background: rgba(56, 189, 248, 0.15); padding: 0.15rem 0.4rem; border-radius: 4px;">/link ${data.code}</code>
+            </div>
+          `;
+        } else {
+          btn.innerHTML = '<span>⏳ Ожидание подтверждения в боте...</span>';
+        }
+
+        showToast('Открываем Telegram! Нажмите «Запустить» в боте для завершения объединения.');
+
+        // Active Polling: Check every 2s if Telegram account has linked
+        let pollCount = 0;
+        const pollInterval = setInterval(async () => {
+          pollCount++;
+          if (pollCount > 60) {
+            clearInterval(pollInterval);
+            return;
+          }
+          try {
+            const pRes = await fetch('/api/user/profile/');
+            const pData = await pRes.json();
+            if (pData.success && pData.user && pData.user.telegram_id) {
+              clearInterval(pollInterval);
+              showToast('🎉 Telegram успешно привязан! Аккаунты объединены.');
+              setTimeout(() => {
+                window.location.reload();
+              }, 1200);
+            }
+          } catch (e) {
+            // silent ignore during poll
+          }
+        }, 2000);
+
       } else {
-        showToast('Ошибка создания ссылки привязки');
+        showToast(data.error || 'Ошибка создания ссылки привязки');
         btn.disabled = false;
-        btn.innerHTML = oldHtml;
+        btn.innerHTML = '<span>⚡ Забрать +2 дня в Telegram</span>';
       }
     } catch (e) {
       console.error('Error generating link code:', e);
       showToast('Ошибка сети');
       btn.disabled = false;
-      btn.innerHTML = oldHtml;
+      btn.innerHTML = '<span>⚡ Забрать +2 дня в Telegram</span>';
     }
   });
 }
