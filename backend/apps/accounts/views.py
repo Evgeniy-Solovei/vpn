@@ -426,7 +426,7 @@ def telegram_auth_callback_view(request):
         key = VPNKey.objects.create(
             user=user,
             server=server,
-            traffic_limit_gb=200,
+            traffic_limit_gb=150,
             max_devices=5,
         )
         try:
@@ -595,7 +595,7 @@ def google_callback_view(request):
         key = VPNKey.objects.create(
             user=user,
             server=server,
-            traffic_limit_gb=200,
+            traffic_limit_gb=150,
             max_devices=5,
         )
         try:

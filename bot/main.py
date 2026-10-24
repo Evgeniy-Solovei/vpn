@@ -119,12 +119,8 @@ async def cmd_start(message: Message, command: CommandObject):
     server_title = vpn_info.get('server_name') or '🇫🇷 Франция • Париж'
     ping_ms = vpn_info.get('ping_ms', 38)
     used_display = traffic_info.get('used_display', '0.0 МБ')
-    is_unlimited = traffic_info.get('is_unlimited', True) or not traffic_info.get('limit_gb')
-
-    if is_unlimited:
-        traffic_line = f"• Трафик: <b>{used_display}</b> (Безлимит ∞)"
-    else:
-        traffic_line = f"• Трафик: <b>{traffic_info.get('used_gb', 0)} / {traffic_info.get('limit_gb', 0)} ГБ</b>"
+    limit_gb = traffic_info.get('limit_gb') or 150
+    traffic_line = f"• Трафик: <b>{used_display} / {limit_gb} ГБ</b> (квота на месяц)"
 
     welcome_text = (
         f"👋 <b>Добро пожаловать в VPN live-dev!</b>\n\n"
@@ -205,12 +201,8 @@ async def cb_main_menu(call: CallbackQuery):
     server_title = vpn_info.get('server_name') or '🇫🇷 Франция • Париж'
     ping_ms = vpn_info.get('ping_ms', 38)
     used_display = traffic_info.get('used_display', '0.0 МБ')
-    is_unlimited = traffic_info.get('is_unlimited', True) or not traffic_info.get('limit_gb')
-
-    if is_unlimited:
-        traffic_line = f"• Трафик: <b>{used_display}</b> (Безлимит ∞)"
-    else:
-        traffic_line = f"• Трафик: <b>{traffic_info.get('used_gb', 0)} / {traffic_info.get('limit_gb', 0)} ГБ</b>"
+    limit_gb = traffic_info.get('limit_gb') or 150
+    traffic_line = f"• Трафик: <b>{used_display} / {limit_gb} ГБ</b> (квота на месяц)"
 
     text = (
         f"🏠 <b>Главное меню VPN live-dev</b>\n\n"

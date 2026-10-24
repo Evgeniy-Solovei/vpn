@@ -163,7 +163,7 @@
                 data-telegram-login="{{ BOT_USERNAME }}" 
                 data-size="large" 
                 data-radius="10" 
-                data-auth-url="{% url 'telegram_auth_callback' %}" 
+                data-auth-url="{{ SITE_URL }}{% url 'telegram_auth_callback' %}" 
                 data-request-access="write"></script>
       </div>
     </div>

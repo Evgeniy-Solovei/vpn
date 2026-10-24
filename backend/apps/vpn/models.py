@@ -148,7 +148,7 @@ class VPNKey(models.Model):
     
     # Fair Usage Policy (FUP) & Traffic Management (Pooled across all servers)
     used_traffic_bytes = models.BigIntegerField(default=0, verbose_name="Использованный трафик (байт)")
-    traffic_limit_gb = models.PositiveIntegerField(default=0, verbose_name="Лимит скоростного трафика (0 = Безлимит)")
+    traffic_limit_gb = models.PositiveIntegerField(default=150, verbose_name="Лимит скоростного трафика (ГБ)")
     traffic_reset_date = models.DateField(default=get_default_reset_date, verbose_name="Дата следующего сброса квоты")
     is_throttled = models.BooleanField(default=False, verbose_name="Скорость ограничена (FUP)")
     custom_whitelist = models.TextField(blank=True, default="", verbose_name="Пользовательские домены-исключения")
