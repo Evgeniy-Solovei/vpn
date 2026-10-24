@@ -6,7 +6,7 @@ from .models import CustomUser
 
 class RegisterForm(forms.ModelForm):
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={
+        widget=forms.PasswordInput(render_value=True, attrs={
             'placeholder': '••••••••••••',
             'class': 'form-input',
             'id': 'id_password'
@@ -14,7 +14,7 @@ class RegisterForm(forms.ModelForm):
         label="Мой секретный пароль"
     )
     password_confirm = forms.CharField(
-        widget=forms.PasswordInput(attrs={
+        widget=forms.PasswordInput(render_value=True, attrs={
             'placeholder': '••••••••••••',
             'class': 'form-input',
             'id': 'id_password_confirm'
@@ -87,7 +87,7 @@ class LoginForm(forms.Form):
         label="Логин или Email"
     )
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={
+        widget=forms.PasswordInput(render_value=True, attrs={
             'placeholder': '••••••••••••',
             'class': 'form-input',
             'autocomplete': 'current-password'
@@ -141,14 +141,14 @@ class PasswordResetRequestForm(forms.Form):
 
 class SetNewPasswordForm(forms.Form):
     new_password = forms.CharField(
-        widget=forms.PasswordInput(attrs={
+        widget=forms.PasswordInput(render_value=True, attrs={
             'placeholder': 'Новый пароль',
             'class': 'form-input'
         }),
         label="Новый пароль"
     )
     new_password_confirm = forms.CharField(
-        widget=forms.PasswordInput(attrs={
+        widget=forms.PasswordInput(render_value=True, attrs={
             'placeholder': 'Повторите новый пароль',
             'class': 'form-input'
         }),
