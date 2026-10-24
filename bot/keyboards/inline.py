@@ -51,12 +51,12 @@ def get_main_menu(vpn_data: dict, user_data: dict) -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(
-                text="💬 Поддержка",
-                callback_data="support"
+                text="💻 Войти на сайте (ПК)",
+                callback_data="web_magic_login"
             ),
             InlineKeyboardButton(
-                text="🌐 Сайт vpn.live-dev.by",
-                url=SITE_URL
+                text="💬 Поддержка",
+                callback_data="support"
             )
         ]
     ]

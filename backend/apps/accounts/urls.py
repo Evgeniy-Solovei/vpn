@@ -8,4 +8,6 @@ urlpatterns = [
     path('password-reset/', views.password_reset_request_view, name='password_reset'),
     path('password-reset/done/', views.password_reset_done_view, name='password_reset_done'),
     path('password-reset-confirm/<uidb64>/<token>/', views.password_reset_confirm_view, name='password_reset_confirm'),
+    path('telegram-link-code/', views.generate_telegram_link_code_view, name='telegram_link_code'),
+    path('magic/<str:token>/', views.magic_login_view, name='magic_login'),
 ]

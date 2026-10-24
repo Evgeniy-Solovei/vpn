@@ -65,6 +65,41 @@
   <!-- ==========================================
        2. DASHBOARD MAIN GRID
        ========================================== -->
+  {% if not is_telegram_linked and can_claim_tg_bonus %}
+  <!-- Telegram Link Bonus Banner (+2 Free Days) -->
+  <div class="glass-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(56, 189, 248, 0.35); padding: 1.1rem 1.4rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <div style="width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, #0284c7, #38bdf8); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); flex-shrink: 0;">
+        ✈️
+      </div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <h3 style="font-size: 1rem; font-weight: 800; color: #fff; margin: 0;">Привяжите Telegram и получите ещё +2 дня бесплатно!</h3>
+          <span class="status-pill pill-cyan" style="font-size: 0.72rem; padding: 0.15rem 0.55rem;">🎁 Бонус +2 дня</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4; margin-bottom: 0;">
+          Вы получили 1 день теста при регистрации на сайте. Подтвердите Telegram-аккаунт в 1 клик, чтобы продлить тест до 3 дней и управлять подпиской в боте.
+        </p>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" id="btn-link-telegram" style="background: linear-gradient(135deg, #0284c7, #38bdf8); border: none; padding: 0.65rem 1.25rem; font-size: 0.88rem; box-shadow: 0 0 20px rgba(56, 189, 248, 0.35); white-space: nowrap;">
+      <span>⚡ Забрать +2 дня в Telegram</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </button>
+  </div>
+  {% elif is_telegram_linked %}
+  <div style="margin-bottom: 1.25rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 0.75rem; padding: 0.6rem 1rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem; color: #34d399;">
+      <span>✅</span>
+      <span>Telegram привязан: <strong>@{{ user.telegram_username|default:user.telegram_id }}</strong> (синхронизация активна)</span>
+    </div>
+    <span style="font-size: 0.75rem; color: var(--text-dim);">Единый аккаунт Сайт + Бот</span>
+  </div>
+  {% endif %}
+
   <div class="dashboard-grid">
 
     <!-- Card 1: Balance & Tariffs (Emerald / Cyan Ribbon) -->

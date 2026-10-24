@@ -11,7 +11,8 @@ from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 from django.http import JsonResponse
 
-from .models import CustomUser, DeviceAuthKey
+from decimal import Decimal
+from .models import CustomUser, DeviceAuthKey, TelegramLinkCode, MagicLoginToken
 from .forms import RegisterForm, LoginForm, PasswordResetRequestForm, SetNewPasswordForm
 from apps.vpn.models import VPNServer, VPNKey
 from apps.vpn.services import get_or_create_default_server
@@ -55,6 +56,8 @@ def register_view(request):
         
         if form.is_valid():
             user = form.save(commit=False)
+            user.balance = Decimal('3.50')  # 1-day free trial on web registration
+            user.telegram_bonus_claimed = False
             if ref_code:
                 try:
                     referrer = CustomUser.objects.get(referral_code=ref_code)
@@ -229,7 +232,49 @@ def dashboard_view(request):
         'servers': servers,
         'referrals_count': referrals_count,
         'referral_url': referral_url,
+        'is_telegram_linked': bool(user.telegram_id),
+        'can_claim_tg_bonus': not user.telegram_bonus_claimed,
+        'bot_username': getattr(settings, 'BOT_USERNAME', 'live_vpn_bot'),
     })
+
+
+@login_required
+def generate_telegram_link_code_view(request):
+    """
+    Generates a 16-character authorization link code for the current web user
+    to link their Telegram account in @live_vpn_bot and receive +2 free days.
+    """
+    code_obj = TelegramLinkCode.create_for_user(request.user)
+    bot_username = getattr(settings, 'BOT_USERNAME', 'live_vpn_bot')
+    bot_url = f"https://t.me/{bot_username}?start=link_{code_obj.code}"
+
+    return JsonResponse({
+        'success': True,
+        'code': code_obj.code,
+        'bot_url': bot_url,
+        'is_linked': bool(request.user.telegram_id),
+        'telegram_username': request.user.telegram_username or '',
+        'bonus_claimed': request.user.telegram_bonus_claimed,
+    })
+
+
+def magic_login_view(request, token):
+    """
+    One-click instant login via single-use token issued by Telegram Bot.
+    Enables seamless transition from phone/bot to PC without passwords.
+    """
+    token_obj = MagicLoginToken.objects.select_related('user').filter(token=token).first()
+    if not token_obj or not token_obj.is_valid():
+        messages.error(request, "Срок действия ссылки для входа истек или она уже была использована. Запросите новую ссылку в Telegram-боте.")
+        return redirect('login')
+
+    user = token_obj.user
+    token_obj.delete()  # Single-use
+
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    messages.success(request, f"Добро пожаловать, {user.username}! Вы успешно вошли через Telegram.")
+    response = redirect('dashboard')
+    return apply_persistent_auth(request, response, user, remember=True, days=90)
 
 
 def custom_500_handler(request):

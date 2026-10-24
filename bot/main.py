@@ -37,7 +37,43 @@ async def sync_user_with_backend(telegram_id: int, username: str = None, ref_cod
 async def cmd_start(message: Message, command: CommandObject):
     telegram_id = message.from_user.id
     username = message.from_user.username
-    ref_code = command.args if command.args else None
+    raw_arg = command.args if command.args else None
+
+    # Handle Web Account Linking with +2 days bonus
+    if raw_arg and raw_arg.startswith('link_'):
+        link_code = raw_arg[5:].strip()
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                resp = await client.post(
+                    f"{WEB_API_URL}/tg/link-account/",
+                    json={
+                        "code": link_code,
+                        "telegram_id": str(telegram_id),
+                        "telegram_username": username or ""
+                    }
+                )
+                res_data = resp.json()
+                if res_data.get('success'):
+                    data = await sync_user_with_backend(telegram_id, username)
+                    user_info = data.get('user', {})
+                    vpn_info = data.get('vpn', {})
+                    bonus_text = "\n🎁 <b>Вам начислено +2 дня бесплатного VPN!</b> (всего 3 дня)\n" if res_data.get('bonus_awarded') else ""
+                    msg_text = (
+                        f"🎉 <b>Telegram успешно привязан к аккаунту {res_data.get('username')}!</b>\n"
+                        f"{bonus_text}\n"
+                        f"💰 Ваш текущий баланс: <b>{res_data.get('new_balance')} ₽</b> (на {res_data.get('days_left')} дн.)\n\n"
+                        f"⚡ Теперь ваш аккаунт на сайте и в Telegram полностью синхронизированы. Ключи и настройки едины!"
+                    )
+                    await message.answer(msg_text, parse_mode="HTML", reply_markup=get_main_menu(vpn_info, user_info))
+                    return
+                else:
+                    err_msg = res_data.get('error', 'Не удалось привязать аккаунт')
+                    await message.answer(f"⚠️ <b>Ошибка привязки:</b> {err_msg}", parse_mode="HTML")
+            except Exception as e:
+                logger.error(f"Error linking account: {e}")
+                await message.answer("⚠️ Ошибка соединения с сервером при привязке аккаунта.", parse_mode="HTML")
+
+    ref_code = raw_arg if raw_arg and not raw_arg.startswith('link_') else None
 
     data = await sync_user_with_backend(telegram_id, username, ref_code)
     user_info = data.get('user', {})
@@ -219,6 +255,33 @@ async def cb_support(call: CallbackQuery):
     )
     await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_back_menu())
     await call.answer()
+
+
+@dp.callback_query(F.data == "web_magic_login")
+async def cb_web_magic_login(call: CallbackQuery):
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/tg/generate-magic-link/",
+                json={"telegram_id": str(call.from_user.id)}
+            )
+            res_data = resp.json()
+            if res_data.get('success'):
+                login_url = res_data.get('login_url')
+                text = (
+                    f"💻 <b>Вход в личный кабинет на ПК:</b>\n\n"
+                    f"Нажмите на ссылку ниже, чтобы войти в кабинет на компьютере без пароля:\n\n"
+                    f"👉 <a href=\"{login_url}\"><b>Войти в личный кабинет на сайте &rarr;</b></a>\n\n"
+                    f"⏳ <i>Ссылка одноразовая и действует 15 минут.</i>"
+                )
+                await call.message.answer(text, parse_mode="HTML", disable_web_page_preview=True)
+                await call.answer()
+                return
+            else:
+                await call.answer(f"⚠️ {res_data.get('error', 'Ошибка генерации ссылки')}", show_alert=True)
+        except Exception as e:
+            logger.error(f"Error generating magic link: {e}")
+            await call.answer("Ошибка при создании ссылки для входа", show_alert=True)
 
 
 @dp.message(F.text.startswith('/promo'))

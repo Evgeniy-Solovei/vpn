@@ -351,5 +351,109 @@ class AccountsTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(User.objects.filter(username='shortpassuser').exists())
 
+    def test_web_registration_initial_balance_one_day(self):
+        """Web registration awards 1 free day (3.50 ₽) initially."""
+        resp = self.client.post(reverse('register'), {
+            'username': 'onedayuser',
+            'email': 'oneday@test.com',
+            'password': 'password123',
+            'password_confirm': 'password123',
+        })
+        self.assertEqual(resp.status_code, 302)
+        user = User.objects.get(username='onedayuser')
+        self.assertEqual(user.balance, Decimal('3.50'))
+        self.assertEqual(user.days_left, 1)
+        self.assertFalse(user.telegram_bonus_claimed)
+
+    def test_telegram_link_code_and_claiming_bonus(self):
+        """Linking Telegram awards +2 free days (total 3 days = 10.50 ₽)."""
+        user = User.objects.create_user(
+            username='webuser1',
+            email='webuser1@test.com',
+            password='password123',
+            balance=Decimal('3.50')
+        )
+        self.client.force_login(user)
+
+        # 1. Generate link code
+        resp = self.client.get(reverse('telegram_link_code'))
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['success'])
+        code = data['code']
+
+        # 2. Link account via Telegram Bot API
+        import json
+        link_resp = self.client.post(
+            reverse('api_tg_link_account'),
+            data=json.dumps({
+                'code': code,
+                'telegram_id': '888777666',
+                'telegram_username': 'cool_tg_user'
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(link_resp.status_code, 200)
+        link_data = link_resp.json()
+        self.assertTrue(link_data['success'])
+        self.assertTrue(link_data['bonus_awarded'])
+        self.assertEqual(link_data['new_balance'], 10.50)
+        self.assertEqual(link_data['days_left'], 3)
+
+        user.refresh_from_db()
+        self.assertEqual(user.telegram_id, '888777666')
+        self.assertEqual(user.telegram_username, 'cool_tg_user')
+        self.assertTrue(user.telegram_bonus_claimed)
+
+        # 3. Duplicate Telegram link rejected for another user
+        user2 = User.objects.create_user(
+            username='webuser2',
+            email='webuser2@test.com',
+            password='password123',
+            balance=Decimal('3.50')
+        )
+        self.client.force_login(user2)
+        resp2 = self.client.get(reverse('telegram_link_code'))
+        code2 = resp2.json()['code']
+
+        dup_resp = self.client.post(
+            reverse('api_tg_link_account'),
+            data=json.dumps({
+                'code': code2,
+                'telegram_id': '888777666',
+                'telegram_username': 'cool_tg_user'
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(dup_resp.status_code, 400)
+        self.assertFalse(dup_resp.json()['success'])
+
+    def test_magic_login_token(self):
+        """Magic login token provides instant 1-click passwordless entry."""
+        user = User.objects.create_user(
+            username='magicuser',
+            email='magic@test.com',
+            password='password123',
+            telegram_id='555444333'
+        )
+        import json
+        # 1. Bot calls generate magic link
+        gen_resp = self.client.post(
+            reverse('api_tg_generate_magic_link'),
+            data=json.dumps({'telegram_id': '555444333'}),
+            content_type='application/json'
+        )
+        self.assertEqual(gen_resp.status_code, 200)
+        login_url = gen_resp.json()['login_url']
+        token = login_url.rstrip('/').split('/')[-1]
+
+        # 2. Browser opens magic link
+        resp = self.client.get(reverse('magic_login', kwargs={'token': token}))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse('dashboard'))
+
+        # User is authenticated
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.id)
+
 
 

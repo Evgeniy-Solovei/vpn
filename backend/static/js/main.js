@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initYooKassa();
   initModals();
   initGuideTabs();
+  initTelegramLink();
 });
 
 
@@ -710,4 +711,39 @@ function getCookie(name) {
     }
   }
   return cookieValue;
+}
+
+// Telegram Link (+2 days bonus)
+function initTelegramLink() {
+  const btn = document.getElementById('btn-link-telegram');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '<span>Создание ссылки...</span>';
+
+    try {
+      const res = await fetch('/auth/telegram-link-code/');
+      const data = await res.json();
+      if (data.success && data.bot_url) {
+        showToast('Открываем Telegram для подтверждения...');
+        window.open(data.bot_url, '_blank');
+        btn.innerHTML = '<span>⚡ Открыто в Telegram</span>';
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 7000);
+      } else {
+        showToast('Ошибка создания ссылки привязки');
+        btn.disabled = false;
+        btn.innerHTML = oldHtml;
+      }
+    } catch (e) {
+      console.error('Error generating link code:', e);
+      showToast('Ошибка сети');
+      btn.disabled = false;
+      btn.innerHTML = oldHtml;
+    }
+  });
 }

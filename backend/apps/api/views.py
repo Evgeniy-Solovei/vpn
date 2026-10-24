@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.contrib.auth import login as auth_login
-from apps.accounts.models import CustomUser
+from apps.accounts.models import CustomUser, TelegramLinkCode, MagicLoginToken
 from apps.vpn.models import VPNServer, VPNKey
 from apps.vpn.services import get_or_create_default_server
 from apps.billing.models import TariffPlan, Transaction
@@ -184,6 +184,106 @@ def tg_sync_view(request):
     except Exception as e:
         logger.error(f"Error in tg_sync_view: {e}")
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def tg_link_account_view(request):
+    """
+    Called by Telegram Bot when user opens /start link_<code_16>.
+    Validates the temporary link code, associates telegram_id,
+    and awards +2 free days (+7.00 ₽) if not already claimed.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        code = str(data.get('code', '')).strip()
+        telegram_id = str(data.get('telegram_id', '')).strip()
+        telegram_username = data.get('telegram_username', '')
+
+        if not code or not telegram_id:
+            return JsonResponse({'success': False, 'error': 'Код привязки и telegram_id обязательны'}, status=400)
+
+        link_code = TelegramLinkCode.objects.select_related('user').filter(code=code).first()
+        if not link_code or not link_code.is_valid():
+            return JsonResponse({'success': False, 'error': 'Неверный или устаревший код привязки. Сгенерируйте новый на сайте.'}, status=400)
+
+        user = link_code.user
+
+        # Ensure this telegram_id is not already linked to ANOTHER user
+        existing = CustomUser.objects.filter(telegram_id=telegram_id).exclude(id=user.id).first()
+        if existing:
+            return JsonResponse({
+                'success': False,
+                'error': f'Этот Telegram (@{telegram_username or telegram_id}) уже привязан к аккаунту {existing.username}.'
+            }, status=400)
+
+        # Link account
+        user.telegram_id = telegram_id
+        if telegram_username:
+            user.telegram_username = telegram_username
+
+        bonus_awarded = False
+        if not user.telegram_bonus_claimed:
+            user.balance += Decimal('7.00')  # +2 full days bonus!
+            user.telegram_bonus_claimed = True
+            bonus_awarded = True
+
+        user.save()
+        link_code.delete()  # Consumed
+
+        # Ensure key is synced in 3X-UI
+        from apps.vpn.services import ensure_key_in_panel
+        key = user.vpn_keys.first()
+        if key:
+            ensure_key_in_panel(key)
+
+        return JsonResponse({
+            'success': True,
+            'bonus_awarded': bonus_awarded,
+            'username': user.username,
+            'new_balance': float(user.balance),
+            'days_left': user.days_left,
+            'message': f"Telegram успешно привязан к аккаунту {user.username}!"
+        })
+    except Exception as e:
+        logger.error(f"Error in tg_link_account_view: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def tg_generate_magic_link_view(request):
+    """
+    Called by Telegram Bot when user clicks 'Войти в кабинет на ПК'.
+    Generates a 15-minute single-use login link.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        telegram_id = str(data.get('telegram_id', '')).strip()
+
+        if not telegram_id:
+            return JsonResponse({'success': False, 'error': 'telegram_id is required'}, status=400)
+
+        user = CustomUser.objects.filter(telegram_id=telegram_id).first()
+        if not user:
+            return JsonResponse({'success': False, 'error': 'Пользователь не найден. Сначала запустите бота.'}, status=404)
+
+        token_obj = MagicLoginToken.create_for_user(user, minutes=15)
+        site_url = getattr(settings, 'SITE_URL', 'https://vpn.live-dev.by').rstrip('/')
+        login_url = f"{site_url}/auth/magic/{token_obj.token}/"
+
+        return JsonResponse({
+            'success': True,
+            'login_url': login_url,
+            'username': user.username,
+        })
+    except Exception as e:
+        logger.error(f"Error in tg_generate_magic_link_view: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @csrf_exempt
