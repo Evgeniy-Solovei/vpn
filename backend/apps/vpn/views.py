@@ -14,7 +14,7 @@ from .services import generate_pac_script, ThreeXUIService
 
 def subscription_view(request, token):
     """
-    Standard Base64 subscription endpoint for INCY, Happ, Hiddify, v2rayNG, etc.
+    Standard Base64 subscription endpoint for INCY, Hiddify, v2rayNG, etc.
     URL: /sub/<token>
     """
     key = get_object_or_404(VPNKey, sub_token=token)

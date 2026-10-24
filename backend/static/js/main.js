@@ -225,8 +225,8 @@ function getAppStoreInfo() {
   if (/Macintosh|Mac OS X/i.test(ua) && !(/iPad|iPhone|iPod/.test(ua))) {
     return {
       platform: 'mac',
-      storeName: 'App Store (Mac)',
-      storeUrl: 'https://apps.apple.com/app/happ-proxy-utility/id6504287215',
+      storeName: 'сайт INCY для Mac',
+      storeUrl: 'https://incy.app/skachat/',
       selector: '.btn-store-mac'
     };
   }
@@ -258,7 +258,10 @@ function highlightUserPlatformInModal() {
 
 function initIncyDeeplinkFallback() {
   document.querySelectorAll('a[href^="incy://"], a[href^="vless://"], .btn-smart-connect').forEach(link => {
-    link.addEventListener('click', () => {
+    link.addEventListener('click', (e) => {
+      // Гарантированно остаёмся на текущей странице личного кабинета
+      if (e) e.preventDefault();
+
       const deeplinkUrl = link.getAttribute('href');
       if (!deeplinkUrl) return;
 
@@ -275,8 +278,7 @@ function initIncyDeeplinkFallback() {
         navigator.clipboard.writeText(copyVal).catch(() => {});
       }
 
-      const store = getAppStoreInfo();
-      showToast('Запускаем приложение...');
+      showToast('✓ Ключ скопирован! Запускаем INCY...');
 
       let appOpened = false;
       const onBlur = () => { appOpened = true; };
@@ -288,29 +290,34 @@ function initIncyDeeplinkFallback() {
       window.addEventListener('pagehide', onBlur, { once: true });
       document.addEventListener('visibilitychange', onVisChange);
 
-      // 2. Пытаемся открыть установленное приложение
-      window.location.href = deeplinkUrl;
+      // 2. Запускаем приложение через схему
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+      if (isIOS) {
+        window.location.href = deeplinkUrl;
+      } else {
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = deeplinkUrl;
+        document.body.appendChild(iframe);
+        setTimeout(() => {
+          try { iframe.remove(); } catch (_) {}
+        }, 3000);
+      }
 
-      // 3. Проверка: если приложение не открылось в течение 1.3 сек (нет приложения на ПК/телефоне)
+      // 3. Проверка: если приложение не запустилось (нет приложения на ПК/телефоне)
       setTimeout(() => {
         window.removeEventListener('blur', onBlur);
         window.removeEventListener('pagehide', onBlur);
         document.removeEventListener('visibilitychange', onVisChange);
 
         if (!appOpened && !document.hidden) {
-          showToast(`⚠️ Приложение не найдено. Открываем ${store.storeName}...`);
+          // Приложение не найдено: остаёмся строго на текущей странице!
+          showToast('⚠️ INCY не установлено? Скачайте его в Шаге 1 выше');
           highlightUserPlatformInModal();
-
-          setTimeout(() => {
-            const storeWin = window.open(store.storeUrl, '_blank', 'noopener,noreferrer');
-            if (!storeWin || storeWin.closed || typeof storeWin.closed === 'undefined') {
-              window.location.href = store.storeUrl;
-            }
-          }, 350);
         } else {
-          showToast('✓ Приложение открыто! Сервер успешно добавлен.');
+          showToast('✓ Приложение INCY открыто! Сервер успешно добавлен.');
         }
-      }, 1300);
+      }, 1400);
     });
   });
 }
