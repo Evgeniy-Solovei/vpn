@@ -198,29 +198,76 @@ function initCopyButtons() {
   });
 }
 
+function getAppStoreInfo() {
+  const ua = navigator.userAgent || navigator.vendor || window.opera || '';
+
+  // iOS (iPhone, iPad, iPod)
+  if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    return {
+      storeName: 'App Store (iOS)',
+      storeUrl: 'https://apps.apple.com/app/incy/id6477873703'
+    };
+  }
+
+  // Android
+  if (/android/i.test(ua)) {
+    return {
+      storeName: 'Google Play',
+      storeUrl: 'https://play.google.com/store/apps/details?id=llc.itdev.incy'
+    };
+  }
+
+  // macOS
+  if (/Macintosh|Mac OS X/i.test(ua)) {
+    return {
+      storeName: 'App Store (Mac)',
+      storeUrl: 'https://apps.apple.com/app/incy/id6477873703'
+    };
+  }
+
+  // Windows / Linux / other PC
+  return {
+    storeName: 'маркет приложений',
+    storeUrl: 'https://incy.app'
+  };
+}
+
 function initIncyDeeplinkFallback() {
-  document.querySelectorAll('a[href^="incy://"]').forEach(link => {
-    link.addEventListener('click', () => {
+  document.querySelectorAll('a[href^="incy://"], .btn-smart-connect').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const deeplinkUrl = link.getAttribute('href');
+      if (!deeplinkUrl) return;
+
+      const store = getAppStoreInfo();
+
+      // Automatically copy VLESS key to clipboard so once installed, key is ready
+      const vlessBtn = document.getElementById('btn-copy-vless') || document.querySelector('[data-copy^="vless://"]');
+      const vlessUrl = vlessBtn ? vlessBtn.getAttribute('data-copy') : '';
+      if (vlessUrl && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(vlessUrl).catch(() => {});
+      }
+
       let appOpened = false;
       const onBlur = () => { appOpened = true; };
       window.addEventListener('blur', onBlur, { once: true });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) appOpened = true;
+      }, { once: true });
 
-      const vlessBtn = document.getElementById('btn-copy-vless') || document.querySelector('[data-copy^="vless://"]');
-      const vlessUrl = vlessBtn ? vlessBtn.getAttribute('data-copy') : '';
+      // 1. Try launching the installed application
+      window.location.href = deeplinkUrl;
 
+      // 2. If app didn't launch within 1.2s -> redirect to appropriate Store
       setTimeout(() => {
         window.removeEventListener('blur', onBlur);
-        if (!appOpened && document.hasFocus()) {
-          showToast('⚠️ Приложение INCY не установлено? Скачайте его в Шаге 1 или скопируйте ключ VLESS');
-          if (vlessUrl && navigator.clipboard) {
-            navigator.clipboard.writeText(vlessUrl).then(() => {
-              setTimeout(() => {
-                showToast('✓ Ключ VLESS скопирован в буфер для любого VPN-клиента!');
-              }, 1400);
-            }).catch(() => {});
-          }
+        if (!appOpened && !document.hidden) {
+          showToast(`Перенаправляем в ${store.storeName} для скачивания...`);
+          setTimeout(() => {
+            window.location.href = store.storeUrl;
+          }, 350);
         }
-      }, 1500);
+      }, 1200);
     });
   });
 }
