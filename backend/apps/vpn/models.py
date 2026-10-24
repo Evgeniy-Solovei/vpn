@@ -35,16 +35,16 @@ class VPNServer(models.Model):
         ('offline', '⚫ Недоступен'),
     ]
 
-    name = models.CharField(max_length=128, verbose_name="Название сервера", default="Нидерланды • Амстердам")
+    name = models.CharField(max_length=128, verbose_name="Название сервера", default="Франция • Париж")
     server_type = models.CharField(max_length=16, choices=SERVER_TYPE_CHOICES, default='direct', verbose_name="Тип сервера")
     health_status = models.CharField(max_length=16, choices=HEALTH_STATUS_CHOICES, default='online', verbose_name="Состояние доступности")
     is_emergency_relay = models.BooleanField(default=False, verbose_name="Мост «Белый интернет» (Шатдаун)")
     relay_upstream = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='downstream_relays', verbose_name="Выходной сервер (Relay Upstream)")
 
-    country_code = models.CharField(max_length=4, default="NL", verbose_name="Код страны (ISO)")
-    country_name = models.CharField(max_length=64, default="Нидерланды", verbose_name="Страна")
-    city = models.CharField(max_length=64, default="Амстердам", verbose_name="Город / Локация")
-    ip = models.GenericIPAddressField(verbose_name="IP сервера", default="89.110.100.12")
+    country_code = models.CharField(max_length=4, default="FR", verbose_name="Код страны (ISO)")
+    country_name = models.CharField(max_length=64, default="Франция", verbose_name="Страна")
+    city = models.CharField(max_length=64, default="Париж", verbose_name="Город / Локация")
+    ip = models.GenericIPAddressField(verbose_name="IP сервера", default="81.19.137.255")
     port = models.PositiveIntegerField(default=443, verbose_name="Порт VLESS Reality")
     
     # Reality Settings

@@ -92,7 +92,7 @@ class ApiTestCase(TestCase):
         data = resp.json()
         self.assertIn('servers', data)
         self.assertGreater(len(data['servers']), 0)
-        self.assertEqual(data['servers'][0]['country_code'], 'NL')
+        self.assertEqual(data['servers'][0]['country_code'], 'FR')
 
     def test_api_tariffs_list(self):
         """API returns active tariffs list."""

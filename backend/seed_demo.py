@@ -15,60 +15,24 @@ User = get_user_model()
 def seed():
     print("🌱 Инициализация демо-данных для локального просмотра...")
 
-    # 1. Create or update European High-Speed VPN Servers
+    # 1. Create or update Real France Server
     servers_data = [
         {
-            "country_code": "NL",
-            "country_name": "Нидерланды",
-            "city": "Амстердам",
-            "name": "Нидерланды • Амстердам",
-            "ip": "89.110.100.12",
+            "country_code": "FR",
+            "country_name": "Франция",
+            "city": "Париж",
+            "name": "Франция • Париж",
+            "ip": "81.19.137.255",
             "port": 443,
-            "ping_ms": 42,
-            "load_percent": 24,
-            "speed_description": "1 Gbps • Безлимит",
-            "is_active": True,
-        },
-        {
-            "country_code": "DE",
-            "country_name": "Германия",
-            "city": "Франкфурт",
-            "name": "Германия • Франкфурт",
-            "ip": "45.142.214.55",
-            "port": 443,
+            "reality_sni": "dl.google.com",
+            "reality_pbk": "yq8Rau8sF3wZ48kXb7x7_Y2o_F-qK9wz8L_X-QyA6iE",
+            "reality_short_id": "d8e4f1a2b3c5",
             "ping_ms": 38,
-            "load_percent": 31,
-            "speed_description": "1 Gbps • Безлимит",
-            "is_active": True,
-        },
-        {
-            "country_code": "FI",
-            "country_name": "Финляндия",
-            "city": "Хельсинки",
-            "name": "Финляндия • Хельсинки",
-            "ip": "65.21.144.80",
-            "port": 443,
-            "ping_ms": 27,
             "load_percent": 18,
             "speed_description": "1 Gbps • Безлимит",
             "is_active": True,
             "server_type": "direct",
-            "order": 10,
-        },
-        {
-            "country_code": "RU",
-            "country_name": "Россия",
-            "city": "Москва",
-            "name": "Россия • Москва",
-            "ip": "185.129.50.15",
-            "port": 443,
-            "ping_ms": 14,
-            "load_percent": 15,
-            "speed_description": "1 Gbps • Шатдаун Bypass",
-            "is_active": True,
-            "server_type": "relay",
-            "is_emergency_relay": True,
-            "order": 5,
+            "order": 1,
         },
     ]
 
@@ -83,11 +47,9 @@ def seed():
             primary_server = s
         print(f"✅ VPN Сервер: {s.display_name} ({s.speed_description}, {s.ping_ms} ms)")
 
-    # Clean any legacy servers with '01'
-    VPNServer.objects.filter(name__contains='01').exclude(id=primary_server.id).delete()
-    if '01' in primary_server.name:
-        primary_server.name = "Нидерланды • Амстердам"
-        primary_server.save()
+    # Re-point all keys to real France server and delete fake servers
+    VPNKey.objects.all().update(server=primary_server)
+    VPNServer.objects.exclude(id=primary_server.id).delete()
     server = primary_server
 
 
@@ -146,7 +108,12 @@ def seed():
     demo_user.set_password("demo123")
     demo_user.balance = Decimal("105.00")
     demo_user.save()
-    demo_key, _ = VPNKey.objects.get_or_create(user=demo_user, server=server)
+    demo_key = VPNKey.objects.filter(user=demo_user).first()
+    if not demo_key:
+        demo_key = VPNKey.objects.create(user=demo_user, server=server)
+    else:
+        demo_key.server = server
+        demo_key.save()
     print(f"✅ Демо-пользователь: логин 'demo' | пароль 'demo123' (Баланс 105 ₽)")
 
     # 5. Promo Codes (3, 5, 10 days)

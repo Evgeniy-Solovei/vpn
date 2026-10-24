@@ -337,37 +337,30 @@
     </div>
 
     <!-- Card 5: Connect Without Installing Apps (PAC) -->
+    <!-- Card 4: Router & Smart TV (Direct Home Network) -->
     <div class="glass-card">
-
       <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem;">
         <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(6, 182, 212, 0.18); display: flex; align-items: center; justify-content: center; color: #38bdf8;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="2" y1="12" x2="22" y2="12"/>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <line x1="12" y1="20" x2="12.01" y2="20"/>
           </svg>
         </div>
         <div>
-          <h3 style="font-size: 1rem; font-weight: 700; color: #fff;">Без скачивания программ</h3>
-          <span style="font-size: 0.75rem; color: var(--text-dim);">PAC-скрипт для браузера</span>
+          <h3 style="font-size: 1rem; font-weight: 700; color: #fff;">Роутер и Smart TV</h3>
+          <span style="font-size: 0.75rem; color: var(--text-dim);">Защита всей домашней сети</span>
         </div>
       </div>
 
       <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
-        Вставьте ссылку в настройки системы или браузера, и заблокированные сайты будут проксироваться автоматически.
+        Подключите Smart TV, PlayStation и домашний роутер к VPN — без ограничений на скорость.
       </p>
 
       <div style="display: flex; gap: 0.5rem; flex-direction: column;">
-        <button type="button" class="btn btn-secondary btn-block" data-modal-target="pac-modal" style="font-size: 0.85rem;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          Инструкция по настройке PAC
-        </button>
         <button type="button" class="btn btn-secondary btn-block" data-modal-target="router-modal" style="font-size: 0.85rem; border-color: rgba(6, 182, 212, 0.35); color: #38bdf8;">
-          📶 Настройка Роутера и Smart TV
+          📶 Инструкция по настройке ТВ и Роутера
         </button>
       </div>
     </div>
@@ -555,31 +548,6 @@
   </div>
 </div>
 
-<!-- PAC Setup Modal -->
-<div class="modal-overlay" id="pac-modal">
-  <div class="modal-body">
-    <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Подключение через PAC-скрипт</h3>
-    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-      Позволяет использовать VPN прямо в браузере или системе без сторонних программ:
-    </p>
-
-    <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-subtle); border-radius: 0.85rem; padding: 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; line-height: 1.6;">
-      <p style="margin-bottom: 0.5rem;"><strong>1. Скопируйте URL скрипта:</strong></p>
-      <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
-        <input type="text" readonly value="{{ request.scheme }}://{{ request.get_host }}{% url 'pac_script' vpn_key.sub_token %}" class="form-input" style="font-size: 0.75rem; font-family: var(--font-mono);">
-        <button type="button" class="btn btn-secondary" data-copy="{{ request.scheme }}://{{ request.get_host }}{% url 'pac_script' vpn_key.sub_token %}">📋</button>
-      </div>
-      <p><strong>2. Вставьте в настройки системы:</strong></p>
-      <ul style="padding-left: 1.25rem; color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem;">
-        <li>В macOS: <em>Сеть → Дополнительно → Прокси → Автоконфигурация (PAC)</em></li>
-        <li>В Windows: <em>Параметры → Сеть и интернет → Прокси → Использовать скрипт</em></li>
-        <li>В iOS: <em>Wi-Fi → Настройка прокси → Автоматически</em></li>
-      </ul>
-    </div>
-
-    <button type="button" class="btn btn-secondary btn-block modal-close">Понятно</button>
-  </div>
-</div>
 
 <!-- Custom Whitelist Modal -->
 <div class="modal-overlay" id="custom-whitelist-modal">

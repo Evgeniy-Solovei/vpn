@@ -41,17 +41,17 @@ def get_or_create_default_server() -> VPNServer:
     if not server:
         from django.conf import settings
         server = VPNServer.objects.create(
-            name="Нидерланды • Амстердам",
-            country_code="NL",
-            country_name="Нидерланды",
-            city="Амстердам",
-            ip=getattr(settings, 'XRAY_PUBLIC_IP', '89.110.100.12') or '89.110.100.12',
+            name="Франция • Париж",
+            country_code="FR",
+            country_name="Франция",
+            city="Париж",
+            ip=getattr(settings, 'XRAY_PUBLIC_IP', '81.19.137.255') or '81.19.137.255',
             port=int(getattr(settings, 'XRAY_PUBLIC_PORT', 443) or 443),
-            reality_sni=getattr(settings, 'XRAY_SNI', 'www.microsoft.com') or 'www.microsoft.com',
-            reality_pbk=getattr(settings, 'XRAY_PBK', 'w4XF_zC_test_pub_key_1234567890abcdef') or 'w4XF_zC_test_pub_key_1234567890abcdef',
-            reality_short_id=getattr(settings, 'XRAY_SHORT_ID', '0123456789abcdef') or '0123456789abcdef',
-            ping_ms=42,
-            load_percent=24,
+            reality_sni=getattr(settings, 'XRAY_SNI', 'dl.google.com') or 'dl.google.com',
+            reality_pbk=getattr(settings, 'XRAY_PBK', 'yq8Rau8sF3wZ48kXb7x7_Y2o_F-qK9wz8L_X-QyA6iE') or 'yq8Rau8sF3wZ48kXb7x7_Y2o_F-qK9wz8L_X-QyA6iE',
+            reality_short_id=getattr(settings, 'XRAY_SHORT_ID', 'd8e4f1a2b3c5') or 'd8e4f1a2b3c5',
+            ping_ms=38,
+            load_percent=18,
             speed_description="1 Gbps • Безлимит",
             is_active=True
         )
