@@ -152,14 +152,25 @@ async def cb_view_key(call: CallbackQuery):
     vless_url = vpn_info.get('vless_url', '')
     sub_url = vpn_info.get('sub_url', '')
 
+    max_dev = vpn_info.get('max_devices', 5)
     text = (
         f"🔑 <b>Ваш персональный VLESS Reality ключ:</b>\n\n"
         f"<code>{vless_url}</code>\n\n"
         f"🔗 <b>Ссылка на автообновляемую подписку:</b>\n"
         f"<code>{sub_url}</code>\n\n"
-        f"💡 <i>Скопируйте ключ или подписку и вставьте в клиент <b>INCY</b>, Happ или Hiddify.</i>"
+        f"📱 <b>Лимит:</b> до {max_dev} устройств одновременно (телефон, ПК, планшет, Smart TV)\n\n"
+        f"💡 <b>Как подключить:</b>\n"
+        f"1. Скачайте клиент: <b>Streisand</b> (iOS), <b>v2rayNG</b> (Android), <b>Hiddify</b> (ПК/Mac) или <b>Happ</b>\n"
+        f"2. Скопируйте ключ выше и нажмите в приложении <b>«+» → «Добавить из буфера»</b>\n"
+        f"3. Нажмите кнопку подключения (ВКЛ) 🚀"
     )
-    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_back_menu())
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⚡ Подключить в 1 клик (INCY)", url=vpn_info.get('connect_url') or f"{SITE_URL}/dashboard/")],
+        [InlineKeyboardButton(text="📲 Скачать приложение", callback_data="download_app")],
+        [InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")]
+    ])
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=kb, disable_web_page_preview=True)
     await call.answer()
 
 
@@ -181,27 +192,42 @@ async def cb_view_balance(call: CallbackQuery):
 
 @dp.callback_query(F.data == "pay_yookassa")
 async def cb_pay_yookassa(call: CallbackQuery):
+    packages = []
+    async with httpx.AsyncClient(timeout=6.0) as client:
+        try:
+            resp = await client.get(f"{WEB_API_URL}/billing/tariffs/")
+            if resp.status_code == 200:
+                packages = resp.json().get('packages', [])
+        except Exception as e:
+            logger.debug(f"Error fetching packages: {e}")
+
     text = (
         f"🇷🇺 <b>Оплата через ЮKassa (РФ):</b>\n\n"
         f"• Моментальное зачисление через <b>СБП (0%)</b>, карты МИР, Сбер, Т-Банк\n"
         f"• Официальный фискальный чек для самозанятых (НПД)\n\n"
         f"Выберите период подписки:"
     )
-    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_yookassa_tariffs_menu())
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_yookassa_tariffs_menu(packages))
     await call.answer()
 
 
 @dp.callback_query(F.data.startswith("yoo_pay_"))
 async def cb_yoo_pay_amount(call: CallbackQuery):
-    amount_str = call.data.replace("yoo_pay_", "")
-    amount_map = {
-        "105": {"amount": 105, "days": 30},
-        "200": {"amount": 200, "days": 60},
-        "280": {"amount": 280, "days": 90},
-    }
-    cfg = amount_map.get(amount_str, {"amount": 105, "days": 30})
-    amount = cfg["amount"]
-    days = cfg["days"]
+    # Support both yoo_pay_{days}_{amount} and legacy yoo_pay_{amount}
+    raw = call.data.replace("yoo_pay_", "")
+    parts = raw.split("_")
+    if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+        days = int(parts[0])
+        amount = int(parts[1])
+    else:
+        amount_map = {
+            "105": {"amount": 105, "days": 30},
+            "200": {"amount": 200, "days": 60},
+            "280": {"amount": 280, "days": 90},
+        }
+        cfg = amount_map.get(raw, {"amount": 105, "days": 30})
+        amount = cfg["amount"]
+        days = cfg["days"]
 
     await call.answer("Генерируем платёжный счёт ЮKassa...")
     async with httpx.AsyncClient(timeout=10.0) as client:

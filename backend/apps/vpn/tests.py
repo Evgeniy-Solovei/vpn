@@ -105,12 +105,12 @@ class VPNTestCase(TestCase):
         self.assertNotEqual(self.key.key_uuid, old_uuid)
 
     def test_connect_landing_redirect_view(self):
-        """Connect landing page loads successfully with INCY scheme and copy buttons."""
+        """Connect landing page loads successfully with 1-click schemes and copy buttons."""
         url = reverse('incy_connect', kwargs={'token': self.key.sub_token})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "Подключение в приложении INCY")
-        self.assertContains(resp, self.key.get_incy_url())
+        self.assertContains(resp, "Быстрое подключение VLESS Reality")
+        self.assertContains(resp, self.key.get_streisand_url())
 
     def test_check_server_health_detects_online_status(self):
         """Mocked TCP connect marks server online and saves measured ping."""

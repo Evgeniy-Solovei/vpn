@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import TariffPlan, Transaction, PromoCode, PaymentOrder, YooKassaOrder
+from .models import TariffPlan, SubscriptionPackage, Transaction, PromoCode, PaymentOrder, YooKassaOrder
+
+@admin.register(SubscriptionPackage)
+class SubscriptionPackageAdmin(admin.ModelAdmin):
+    list_display = ('name', 'days', 'price_rub', 'price_byn', 'badge', 'is_featured', 'is_active', 'order')
+    list_editable = ('price_rub', 'price_byn', 'badge', 'is_featured', 'is_active', 'order')
+    list_filter = ('is_active', 'is_featured')
+    search_fields = ('name',)
 
 @admin.register(TariffPlan)
 class TariffPlanAdmin(admin.ModelAdmin):

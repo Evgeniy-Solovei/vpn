@@ -213,6 +213,12 @@ def dashboard_view(request):
     if not key:
         server = get_or_create_default_server()
         key = VPNKey.objects.create(user=user, server=server)
+
+    from apps.vpn.services import ensure_key_in_panel
+    try:
+        ensure_key_in_panel(key)
+    except Exception:
+        pass
     
     # Auto-failover if user's current server became inactive or blocked by RKN
     if not key.server.is_active or key.server.health_status == 'blocked_rkn':

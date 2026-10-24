@@ -96,21 +96,27 @@ def get_balance_menu() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def get_yookassa_tariffs_menu() -> InlineKeyboardMarkup:
-    buttons = [
-        [
-            InlineKeyboardButton(text="30 дн. — 105 ₽ (3.50 ₽/день)", callback_data="yoo_pay_105")
-        ],
-        [
-            InlineKeyboardButton(text="60 дн. — 200 ₽ (выгодно)", callback_data="yoo_pay_200")
-        ],
-        [
-            InlineKeyboardButton(text="90 дн. — 280 ₽ (хит)", callback_data="yoo_pay_280")
-        ],
-        [
-            InlineKeyboardButton(text="◀️ Назад к балансу", callback_data="view_balance")
+def get_yookassa_tariffs_menu(packages: list = None) -> InlineKeyboardMarkup:
+    buttons = []
+    if packages:
+        for pkg in packages:
+            days = pkg.get('days')
+            price = pkg.get('price_rub')
+            price_int = int(price) if float(price).is_integer() else price
+            badge = f" ({pkg['badge']})" if pkg.get('badge') else ""
+            buttons.append([
+                InlineKeyboardButton(
+                    text=f"{days} дн. — {price_int} ₽{badge}",
+                    callback_data=f"yoo_pay_{days}_{price_int}"
+                )
+            ])
+    else:
+        buttons = [
+            [InlineKeyboardButton(text="30 дн. — 105 ₽ (хит)", callback_data="yoo_pay_30_105")],
+            [InlineKeyboardButton(text="60 дн. — 200 ₽ (выгодно)", callback_data="yoo_pay_60_200")],
+            [InlineKeyboardButton(text="90 дн. — 280 ₽ (максимум)", callback_data="yoo_pay_90_280")],
         ]
-    ]
+    buttons.append([InlineKeyboardButton(text="◀️ Назад к балансу", callback_data="view_balance")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -133,13 +139,18 @@ def get_yookassa_pay_button(checkout_url: str, amount: int, days: int) -> Inline
 def get_download_menu() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="🍏 iOS (App Store)", url="https://apps.apple.com/app/id6474328827"),
-            InlineKeyboardButton(text="🤖 Android (Google Play)", url="https://play.google.com/store")
+            InlineKeyboardButton(text="🍏 iOS: Streisand (App Store)", url="https://apps.apple.com/app/id6450534064"),
         ],
         [
-            InlineKeyboardButton(text="💻 Windows / macOS", url="https://github.com")
+            InlineKeyboardButton(text="📱 iOS: V2Box (App Store)", url="https://apps.apple.com/app/id6446814690"),
         ],
         [
-            InlineKeyboardButton(text="◀️ Назад", callback_data="main_menu")
+            InlineKeyboardButton(text="🤖 Android: v2rayNG (Google Play)", url="https://play.google.com/store/apps/details?id=com.v2ray.ang"),
+        ],
+        [
+            InlineKeyboardButton(text="💻 Windows / macOS: Hiddify", url="https://github.com/hiddify/hiddify-next/releases"),
+        ],
+        [
+            InlineKeyboardButton(text="◀️ Назад в меню", callback_data="main_menu")
         ]
     ])

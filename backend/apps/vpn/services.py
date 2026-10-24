@@ -125,7 +125,7 @@ class ThreeXUIService:
             "id": str(key.key_uuid),
             "flow": "xtls-rprx-vision",
             "email": f"{key.user.username}_{key.user.id}",
-            "limitIp": 2,
+            "limitIp": getattr(key, 'max_devices', 5) or 5,
             "totalGB": 0,
             "expiryTime": 0,
             "enable": True,

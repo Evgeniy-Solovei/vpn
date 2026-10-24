@@ -44,6 +44,48 @@ class TariffPlan(models.Model):
         return f"{self.name} ({self.daily_price} ₽/день, {self.speed_mbps} Мб/с)"
 
 
+class SubscriptionPackage(models.Model):
+    """
+    Dynamic subscription duration packages (e.g. 7, 30, 60, 90 days).
+    Prices and packages are fully configurable by the administrator in Django Admin.
+    """
+    name = models.CharField(max_length=64, verbose_name="Название периода (e.g. 30 дней)")
+    days = models.PositiveIntegerField(unique=True, verbose_name="Количество дней")
+    price_rub = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена в рублях (₽)")
+    price_byn = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('5.00'), verbose_name="Цена в BYN")
+    badge = models.CharField(max_length=32, blank=True, default="", verbose_name="Бейдж (e.g. Хит, Выгодно)")
+    is_featured = models.BooleanField(default=False, verbose_name="Выделен / Рекомендуемый")
+    is_active = models.BooleanField(default=True, verbose_name="Активен")
+    order = models.PositiveIntegerField(default=10, verbose_name="Порядок сортировки")
+
+    class Meta:
+        verbose_name = "Тарифный пакет подписки"
+        verbose_name_plural = "Тарифные пакеты подписки"
+        ordering = ['order', 'days']
+
+    def __str__(self):
+        return f"{self.name} — {self.price_rub} ₽ ({self.days} дн.)"
+
+    @property
+    def daily_rub(self) -> Decimal:
+        if self.days:
+            return round(self.price_rub / Decimal(self.days), 2)
+        return Decimal('0.00')
+
+    @classmethod
+    def get_active_packages(cls):
+        pkgs = cls.objects.filter(is_active=True).order_by('order', 'days')
+        if not pkgs.exists():
+            cls.objects.bulk_create([
+                cls(name="7 дней", days=7, price_rub=Decimal('25.00'), price_byn=Decimal('1.00'), order=1),
+                cls(name="30 дней", days=30, price_rub=Decimal('105.00'), price_byn=Decimal('5.00'), badge="Хит", is_featured=True, order=2),
+                cls(name="60 дней", days=60, price_rub=Decimal('200.00'), price_byn=Decimal('9.00'), badge="Выгодно", order=3),
+                cls(name="90 дней", days=90, price_rub=Decimal('280.00'), price_byn=Decimal('12.00'), badge="Максимум", order=4),
+            ])
+            pkgs = cls.objects.filter(is_active=True).order_by('order', 'days')
+        return pkgs
+
+
 class Transaction(models.Model):
     PAYMENT_METHODS = [
         ('sbp', 'СБП (Система быстрых платежей)'),

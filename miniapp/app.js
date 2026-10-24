@@ -6,6 +6,7 @@ let tg = window.Telegram?.WebApp;
 let userData = null;
 let vpnData = null;
 let trafficData = null;
+let packagesData = [];
 
 const loadingView = document.getElementById('loading-view');
 const miniappView = document.getElementById('miniapp-view');
@@ -45,6 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         userData = data.user;
         vpnData = data.vpn;
         trafficData = data.traffic;
+        packagesData = data.packages || [];
         renderUI();
         return;
       } else {
@@ -76,6 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           userData = data.user;
           vpnData = data.vpn;
           trafficData = data.traffic;
+          packagesData = data.packages || [];
           renderUI();
           if (browserBanner) browserBanner.style.display = 'flex';
           return;
@@ -102,6 +105,7 @@ async function checkWebSession() {
       userData = data.user;
       vpnData = data.vpn;
       trafficData = data.traffic;
+      packagesData = data.packages || [];
       renderUI();
       if (browserBanner) browserBanner.style.display = 'flex';
       return;
@@ -279,20 +283,35 @@ function renderUI() {
     btnClosePayRu.onclick = () => modalPayRu.classList.remove('active');
   }
 
+  // Render dynamic packages if available from backend
+  const pkgGrid = document.getElementById('miniapp-ru-packages-grid');
+  if (pkgGrid && packagesData && packagesData.length > 0) {
+    pkgGrid.innerHTML = packagesData.map((pkg, idx) => `
+      <button type="button" class="btn ${pkg.is_featured || idx === 0 ? 'btn-primary' : 'btn-secondary'} miniapp-ru-amount-btn" data-amount="${Math.round(pkg.price_rub)}" style="padding: 0.5rem 0.25rem; font-size: 0.75rem;">
+        ${pkg.days} дн (${Math.round(pkg.price_rub)} ₽)
+      </button>
+    `).join('');
+    const featured = packagesData.find(p => p.is_featured) || packagesData[0];
+    selectedRuAmount = Math.round(featured.price_rub);
+  }
+
   // Handle amount buttons
-  document.querySelectorAll('.miniapp-ru-amount-btn').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.miniapp-ru-amount-btn').forEach(b => {
-        b.className = 'btn btn-secondary miniapp-ru-amount-btn';
-      });
-      btn.className = 'btn btn-primary miniapp-ru-amount-btn';
-      selectedRuAmount = parseInt(btn.getAttribute('data-amount') || '105', 10);
-      if (btnSubmitPayRu) {
-        const method = document.querySelector('input[name="miniapp_ru_method"]:checked')?.value || 'sbp';
-        btnSubmitPayRu.textContent = `🇷🇺 Оплатить ${selectedRuAmount} ₽ (${method.toUpperCase()})`;
-      }
-    };
-  });
+  function bindAmountButtons() {
+    document.querySelectorAll('.miniapp-ru-amount-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.miniapp-ru-amount-btn').forEach(b => {
+          b.className = 'btn btn-secondary miniapp-ru-amount-btn';
+        });
+        btn.className = 'btn btn-primary miniapp-ru-amount-btn';
+        selectedRuAmount = parseInt(btn.getAttribute('data-amount') || '105', 10);
+        if (btnSubmitPayRu) {
+          const method = document.querySelector('input[name="miniapp_ru_method"]:checked')?.value || 'sbp';
+          btnSubmitPayRu.textContent = `🇷🇺 Оплатить ${selectedRuAmount} ₽ (${method.toUpperCase()})`;
+        }
+      };
+    });
+  }
+  bindAmountButtons();
 
   // Radio change updates button label
   document.querySelectorAll('input[name="miniapp_ru_method"]').forEach(radio => {

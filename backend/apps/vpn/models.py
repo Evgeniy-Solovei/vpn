@@ -143,6 +143,7 @@ class VPNKey(models.Model):
     sub_token = models.CharField(max_length=64, default=generate_sub_token, unique=True, verbose_name="Токен подписки")
     
     whitelist_enabled = models.BooleanField(default=True, verbose_name="Белый список РФ (Direct Routing)")
+    max_devices = models.PositiveIntegerField(default=5, verbose_name="Лимит устройств (IP)")
     is_active = models.BooleanField(default=True, verbose_name="Активен")
     
     # Fair Usage Policy (FUP) & Traffic Management (Pooled across all servers)

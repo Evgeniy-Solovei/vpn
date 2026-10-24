@@ -186,17 +186,18 @@
         <span style="font-weight: 700;">⚡ Подключить VPN</span>
       </button>
 
-      <!-- Instant In-Browser Connection (No Apps Needed) -->
-      <div style="background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.35); border-radius: 10px; padding: 0.7rem 0.85rem; margin-bottom: 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
-        <div>
-          <div style="font-size: 0.82rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.35rem;">
-            <span>🌐</span> Без программ (В браузере)
+      <!-- Device Limit Badge (5 Devices Allowed) -->
+      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.1rem;">📱</span>
+          <div>
+            <div style="font-size: 0.82rem; font-weight: 700; color: #fff;">Лимит устройств</div>
+            <div style="font-size: 0.72rem; color: var(--text-dim);">Телефон, ПК, планшет, Smart TV</div>
           </div>
-          <div style="font-size: 0.72rem; color: #34d399;">Safari, Chrome, Windows, iOS</div>
         </div>
-        <button type="button" class="btn btn-primary" data-copy="{{ vpn_key.get_pac_url }}" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; white-space: nowrap;">
-          📋 Ссылка для браузера
-        </button>
+        <span class="status-pill pill-emerald" style="font-size: 0.75rem; padding: 0.2rem 0.6rem;">
+          до {{ vpn_key.max_devices|default:5 }} устройств
+        </span>
       </div>
 
       <!-- Quick Action Buttons -->

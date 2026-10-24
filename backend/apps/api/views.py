@@ -8,7 +8,7 @@ from django.contrib.auth import login as auth_login
 from apps.accounts.models import CustomUser, TelegramLinkCode, MagicLoginToken
 from apps.vpn.models import VPNServer, VPNKey
 from apps.vpn.services import get_or_create_default_server
-from apps.billing.models import TariffPlan, Transaction
+from apps.billing.models import TariffPlan, Transaction, SubscriptionPackage
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +58,7 @@ def build_user_response(user, is_new=False):
             'ping_ms': server.ping_ms,
             'load_percent': server.load_percent,
             'speed_description': server.speed_description,
+            'max_devices': getattr(key, 'max_devices', 5) or 5,
             'vless_url': key.get_vless_url(),
             'sub_url': key.get_sub_url(),
             'incy_url': key.get_incy_url(),
@@ -68,6 +69,19 @@ def build_user_response(user, is_new=False):
             'qr_url': f"{site_url}/vpn/qr/{key.sub_token}/",
             'pac_url': f"{site_url}/vpn/pac/{key.sub_token}/",
         },
+        'packages': [
+            {
+                'id': p.id,
+                'name': p.name,
+                'days': p.days,
+                'price_rub': float(p.price_rub),
+                'price_byn': float(p.price_byn),
+                'daily_rub': float(p.daily_rub),
+                'badge': p.badge,
+                'is_featured': p.is_featured,
+            }
+            for p in SubscriptionPackage.get_active_packages()
+        ],
         'traffic': {
             'used_bytes': key.used_traffic_bytes,
             'used_display': key.traffic_display,
@@ -393,6 +407,7 @@ def switch_server_api(request):
 
 def tariffs_list_api(request):
     plans = TariffPlan.objects.filter(is_active=True)
+    packages = SubscriptionPackage.get_active_packages()
     return JsonResponse({
         'plans': [
             {
@@ -405,6 +420,19 @@ def tariffs_list_api(request):
                 'is_featured': p.is_featured,
             }
             for p in plans
+        ],
+        'packages': [
+            {
+                'id': pkg.id,
+                'name': pkg.name,
+                'days': pkg.days,
+                'price_rub': float(pkg.price_rub),
+                'price_byn': float(pkg.price_byn),
+                'daily_rub': float(pkg.daily_rub),
+                'badge': pkg.badge,
+                'is_featured': pkg.is_featured,
+            }
+            for pkg in packages
         ]
     })
 

@@ -98,17 +98,18 @@
         <div style="margin-bottom: 1.25rem;">
           <label class="form-label">Срок подписки</label>
           <div class="days-selector-grid" style="gap: 0.5rem; margin-top: 0.4rem;">
-            <button type="button" class="btn btn-secondary period-btn" onclick="setPeriod(7, 25);">7 дн (25 ₽)</button>
-            <button type="button" class="btn btn-primary period-btn" onclick="setPeriod(30, 105);">30 дн (105 ₽)</button>
-            <button type="button" class="btn btn-secondary period-btn" onclick="setPeriod(60, 200);">60 дн (200 ₽)</button>
-            <button type="button" class="btn btn-secondary period-btn" onclick="setPeriod(90, 280);">90 дн (280 ₽)</button>
+            {% for pkg in packages %}
+              <button type="button" class="btn {% if pkg.is_featured %}btn-primary{% else %}btn-secondary{% endif %} period-btn" onclick="setPeriod({{ pkg.days }}, {{ pkg.price_rub }});">
+                {{ pkg.days }} дн ({{ pkg.price_rub }} ₽){% if pkg.badge %} • {{ pkg.badge }}{% endif %}
+              </button>
+            {% endfor %}
           </div>
         </div>
 
         <!-- Amount input -->
         <div class="form-group" style="margin-bottom: 1.25rem;">
           <label class="form-label" for="amount">Сумма к пополнению (₽)</label>
-          <input type="number" name="amount" id="amount" value="105" min="10" step="1" class="form-input" style="font-size: 1.25rem; font-weight: 700;">
+          <input type="number" name="amount" id="amount" value="{% for p in packages %}{% if p.is_featured %}{{ p.price_rub }}{% endif %}{% empty %}105{% endfor %}" min="10" step="1" class="form-input" style="font-size: 1.25rem; font-weight: 700;">
         </div>
 
         <!-- Russian Payment Methods -->
