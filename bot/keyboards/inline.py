@@ -1,10 +1,22 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-from bot.config import TELEGRAM_WEBAPP_URL, SITE_URL
+from urllib.parse import quote
+from bot.config import TELEGRAM_WEBAPP_URL, SITE_URL, BOT_USERNAME
 
-def get_main_menu(vpn_data: dict, user_data: dict) -> InlineKeyboardMarkup:
+def get_main_menu(vpn_data: dict, user_data: dict, devices_data: dict = None, traffic_data: dict = None) -> InlineKeyboardMarkup:
     connect_url = vpn_data.get('connect_url') or f"{SITE_URL}/dashboard/"
     whitelist_active = vpn_data.get('whitelist_enabled', True)
-    wl_text = "🛡️ Белый список РФ: ВКЛ" if whitelist_active else "🛡️ Белый список РФ: ВЫКЛ"
+    wl_text = "🛡️ Белый список: ВКЛ" if whitelist_active else "🛡️ Белый список: ВЫКЛ"
+
+    conn_count = devices_data.get('connected_count', 1) if devices_data else 1
+    max_dev = devices_data.get('max_devices', 5) if devices_data else 5
+    dev_btn_text = f"📱 Устройства: {conn_count}/{max_dev}"
+
+    ref_count = user_data.get('referrals_count', 0)
+    ref_btn_text = f"👥 Друзья ({ref_count}) • +3 дн."
+
+    flag = vpn_data.get('flag', '🇫🇷')
+    loc_name = vpn_data.get('city') or vpn_data.get('country_name') or 'Франция'
+    srv_btn_text = f"🌍 {flag} {loc_name}"
 
     buttons = [
         [
@@ -21,6 +33,16 @@ def get_main_menu(vpn_data: dict, user_data: dict) -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(
+                text=dev_btn_text,
+                callback_data="view_devices"
+            ),
+            InlineKeyboardButton(
+                text=ref_btn_text,
+                callback_data="view_referrals"
+            )
+        ],
+        [
+            InlineKeyboardButton(
                 text="📋 Мой VLESS Ключ",
                 callback_data="view_key"
             ),
@@ -31,8 +53,18 @@ def get_main_menu(vpn_data: dict, user_data: dict) -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(
+                text=srv_btn_text,
+                callback_data="view_servers"
+            ),
+            InlineKeyboardButton(
                 text=wl_text,
                 callback_data="toggle_whitelist"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="📊 Трафик: " + (traffic_data.get('used_display', '0 МБ') if traffic_data else '0 МБ'),
+                callback_data="view_traffic"
             ),
             InlineKeyboardButton(
                 text="📲 Скачать INCY",
@@ -51,6 +83,70 @@ def get_main_menu(vpn_data: dict, user_data: dict) -> InlineKeyboardMarkup:
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_devices_menu() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🗑️ Сбросить все устройства", callback_data="reset_devices")
+        ],
+        [
+            InlineKeyboardButton(text="📲 Скачать INCY на новое устройство", callback_data="download_app")
+        ],
+        [
+            InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")
+        ]
+    ])
+
+
+def get_referrals_menu(bot_user: str, ref_code: str) -> InlineKeyboardMarkup:
+    clean_bot = bot_user or "live_vpn_bot"
+    clean_code = ref_code or ""
+    bot_link = f"https://t.me/{clean_bot}?start=ref_{clean_code}"
+    share_text = quote(f"🚀 Держи быстрый VPN без блокировок и тормозов! Работает YouTube в 4K и банки напрямую. 3 дня бесплатно: {bot_link}")
+    share_url = f"https://t.me/share/url?url={quote(bot_link)}&text={share_text}"
+
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="📲 Поделиться ссылкой с другом", url=share_url)
+        ],
+        [
+            InlineKeyboardButton(text="🚀 Открыть Личный кабинет", web_app=WebAppInfo(url=TELEGRAM_WEBAPP_URL))
+        ],
+        [
+            InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")
+        ]
+    ])
+
+
+def get_servers_menu(servers: list, current_server_id: int = None) -> InlineKeyboardMarkup:
+    buttons = []
+    for s in servers:
+        s_id = s.get('id')
+        flag = s.get('flag', '🌐')
+        clean_name = s.get('clean_name', s.get('name', 'Сервер'))
+        ping = s.get('ping_ms', 40)
+        is_current = (s_id == current_server_id)
+        active_mark = " (Активен ✓)" if is_current else ""
+        buttons.append([
+            InlineKeyboardButton(
+                text=f"{flag} {clean_name} • {ping} ms{active_mark}",
+                callback_data=f"switch_srv_{s_id}"
+            )
+        ])
+    buttons.append([InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_traffic_menu() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⚡ Подключить в 1 клик (INCY)", callback_data="view_key")
+        ],
+        [
+            InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")
+        ]
+    ])
 
 
 def get_back_menu() -> InlineKeyboardMarkup:

@@ -293,6 +293,42 @@ class ApiTestCase(TestCase):
         self.assertFalse(resp_low.json()['success'])
         self.assertIn("Минимальная сумма", resp_low.json()['error'])
 
+    def test_devices_list_and_reset_api(self):
+        """Test listing and resetting user devices."""
+        user = User.objects.create_user(
+            username='devuser',
+            email='devuser@test.com',
+            password='password123',
+            telegram_id='111222333'
+        )
+        from apps.vpn.models import VPNDevice
+        VPNDevice.objects.create(
+            user=user,
+            device_id='testdev1',
+            device_name='iPhone 15',
+            platform='ios'
+        )
+
+        resp = self.client.get(reverse('api_devices_list') + '?telegram_id=111222333')
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['devices']['connected_count'], 1)
+        self.assertEqual(data['devices']['max_devices'], 5)
+
+        # Reset devices
+        reset_resp = self.client.post(
+            reverse('api_devices_reset'),
+            data=json.dumps({'telegram_id': '111222333'}),
+            content_type='application/json'
+        )
+        self.assertEqual(reset_resp.status_code, 200)
+        reset_data = reset_resp.json()
+        self.assertTrue(reset_data['success'])
+        self.assertEqual(reset_data['cleared'], 1)
+        self.assertEqual(reset_data['devices']['connected_count'], 0)
+
+
 
 
 

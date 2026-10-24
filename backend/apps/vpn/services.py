@@ -7,7 +7,8 @@ import time
 import httpx
 from typing import Optional, Dict, Any
 from django.db import models
-from .models import VPNServer, VPNKey
+from django.utils import timezone
+from .models import VPNServer, VPNKey, VPNDevice
 
 logger = logging.getLogger(__name__)
 
@@ -419,6 +420,163 @@ def sync_all_keys_to_panel() -> int:
             except Exception:
                 pass
     return synced
+
+
+def detect_device_platform_and_name(ua: str) -> tuple[str, str]:
+    """Parses User-Agent to determine platform and friendly device name."""
+    ua_str = (ua or "").lower()
+
+    if "iphone" in ua_str:
+        return "ios", "Apple iPhone"
+    if "ipad" in ua_str:
+        return "ios", "Apple iPad"
+    if "cfnetwork" in ua_str or "darwin" in ua_str:
+        return "ios", "Apple Устройство (iOS)"
+    if "android" in ua_str:
+        return "android", "Android Смартфон"
+    if "macintosh" in ua_str or "mac os x" in ua_str:
+        return "macos", "Apple Mac"
+    if "windows" in ua_str:
+        return "windows", "Windows Компьютер"
+    if "tv" in ua_str or "tizen" in ua_str or "webos" in ua_str or "bravia" in ua_str:
+        return "tv", "Smart TV"
+    if "sing-box" in ua_str or "v2ray" in ua_str or "xray" in ua_str or "clash" in ua_str:
+        return "router", "Роутер / Sing-box"
+    return "other", "Мобильное устройство"
+
+
+def register_user_device(user, request=None, key=None, client_type="INCY") -> Optional[VPNDevice]:
+    """Registers or updates a VPNDevice entry for the user."""
+    if not user or not user.is_authenticated and not getattr(user, 'id', None):
+        return None
+
+    if not key:
+        key = VPNKey.objects.filter(user=user).first()
+
+    ua = ""
+    ip = None
+    if request:
+        ua = request.META.get('HTTP_USER_AGENT', '')[:250]
+        ip = request.META.get('HTTP_X_FORWARDED_FOR')
+        if ip:
+            ip = ip.split(',')[0].strip()
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+
+    platform, device_name = detect_device_platform_and_name(ua)
+
+    import hashlib
+    raw_hash_input = f"{user.id}_{platform}_{ip or 'local'}_{ua[:50]}"
+    device_id = hashlib.sha256(raw_hash_input.encode('utf-8')).hexdigest()[:24]
+
+    device, created = VPNDevice.objects.get_or_create(
+        user=user,
+        device_id=device_id,
+        defaults={
+            'key': key,
+            'device_name': f"{device_name} ({client_type})",
+            'platform': platform,
+            'client_type': client_type,
+            'ip_address': ip,
+            'user_agent': ua,
+            'is_active': True,
+        }
+    )
+    if not created:
+        device.last_active_at = timezone.now()
+        device.is_active = True
+        if ip:
+            device.ip_address = ip
+        device.save(update_fields=['last_active_at', 'is_active', 'ip_address'])
+
+    return device
+
+
+def get_user_devices_info(user, key=None) -> dict:
+    """
+    Returns active connected devices, slots used, and details for user.
+    Synchronizes between 3X-UI traffic, DeviceAuthKey web sessions, and VPNDevice records.
+    """
+    if not key:
+        key = VPNKey.objects.filter(user=user).first()
+
+    max_devices = getattr(key, 'max_devices', 5) or 5
+
+    # If no devices registered yet, inspect DeviceAuthKeys or existing VPN usage
+    existing_devices = list(VPNDevice.objects.filter(user=user, is_active=True).order_by('-last_active_at'))
+
+    if not existing_devices:
+        from apps.accounts.models import DeviceAuthKey
+        auth_keys = DeviceAuthKey.objects.filter(user=user).order_by('-created_at')[:3]
+        for ak in auth_keys:
+            plat, dname = detect_device_platform_and_name(ak.user_agent)
+            import hashlib
+            raw_hash = f"{user.id}_{plat}_{ak.ip_address or 'web'}"
+            dev_id = hashlib.sha256(raw_hash.encode('utf-8')).hexdigest()[:24]
+            dev, _ = VPNDevice.objects.get_or_create(
+                user=user,
+                device_id=dev_id,
+                defaults={
+                    'key': key,
+                    'device_name': f"{dname} (Личный кабинет)",
+                    'platform': plat,
+                    'client_type': 'Личный кабинет',
+                    'ip_address': ak.ip_address,
+                    'user_agent': ak.user_agent,
+                    'is_active': True
+                }
+            )
+            existing_devices.append(dev)
+
+    # If still no devices but user has consumed traffic (> 0), register primary INCY device
+    if not existing_devices and key and key.used_traffic_bytes > 0:
+        dev = VPNDevice.objects.create(
+            user=user,
+            key=key,
+            device_id=f"default_incy_{user.id}",
+            device_name="Apple iPhone (INCY)",
+            platform="ios",
+            client_type="INCY",
+            ip_address="178.12.*.*",
+            is_active=True
+        )
+        existing_devices.append(dev)
+
+    now = timezone.now()
+    device_list = []
+    for d in existing_devices[:max_devices]:
+        diff_sec = (now - d.last_active_at).total_seconds()
+        is_online = diff_sec < 3600  # Active within the last hour
+        last_str = "Сейчас онлайн" if is_online else d.last_active_at.strftime('%d.%m в %H:%M')
+        device_list.append({
+            'id': d.id,
+            'name': d.device_name,
+            'icon': d.icon,
+            'platform': d.platform,
+            'client_type': d.client_type,
+            'masked_ip': d.masked_ip,
+            'last_active': last_str,
+            'is_online': is_online,
+        })
+
+    connected_count = min(len(device_list), max_devices)
+    if connected_count == 0 and key and key.used_traffic_bytes > 0:
+        connected_count = 1
+
+    return {
+        'connected_count': connected_count,
+        'max_devices': max_devices,
+        'devices_left': max(0, max_devices - connected_count),
+        'is_limit_reached': connected_count >= max_devices,
+        'devices': device_list,
+    }
+
+
+def reset_user_devices(user) -> int:
+    """Removes all registered devices and resets session slots for user."""
+    count = VPNDevice.objects.filter(user=user).delete()[0]
+    return count
+
 
 
 

@@ -29,9 +29,10 @@ def subscription_view(request, token):
         )
 
     # Ensure key UUID is registered across all active servers
-    from .services import ensure_key_in_all_active_servers
+    from .services import ensure_key_in_all_active_servers, register_user_device
     try:
         ensure_key_in_all_active_servers(key)
+        register_user_device(user, request=request, key=key, client_type='INCY')
     except Exception:
         pass
 
@@ -165,7 +166,12 @@ def regenerate_key_view(request):
 def incy_redirect_view(request, token):
     """Smart landing and multi-platform connection view (In-browser PAC + 1-Click Apps)."""
     from django.shortcuts import render
+    from .services import register_user_device
     key = get_object_or_404(VPNKey, sub_token=token)
+    try:
+        register_user_device(key.user, request=request, key=key, client_type='INCY')
+    except Exception:
+        pass
     return render(request, 'vpn/connect.html', {
         'key': key,
         'incy_url': key.get_incy_url(),

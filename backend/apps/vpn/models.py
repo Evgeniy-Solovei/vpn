@@ -325,3 +325,65 @@ class UserServerTraffic(models.Model):
 
     def __str__(self):
         return f"{self.user.username} @ {self.server.clean_name}: {self.used_gb} GB"
+
+
+class VPNDevice(models.Model):
+    PLATFORM_CHOICES = [
+        ('ios', 'iPhone / iPad (iOS)'),
+        ('android', 'Android'),
+        ('windows', 'Windows'),
+        ('macos', 'macOS'),
+        ('tv', 'Smart TV / Apple TV'),
+        ('router', 'Роутер'),
+        ('web', 'Браузер / Личный кабинет'),
+        ('other', 'Другое устройство'),
+    ]
+
+    PLATFORM_ICONS = {
+        'ios': '📱',
+        'android': '📱',
+        'windows': '💻',
+        'macos': '🍎',
+        'tv': '📺',
+        'router': '📶',
+        'web': '🌐',
+        'other': '⚡',
+    }
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='vpn_devices', verbose_name="Пользователь")
+    key = models.ForeignKey(VPNKey, on_delete=models.CASCADE, related_name='devices', null=True, blank=True, verbose_name="VPN Ключ")
+
+    device_id = models.CharField(max_length=64, verbose_name="Идентификатор устройства", db_index=True)
+    device_name = models.CharField(max_length=128, default="Мобильное устройство", verbose_name="Название устройства")
+    platform = models.CharField(max_length=16, choices=PLATFORM_CHOICES, default='other', verbose_name="Платформа")
+    client_type = models.CharField(max_length=32, default="INCY", verbose_name="Клиентское приложение")
+
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP адрес")
+    user_agent = models.CharField(max_length=256, blank=True, default="", verbose_name="User-Agent")
+
+    is_active = models.BooleanField(default=True, verbose_name="Активно")
+    last_active_at = models.DateTimeField(auto_now=True, verbose_name="Последняя активность")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Добавлено")
+
+    class Meta:
+        verbose_name = "Устройство пользователя"
+        verbose_name_plural = "Устройства пользователей"
+        unique_together = ('user', 'device_id')
+        ordering = ['-last_active_at']
+
+    @property
+    def icon(self) -> str:
+        return self.PLATFORM_ICONS.get(self.platform, '📱')
+
+    @property
+    def masked_ip(self) -> str:
+        if not self.ip_address:
+            return "—"
+        parts = self.ip_address.split('.')
+        if len(parts) == 4:
+            return f"{parts[0]}.{parts[1]}.*.*"
+        return self.ip_address
+
+    def __str__(self):
+        return f"{self.icon} {self.device_name} ({self.user.username})"
+

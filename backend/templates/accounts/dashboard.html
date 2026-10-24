@@ -197,10 +197,13 @@
             <div style="font-size: 0.72rem; color: var(--text-dim);">iPhone, ПК, планшет, Smart TV</div>
           </div>
         </div>
-        <div style="text-align: right;">
+        <div style="text-align: right; display: flex; align-items: center; gap: 0.45rem;">
+          <button type="button" class="btn btn-secondary" data-modal-target="devices-modal" style="padding: 0.2rem 0.55rem; font-size: 0.72rem; line-height: 1.2;">
+            Управление
+          </button>
           <span class="status-pill pill-emerald" style="font-size: 0.75rem; padding: 0.2rem 0.6rem; display: inline-flex; align-items: center; gap: 0.35rem;">
             <span style="width: 6px; height: 6px; border-radius: 50%; background: #34d399;"></span>
-            {% if vpn_key.used_traffic_bytes > 0 %}1{% else %}0{% endif %} из {{ vpn_key.max_devices|default:5 }} в сети
+            {{ devices_info.connected_count|default:1 }} из {{ devices_info.max_devices|default:5 }} в сети
           </span>
         </div>
       </div>
@@ -631,6 +634,63 @@
 </div>
 
 
+<!-- Devices Management Modal -->
+<div class="modal-overlay" id="devices-modal">
+  <div class="modal-body" style="max-width: 520px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">📱 Мои устройства</h3>
+      <span class="status-pill pill-emerald" style="font-size: 0.75rem; padding: 0.2rem 0.6rem;">
+        {{ devices_info.connected_count|default:1 }} из {{ devices_info.max_devices|default:5 }} слотов занято
+      </span>
+    </div>
+    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.2rem; line-height: 1.45;">
+      Вы можете использовать один аккаунт одновременно на <strong>5 любых устройствах</strong> (iPhone, iPad, Android, Windows, Mac, Smart TV или роутер) без доплат.
+    </p>
+
+    <!-- Devices List -->
+    <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem;">
+      {% for dev in devices_info.devices %}
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.75rem 0.9rem; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 0.65rem;">
+            <span style="font-size: 1.3rem;">{{ dev.icon }}</span>
+            <div>
+              <div style="font-size: 0.85rem; font-weight: 700; color: #fff;">{{ dev.name }}</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">IP: {{ dev.masked_ip }} • {{ dev.last_active }}</div>
+            </div>
+          </div>
+          <div>
+            {% if dev.is_online %}
+              <span class="status-pill pill-emerald" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">🟢 Онлайн</span>
+            {% else %}
+              <span class="status-pill" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.06); color: var(--text-dim);">Активен</span>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div style="text-align: center; padding: 1.2rem; background: rgba(255,255,255,0.02); border-radius: 10px; color: var(--text-muted); font-size: 0.85rem;">
+          Нет активных подключений. Добавьте VLESS-ключ в INCY.
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Free slots note -->
+    <div style="background: rgba(16, 185, 129, 0.06); border: 1px dashed rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 1.25rem; font-size: 0.8rem; color: #6ee7b7; display: flex; align-items: center; gap: 0.5rem;">
+      <span>✨</span>
+      <span>Свободно для подключения: <strong>{{ devices_info.devices_left|default:4 }} устройств</strong> из 5.</span>
+    </div>
+
+    <div style="display: flex; gap: 0.6rem;">
+      <button type="button" class="btn btn-secondary" id="btn-reset-devices" style="flex: 1; justify-content: center; font-size: 0.82rem; border-color: rgba(239, 68, 68, 0.3); color: #fca5a5;">
+        🗑️ Сбросить устройства
+      </button>
+      <button type="button" class="btn btn-secondary modal-close" style="flex: 1; justify-content: center; font-size: 0.82rem;">
+        Закрыть
+      </button>
+    </div>
+  </div>
+</div>
+
+
 <!-- Custom Whitelist Modal -->
 <div class="modal-overlay" id="custom-whitelist-modal">
   <div class="modal-body" style="max-width: 520px;">
@@ -718,6 +778,63 @@
     </div>
 
     <button type="button" class="btn btn-secondary btn-block modal-close">Закрыть</button>
+  </div>
+</div>
+
+
+<!-- Devices Management Modal -->
+<div class="modal-overlay" id="devices-modal">
+  <div class="modal-body" style="max-width: 520px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">📱 Мои устройства</h3>
+      <span class="status-pill pill-emerald" style="font-size: 0.75rem; padding: 0.2rem 0.6rem;">
+        {{ devices_info.connected_count|default:1 }} из {{ devices_info.max_devices|default:5 }} слотов занято
+      </span>
+    </div>
+    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.2rem; line-height: 1.45;">
+      Вы можете использовать один аккаунт одновременно на <strong>5 любых устройствах</strong> (iPhone, iPad, Android, Windows, Mac, Smart TV или роутер) без доплат.
+    </p>
+
+    <!-- Devices List -->
+    <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem;">
+      {% for dev in devices_info.devices %}
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.75rem 0.9rem; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 0.65rem;">
+            <span style="font-size: 1.3rem;">{{ dev.icon }}</span>
+            <div>
+              <div style="font-size: 0.85rem; font-weight: 700; color: #fff;">{{ dev.name }}</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">IP: {{ dev.masked_ip }} • {{ dev.last_active }}</div>
+            </div>
+          </div>
+          <div>
+            {% if dev.is_online %}
+              <span class="status-pill pill-emerald" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">🟢 Онлайн</span>
+            {% else %}
+              <span class="status-pill" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.06); color: var(--text-dim);">Активен</span>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div style="text-align: center; padding: 1.2rem; background: rgba(255,255,255,0.02); border-radius: 10px; color: var(--text-muted); font-size: 0.85rem;">
+          Нет активных подключений. Добавьте VLESS-ключ в INCY.
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Free slots note -->
+    <div style="background: rgba(16, 185, 129, 0.06); border: 1px dashed rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 1.25rem; font-size: 0.8rem; color: #6ee7b7; display: flex; align-items: center; gap: 0.5rem;">
+      <span>✨</span>
+      <span>Свободно для подключения: <strong>{{ devices_info.devices_left|default:4 }} устройств</strong> из 5.</span>
+    </div>
+
+    <div style="display: flex; gap: 0.6rem;">
+      <button type="button" class="btn btn-secondary" id="btn-reset-devices" style="flex: 1; justify-content: center; font-size: 0.82rem; border-color: rgba(239, 68, 68, 0.3); color: #fca5a5;">
+        🗑️ Сбросить устройства
+      </button>
+      <button type="button" class="btn btn-secondary modal-close" style="flex: 1; justify-content: center; font-size: 0.82rem;">
+        Закрыть
+      </button>
+    </div>
   </div>
 </div>
 

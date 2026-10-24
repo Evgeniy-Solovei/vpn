@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initModals();
   initGuideTabs();
   initTelegramLink();
+  initDevicesManagement();
 });
 
 
@@ -479,6 +480,46 @@ function initServerSwitcher() {
     } catch (err) {
       console.error('Server switch error:', err);
       showToast('Ошибка при переключении сервера');
+    }
+  });
+}
+
+// ==========================================
+// 6.1 DEVICES MANAGEMENT & RESET SLOTS
+// ==========================================
+function initDevicesManagement() {
+  const btnReset = document.getElementById('btn-reset-devices');
+  if (!btnReset) return;
+
+  btnReset.addEventListener('click', async () => {
+    if (!confirm('Вы уверены, что хотите сбросить все привязанные устройства и освободить 5 слотов?')) {
+      return;
+    }
+
+    try {
+      btnReset.disabled = true;
+      btnReset.textContent = 'Сбрасываем...';
+      const res = await fetch('/api/vpn/devices/reset/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('✓ Все устройства сброшены! Все 5 слотов свободны.');
+        setTimeout(() => window.location.reload(), 900);
+      } else {
+        showToast('⚠️ ' + (data.error || 'Не удалось сбросить устройства'));
+        btnReset.disabled = false;
+        btnReset.textContent = '🗑️ Сбросить устройства';
+      }
+    } catch (err) {
+      console.error('Reset devices error:', err);
+      showToast('⚠️ Ошибка соединения с сервером');
+      btnReset.disabled = false;
+      btnReset.textContent = '🗑️ Сбросить устройства';
     }
   });
 }

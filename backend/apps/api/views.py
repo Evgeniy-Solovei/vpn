@@ -21,15 +21,19 @@ def build_user_response(user, is_new=False):
     else:
         server = key.server
 
-    from apps.vpn.services import sync_key_traffic, ensure_key_in_panel
+    from apps.vpn.services import sync_key_traffic, ensure_key_in_panel, get_user_devices_info, reset_user_devices
     try:
         sync_key_traffic(key)
         ensure_key_in_panel(key)
     except Exception:
         pass
 
+    devices_info = get_user_devices_info(user, key=key)
+
     site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by')
     referral_url = f"{site_url}/auth/register/?ref={user.referral_code}"
+    bot_username = getattr(settings, 'BOT_USERNAME', 'live_vpn_bot')
+    bot_referral_url = f"https://t.me/{bot_username}?start=ref_{user.referral_code}"
 
     return {
         'success': True,
@@ -45,8 +49,10 @@ def build_user_response(user, is_new=False):
             'autopay': user.autopay,
             'referral_code': user.referral_code,
             'referral_url': referral_url,
+            'bot_referral_url': bot_referral_url,
             'referrals_count': user.referrals.count(),
         },
+        'devices': devices_info,
         'vpn': {
             'server_id': server.id,
             'server_name': server.display_name,
@@ -183,7 +189,8 @@ def tg_sync_view(request):
 
             if ref_code:
                 try:
-                    referrer = CustomUser.objects.get(referral_code=ref_code)
+                    clean_ref = ref_code[4:].strip() if ref_code.startswith('ref_') else ref_code.strip()
+                    referrer = CustomUser.objects.get(referral_code=clean_ref)
                     user.referred_by = referrer
                     referrer.balance += Decimal('10.00')
                     referrer.save()
@@ -591,6 +598,57 @@ def api_deposit_view(request):
 from apps.billing.views import activate_promo_view as activate_promo_api
 from apps.billing.views import bepaid_checkout_view as bepaid_checkout_api
 from apps.billing.views import yookassa_create_payment_view as yookassa_create_api
+
+
+@csrf_exempt
+def devices_list_api(request):
+    """Returns the list of active connected devices for the user."""
+    user = None
+    if request.user.is_authenticated:
+        user = request.user
+    elif request.GET.get('telegram_id'):
+        user = CustomUser.objects.filter(telegram_id=str(request.GET.get('telegram_id'))).first()
+    elif request.GET.get('user_id'):
+        user = CustomUser.objects.filter(id=request.GET.get('user_id')).first()
+
+    if not user:
+        return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+    from apps.vpn.services import get_user_devices_info
+    devices_info = get_user_devices_info(user)
+    return JsonResponse({'success': True, 'devices': devices_info})
+
+
+@csrf_exempt
+def reset_devices_api(request):
+    """Resets all registered devices and slots for user."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        user = None
+        if request.user.is_authenticated:
+            user = request.user
+        elif data.get('telegram_id'):
+            user = CustomUser.objects.filter(telegram_id=str(data.get('telegram_id'))).first()
+        elif data.get('user_id'):
+            user = CustomUser.objects.filter(id=data.get('user_id')).first()
+
+        if not user:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        from apps.vpn.services import reset_user_devices, get_user_devices_info
+        cleared = reset_user_devices(user)
+        devices_info = get_user_devices_info(user)
+        return JsonResponse({
+            'success': True,
+            'cleared': cleared,
+            'message': f'Все устройства успешно сброшены ({cleared}). Доступно 5 свободных слотов.',
+            'devices': devices_info
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 
 
 

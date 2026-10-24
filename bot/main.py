@@ -7,7 +7,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
-from bot.config import BOT_TOKEN, WEB_API_URL, SITE_URL, SUPPORT_TELEGRAM
+from bot.config import BOT_TOKEN, WEB_API_URL, SITE_URL, SUPPORT_TELEGRAM, BOT_USERNAME
 from bot.keyboards.inline import (
     get_main_menu,
     get_back_menu,
@@ -15,6 +15,10 @@ from bot.keyboards.inline import (
     get_balance_menu,
     get_yookassa_tariffs_menu,
     get_yookassa_pay_button,
+    get_devices_menu,
+    get_referrals_menu,
+    get_servers_menu,
+    get_traffic_menu,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
@@ -124,22 +128,28 @@ async def cmd_start(message: Message, command: CommandObject):
     limit_gb = traffic_info.get('limit_gb') or 150
     traffic_line = f"• Трафик: <b>{used_display} / {limit_gb} ГБ</b> (квота на месяц)"
 
+    devices_info = data.get('devices', {})
+    conn_count = devices_info.get('connected_count', 1)
+    max_dev = devices_info.get('max_devices', 5)
+
     welcome_text = (
         f"👋 <b>Добро пожаловать в VPN live-dev!</b>\n\n"
         f"⚡ <b>Быстрый и защищенный VPN без блокировок для РФ и РБ.</b>\n"
-        f"• Протокол нового поколения: <b>VLESS Reality</b> (маскировка под чистый трафик)\n"
-        f"• Активная локация: <b>{server_title}</b> (Пинг: {ping_ms} ms)\n"
-        f"• Скорость: <b>1 Gbps</b>\n"
+        f"• Протокол: <b>VLESS Reality</b> (маскировка под чистый трафик)\n"
+        f"• Сервер: <b>{server_title}</b> (Пинг: {ping_ms} ms)\n"
+        f"• Скорость: <b>1 Gbps • Безлимит</b>\n"
         f"{traffic_line}\n"
-        f"• Белый список РФ: <b>Госуслуги, Сбер, Т-Банк и маркетплейсы работают напрямую!</b>\n\n"
-        f"💰 Ваш баланс: <b>{user_info.get('balance', 15.0)} ₽</b> (хватит на {user_info.get('days_left', 3)} дн.)\n\n"
+        f"• Устройства: <b>{conn_count} из {max_dev} онлайн</b> 📱 (iOS, Android, ПК, ТВ)\n"
+        f"• Белый список РФ: <b>{'ВКЛ (банки напрямую)' if vpn_info.get('whitelist_enabled') else 'ВЫКЛ'}</b>\n\n"
+        f"💰 Ваш баланс: <b>{user_info.get('balance', 15.0)} ₽</b> (хватит на {user_info.get('days_left', 3)} дн.)\n"
+        f"👥 Приглашено друзей: <b>{user_info.get('referrals_count', 0)}</b> (+3 дня за друга)\n\n"
         f"👇 <i>Нажмите «Подключить в 1 клик» для моментальной настройки приложения INCY:</i>"
     )
 
     await message.answer(
         welcome_text,
         parse_mode="HTML",
-        reply_markup=get_main_menu(vpn_info, user_info)
+        reply_markup=get_main_menu(vpn_info, user_info, devices_info, traffic_info)
     )
 
 
@@ -200,6 +210,7 @@ async def cb_main_menu(call: CallbackQuery):
     user_info = data.get('user', {})
     vpn_info = data.get('vpn', {})
     traffic_info = data.get('traffic', {})
+    devices_info = data.get('devices', {})
 
     server_title = vpn_info.get('server_name') or '🇫🇷 Франция • Париж'
     ping_ms = vpn_info.get('ping_ms', 38)
@@ -207,15 +218,20 @@ async def cb_main_menu(call: CallbackQuery):
     limit_gb = traffic_info.get('limit_gb') or 150
     traffic_line = f"• Трафик: <b>{used_display} / {limit_gb} ГБ</b> (квота на месяц)"
 
+    conn_count = devices_info.get('connected_count', 1)
+    max_dev = devices_info.get('max_devices', 5)
+
     text = (
         f"🏠 <b>Главное меню VPN live-dev</b>\n\n"
         f"• Баланс: <b>{user_info.get('balance', 0)} ₽</b> (на {user_info.get('days_left', 0)} дн.)\n"
-        f"• Активная локация: <b>{server_title}</b> ({ping_ms} ms)\n"
-        f"• Скорость: <b>1 Gbps</b>\n"
+        f"• Сервер: <b>{server_title}</b> ({ping_ms} ms)\n"
+        f"• Скорость: <b>1 Gbps • Безлимит</b>\n"
         f"{traffic_line}\n"
+        f"• Устройства: <b>{conn_count} из {max_dev} онлайн</b> 📱\n"
+        f"• Рефералы: <b>{user_info.get('referrals_count', 0)} друзей</b> (+3 дня за друга)\n"
         f"• Белый список РФ: {'<b>ВКЛ (банки напрямую)</b>' if vpn_info.get('whitelist_enabled') else '<b>ВЫКЛ (весь трафик в VPN)</b>'}"
     )
-    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_main_menu(vpn_info, user_info))
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_main_menu(vpn_info, user_info, devices_info, traffic_info))
     await call.answer()
 
 
@@ -429,20 +445,171 @@ async def cb_download_app(call: CallbackQuery):
     await call.answer()
 
 
+@dp.callback_query(F.data == "view_devices")
+async def cb_view_devices(call: CallbackQuery):
+    data = await sync_user_with_backend(call.from_user.id, call.from_user.username)
+    devices_info = data.get('devices', {})
+    conn_count = devices_info.get('connected_count', 1)
+    max_dev = devices_info.get('max_devices', 5)
+    dev_list = devices_info.get('devices', [])
+
+    lines = []
+    if dev_list:
+        for idx, d in enumerate(dev_list, 1):
+            status_icon = "🟢" if d.get('is_online') else "⚪"
+            lines.append(f"{idx}. {d.get('icon', '📱')} <b>{d.get('name')}</b>\n   └ IP: <code>{d.get('masked_ip', '—')}</code> • {d.get('last_active')} [{status_icon}]")
+    else:
+        lines.append("<i>Нет активных устройств. Подключите VLESS ключ в приложении INCY.</i>")
+
+    devices_text = "\n".join(lines)
+    free_slots = max(0, max_dev - conn_count)
+
+    text = (
+        f"📱 <b>Управление устройствами ({conn_count} из {max_dev} онлайн)</b>\n\n"
+        f"Ваша подписка поддерживает <b>до {max_dev} устройств одновременно</b> на одном ключе или подписке INCY.\n\n"
+        f"<b>Активные устройства:</b>\n"
+        f"{devices_text}\n\n"
+        f"✨ <b>Свободных слотов:</b> {free_slots} из {max_dev}\n\n"
+        f"💡 <i>Чтобы добавить новое устройство (iPhone, Android, Windows, Mac или Smart TV), просто установите INCY и нажмите «Подключить в 1 клик».</i>"
+    )
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_devices_menu())
+    await call.answer()
+
+
+@dp.callback_query(F.data == "reset_devices")
+async def cb_reset_devices(call: CallbackQuery):
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/vpn/devices/reset/",
+                json={"telegram_id": str(call.from_user.id)}
+            )
+            res_data = resp.json()
+            if res_data.get('success'):
+                await call.answer("✓ Все устройства сброшены! Все 5 слотов свободны.", show_alert=True)
+            else:
+                await call.answer("⚠️ Не удалось сбросить устройства.", show_alert=True)
+        except Exception as e:
+            logger.error(f"Error resetting devices: {e}")
+            await call.answer("⚠️ Ошибка соединения с сервером.", show_alert=True)
+    return await cb_view_devices(call)
+
+
 @dp.callback_query(F.data == "view_referrals")
 async def cb_view_referrals(call: CallbackQuery):
     data = await sync_user_with_backend(call.from_user.id, call.from_user.username)
     user_info = data.get('user', {})
-    ref_url = user_info.get('referral_url', '')
+    ref_code = user_info.get('referral_code', '')
+    site_ref_url = user_info.get('referral_url', f"{SITE_URL}/auth/register/?ref={ref_code}")
+    bot_ref_url = f"https://t.me/{BOT_USERNAME}?start=ref_{ref_code}"
+    refs_count = user_info.get('referrals_count', 0)
 
     text = (
         f"👥 <b>Реферальная программа VPN live-dev</b>\n\n"
-        f"🎁 Приглашайте друзей и получайте <b>+5 дней бесплатно</b> за каждого приглашенного друга при его первой оплате!\n\n"
-        f"Ваша персональная ссылка:\n"
-        f"<code>{ref_url}</code>\n\n"
-        f"Приглашено друзей: <b>{user_info.get('referrals_count', 0)}</b>"
+        f"Приглашайте друзей и пользуйтесь быстрым VPN <b>абсолютно бесплатно!</b>\n\n"
+        f"🎁 <b>Условия бонусов:</b>\n"
+        f"• <b>+10.00 ₽ (+3 дня теста)</b> начисляются вам мгновенно, когда друг запускает бота!\n"
+        f"• <b>+5 дней бесплатно</b> начисляются вам при первой оплате друга!\n"
+        f"• Ваш друг сразу получает <b>3 дня бесплатного доступа</b>!\n\n"
+        f"📊 <b>Ваша статистика:</b>\n"
+        f"• Приглашено друзей: <b>{refs_count}</b>\n\n"
+        f"🔗 <b>Ваша персональная ссылка для Telegram:</b>\n"
+        f"<code>{bot_ref_url}</code>\n\n"
+        f"🌐 <b>Ссылка для регистрации на сайте:</b>\n"
+        f"<code>{site_ref_url}</code>"
     )
-    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_back_menu())
+    await call.message.edit_text(
+        text,
+        parse_mode="HTML",
+        reply_markup=get_referrals_menu(BOT_USERNAME, ref_code),
+        disable_web_page_preview=True
+    )
+    await call.answer()
+
+
+@dp.callback_query(F.data == "view_servers")
+async def cb_view_servers(call: CallbackQuery):
+    data = await sync_user_with_backend(call.from_user.id, call.from_user.username)
+    vpn_info = data.get('vpn', {})
+    curr_server_id = vpn_info.get('server_id')
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.get(f"{WEB_API_URL}/vpn/servers/")
+            servers_data = resp.json().get('servers', [])
+        except Exception:
+            servers_data = []
+
+    text = (
+        f"🌍 <b>Выбор сервера и локации</b>\n\n"
+        f"Текущий сервер: <b>{vpn_info.get('server_name', 'Франция • Париж')}</b>\n"
+        f"Пинг: <b>{vpn_info.get('ping_ms', 38)} ms</b> | Канал: <b>1 Gbps</b>\n\n"
+        f"Нажмите на локацию ниже для моментального переключения:"
+    )
+    await call.message.edit_text(
+        text,
+        parse_mode="HTML",
+        reply_markup=get_servers_menu(servers_data, curr_server_id)
+    )
+    await call.answer()
+
+
+@dp.callback_query(F.data.startswith("switch_srv_"))
+async def cb_switch_server(call: CallbackQuery):
+    srv_id_str = call.data.replace("switch_srv_", "")
+    try:
+        srv_id = int(srv_id_str)
+    except ValueError:
+        await call.answer("Неверный ID сервера", show_alert=True)
+        return
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/vpn/switch-server/",
+                json={"telegram_id": str(call.from_user.id), "server_id": srv_id}
+            )
+            res_data = resp.json()
+            if res_data.get('success'):
+                srv_name = res_data.get('vpn', {}).get('clean_name', 'сервер')
+                await call.answer(f"✓ Сервер переключен на {srv_name}!", show_alert=True)
+            else:
+                await call.answer("⚠️ Не удалось переключить сервер.", show_alert=True)
+        except Exception as e:
+            logger.error(f"Error switching server: {e}")
+            await call.answer("⚠️ Ошибка соединения с сервером.", show_alert=True)
+
+    return await cb_view_servers(call)
+
+
+@dp.callback_query(F.data == "view_traffic")
+async def cb_view_traffic(call: CallbackQuery):
+    data = await sync_user_with_backend(call.from_user.id, call.from_user.username)
+    traffic_info = data.get('traffic', {})
+    vpn_info = data.get('vpn', {})
+
+    used_display = traffic_info.get('used_display', '0.0 МБ')
+    limit_gb = traffic_info.get('limit_gb', 150)
+    percent = traffic_info.get('percent', 0)
+    left_gb = traffic_info.get('left_gb', 150)
+    reset_date = traffic_info.get('reset_date', 'через 30 дней')
+
+    # Visual progress bar (20 blocks)
+    filled_blocks = min(20, max(0, int(percent / 5)))
+    bar = "█" * filled_blocks + "░" * (20 - filled_blocks)
+
+    text = (
+        f"📊 <b>Статистика трафика и квоты</b>\n\n"
+        f"• Использовано: <b>{used_display}</b> из <b>{limit_gb} ГБ</b>\n"
+        f"• Осталось скоростного трафика: <b>{left_gb} ГБ</b>\n"
+        f"• Использование квоты: <b>{percent}%</b>\n"
+        f"<code>[{bar}]</code>\n\n"
+        f"⚡ <b>Скорость:</b> 1 Gbps (без ограничений)\n"
+        f"🔄 <b>Дата сброса квоты:</b> {reset_date}\n"
+        f"🛡️ <b>Белый список РФ:</b> {'ВКЛ (банки и маркетплейсы не тратят квоту)' if vpn_info.get('whitelist_enabled') else 'ВЫКЛ'}\n\n"
+        f"💡 <i>Весь российский трафик (Госуслуги, Сбер, Т-Банк, WB, Ozon) идет напрямую на максимальной скорости вашего провайдера.</i>"
+    )
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_traffic_menu())
     await call.answer()
 
 
