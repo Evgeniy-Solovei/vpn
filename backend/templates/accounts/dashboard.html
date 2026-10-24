@@ -543,8 +543,12 @@
       <button type="button" id="btn-incy-connect" data-connect-url="{{ vpn_key.get_vless_url }}" class="btn btn-primary btn-block btn-smart-connect" style="font-size: 0.95rem; font-weight: 700; padding: 0.85rem; justify-content: center; border: none; cursor: pointer;">
         ⚡ Подключить в приложении INCY
       </button>
-      <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 0.5rem; text-align: center;">
-        Сервер добавится в приложение автоматически, а ключ скопируется в буфер
+      <div style="margin-top: 0.6rem; background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 0.55rem 0.75rem; font-size: 0.78rem; color: #34d399; display: flex; align-items: center; gap: 0.45rem;">
+        <span>👉</span>
+        <span><b>Шаг 3:</b> В приложении INCY нажмите круглую кнопку <b>«Подключить»</b> — готово!</span>
+      </div>
+      <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 0.45rem; text-align: center;">
+        Сервер добавится автоматически, а ключ скопируется в буфер
       </div>
     </div>
 
@@ -972,7 +976,7 @@
           <div>
             <strong style="color: #fff;">Шаг 2: Подключение в 1 клик</strong>
             <p style="margin: 0.2rem 0 0 0;">
-              Нажмите кнопку <a href="{{ vpn_key.get_incy_url }}" style="color: #34d399; font-weight: 700; text-decoration: underline;">«Подключить в приложении INCY»</a> — сервер добавится автоматически.
+              Нажмите кнопку <button type="button" data-modal-target="connect-modal" style="background: none; border: none; padding: 0; color: #34d399; font-weight: 700; text-decoration: underline; cursor: pointer;">«Подключить в приложении INCY»</button> — сервер добавится автоматически.
             </p>
           </div>
         </div>
@@ -1008,7 +1012,7 @@
           <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(6,182,212,0.18); color: #38bdf8; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem;">2</div>
           <div>
             <strong style="color: #fff;">Шаг 2: Моментальный импорт</strong>
-            <p style="margin: 0.2rem 0 0 0;">Нажмите кнопку <a href="{{ vpn_key.get_incy_url }}" style="color: #38bdf8; font-weight: 700; text-decoration: underline;">«Подключить в приложении INCY»</a> — конфигурация импортируется автоматически.</p>
+            <p style="margin: 0.2rem 0 0 0;">Нажмите кнопку <button type="button" data-modal-target="connect-modal" style="background: none; border: none; padding: 0; color: #38bdf8; font-weight: 700; text-decoration: underline; cursor: pointer;">«Подключить в приложении INCY»</button> — конфигурация импортируется автоматически.</p>
           </div>
         </div>
 

@@ -242,23 +242,23 @@ async def cb_view_key(call: CallbackQuery):
     vpn_info = data.get('vpn', {})
     vless_url = vpn_info.get('vless_url', '')
     sub_url = vpn_info.get('sub_url', '')
-
     max_dev = vpn_info.get('max_devices', 5)
+
     text = (
-        f"🔑 <b>Ваш персональный VLESS Reality ключ:</b>\n\n"
+        f"🔑 <b>Ваш доступ к VPN</b>\n\n"
+        f"💡 <b>Всего 2 простых шага (30 секунд):</b>\n"
+        f"1️⃣ <b>Шаг 1:</b> Скачайте бесплатное приложение <b>INCY</b>\n"
+        f"2️⃣ <b>Шаг 2:</b> Нажмите <b>«⚡ Подключить в 1 клик»</b> — всё настроится автоматически!\n\n"
+        f"<i>В приложении просто нажмите круглую кнопку «Подключить». Больше ничего настраивать не нужно.</i>\n\n"
+        f"───────────────\n"
+        f"📋 <b>Для ручной вставки (если нужно):</b>\n"
         f"<code>{vless_url}</code>\n\n"
-        f"🔗 <b>Ссылка на автообновляемую подписку:</b>\n"
-        f"<code>{sub_url}</code>\n\n"
-        f"📱 <b>Лимит:</b> до {max_dev} устройств одновременно (телефон, ПК, планшет, Smart TV)\n\n"
-        f"💡 <b>Как подключить за 2 шага:</b>\n"
-        f"1. Установите приложение <b>INCY</b> (кнопка ниже)\n"
-        f"2. Нажмите <b>«⚡ Подключить в 1 клик (INCY)»</b> для моментальной настройки\n"
-        f"<i>(Либо скопируйте ключ выше и вставьте в INCY через «+»)</i> 🚀"
+        f"📱 <i>Лимит: до {max_dev} устройств одновременно (телефон, ПК, Smart TV).</i>"
     )
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⚡ Подключить в 1 клик (INCY)", url=vpn_info.get('connect_url') or f"{SITE_URL}/dashboard/")],
-        [InlineKeyboardButton(text="📲 Скачать приложение", callback_data="download_app")],
+        [InlineKeyboardButton(text="📲 Скачать приложение INCY", callback_data="download_app")],
         [InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")]
     ])
     await call.message.edit_text(text, parse_mode="HTML", reply_markup=kb, disable_web_page_preview=True)
@@ -498,14 +498,19 @@ async def cb_buy_turbo(call: CallbackQuery):
 
 @dp.callback_query(F.data == "download_app")
 async def cb_download_app(call: CallbackQuery):
+    data = await sync_user_with_backend(call.from_user.id, call.from_user.username)
+    vpn_info = data.get('vpn', {})
+    connect_url = vpn_info.get('connect_url') or f"{SITE_URL}/dashboard/"
+
     text = (
-        f"📲 <b>Скачать рекомендуемое приложение: INCY</b>\n\n"
-        f"INCY — нативный клиент для VLESS Reality на всех платформах:\n"
-        f"• Поддержка iOS, Android, macOS, Windows, Linux, Android TV\n"
-        f"• Моментальный импорт в 1 клик\n"
-        f"• Функция Send to TV для подключения телевизора"
+        f"📲 <b>Шаг 1 из 2: Скачайте приложение INCY</b>\n\n"
+        f"Выберите устройство и установите официальное бесплатное приложение:\n\n"
+        f"🍏 <b>iPhone / iPad</b> — App Store\n"
+        f"🤖 <b>Android</b> — Google Play\n"
+        f"💻 <b>Компьютер</b> — Windows / Mac\n\n"
+        f"👉 <i>После установки нажмите кнопку <b>«⚡ Шаг 2: Подключить в 1 клик»</b> внизу:</i>"
     )
-    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_download_menu())
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_download_menu(connect_url))
     await call.answer()
 
 

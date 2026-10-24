@@ -248,18 +248,23 @@ def get_yookassa_pay_button(checkout_url: str, amount: int, days: int) -> Inline
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def get_download_menu() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
+def get_download_menu(connect_url: str = None) -> InlineKeyboardMarkup:
+    buttons = [
         [
-            InlineKeyboardButton(text="🍏 INCY для iPhone / iPad (App Store)", url="https://apps.apple.com/app/incy/id6756943388"),
+            InlineKeyboardButton(text="🍏 Для iPhone / iPad (App Store)", url="https://apps.apple.com/app/incy/id6756943388"),
         ],
         [
-            InlineKeyboardButton(text="🤖 INCY для Android (Google Play)", url="https://play.google.com/store/apps/details?id=llc.itdev.incy"),
+            InlineKeyboardButton(text="🤖 Для Android (Google Play)", url="https://play.google.com/store/apps/details?id=llc.itdev.incy"),
         ],
         [
-            InlineKeyboardButton(text="💻 INCY для ПК и Mac (Официальный сайт)", url="https://incy.app/skachat/"),
+            InlineKeyboardButton(text="💻 Для Windows и Mac", url="https://incy.app/skachat/"),
         ],
-        [
-            InlineKeyboardButton(text="◀️ Назад в меню", callback_data="main_menu")
-        ]
+    ]
+    if connect_url:
+        buttons.append([
+            InlineKeyboardButton(text="⚡ Шаг 2: Подключить в 1 клик", url=connect_url)
+        ])
+    buttons.append([
+        InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")
     ])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
