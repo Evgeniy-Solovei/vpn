@@ -149,22 +149,17 @@
         <span style="color: #fff;">Продолжить с Google</span>
       </a>
 
-      <!-- Telegram Direct Button & Widget -->
-      <a href="https://t.me/{{ BOT_USERNAME }}?start=login" target="_blank" class="btn btn-secondary btn-block" style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.75rem; font-size: 0.9rem; font-weight: 700; text-decoration: none; border: 1px solid rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.12); color: #38bdf8; border-radius: 0.75rem;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <line x1="22" y1="2" x2="11" y2="13"/>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-        <span>⚡ Войти через Telegram в 1 клик</span>
-      </a>
-
-      <div style="text-align: center; margin-top: 0.15rem;">
+      <!-- Telegram Sign-In (Official Widget) -->
+      <div style="text-align: center; margin-top: 0.25rem;">
         <script async src="https://telegram.org/js/telegram-widget.js?22" 
                 data-telegram-login="{{ BOT_USERNAME }}" 
                 data-size="large" 
                 data-radius="10" 
                 data-auth-url="{{ SITE_URL }}{% url 'telegram_auth_callback' %}" 
                 data-request-access="write"></script>
+        <div style="font-size: 0.76rem; color: var(--text-dim); margin-top: 0.45rem;">
+          Или в боте <a href="https://t.me/{{ BOT_USERNAME }}?start=login" target="_blank" style="color: #38bdf8; text-decoration: underline;">@{{ BOT_USERNAME }}</a> нажмите <strong>«Войти на сайте»</strong>
+        </div>
       </div>
     </div>
 
