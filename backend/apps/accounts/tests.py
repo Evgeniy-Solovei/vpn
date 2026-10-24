@@ -482,5 +482,52 @@ class AccountsTestCase(TestCase):
             self.assertEqual(created.telegram_username, 'tg_tester')
             self.assertEqual(int(self.client.session['_auth_user_id']), created.id)
 
+    def test_google_login_redirect_without_client_id(self):
+        """When GOOGLE_CLIENT_ID is empty, redirects to login with informative message."""
+        with self.settings(GOOGLE_CLIENT_ID=''):
+            resp = self.client.get(reverse('google_login'))
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp.url, reverse('login'))
+
+    def test_google_login_redirect_with_client_id(self):
+        """When GOOGLE_CLIENT_ID is configured, redirects to accounts.google.com."""
+        with self.settings(GOOGLE_CLIENT_ID='mock-google-client-id-123'):
+            resp = self.client.get(reverse('google_login'))
+            self.assertEqual(resp.status_code, 302)
+            self.assertIn('accounts.google.com/o/oauth2/v2/auth', resp.url)
+            self.assertIn('client_id=mock-google-client-id-123', resp.url)
+            self.assertTrue(self.client.session.get('google_oauth_state'))
+
+    def test_google_callback_flow(self):
+        """Mocked Google code exchange logs in or creates new user with 3-day trial."""
+        from unittest.mock import patch, MagicMock
+
+        session = self.client.session
+        session['google_oauth_state'] = 'mockstate123'
+        session.save()
+
+        with self.settings(GOOGLE_CLIENT_ID='mock-id', GOOGLE_CLIENT_SECRET='mock-secret'):
+            token_json = b'{"access_token": "mock_access_token_xyz"}'
+            userinfo_json = b'{"sub": "google_uid_999", "email": "googler@example.com", "name": "Google Tester"}'
+
+            with patch('urllib.request.urlopen') as mock_urlopen:
+                mock_resp1 = MagicMock()
+                mock_resp1.read.return_value = token_json
+                mock_resp1.__enter__.return_value = mock_resp1
+
+                mock_resp2 = MagicMock()
+                mock_resp2.read.return_value = userinfo_json
+                mock_resp2.__enter__.return_value = mock_resp2
+
+                mock_urlopen.side_effect = [mock_resp1, mock_resp2]
+
+                resp = self.client.get(reverse('google_callback'), {'code': 'auth_code_123', 'state': 'mockstate123'})
+                self.assertEqual(resp.status_code, 302)
+                self.assertEqual(resp.url, reverse('dashboard'))
+
+                created = User.objects.get(google_id='google_uid_999')
+                self.assertEqual(created.email, 'googler@example.com')
+                self.assertEqual(int(self.client.session['_auth_user_id']), created.id)
+
 
 

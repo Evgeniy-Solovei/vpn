@@ -14,6 +14,7 @@ class CustomUser(AbstractUser):
     telegram_id = models.CharField(max_length=64, blank=True, null=True, unique=True, verbose_name="Telegram ID")
     telegram_username = models.CharField(max_length=128, blank=True, null=True, verbose_name="Telegram Username")
     telegram_bonus_claimed = models.BooleanField(default=False, verbose_name="Бонус за привязку Telegram начислен")
+    google_id = models.CharField(max_length=128, blank=True, null=True, unique=True, verbose_name="Google ID")
     
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('3.50'), verbose_name="Баланс (₽) [1 день теста]")
     daily_deduction = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('3.50'), verbose_name="Ежедневное списание (₽)")

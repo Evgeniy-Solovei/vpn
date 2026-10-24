@@ -165,6 +165,10 @@ BOT_TOKEN = os.getenv('BOT_TOKEN', '')
 BOT_USERNAME = os.getenv('BOT_USERNAME', 'live_vpn_bot')
 TELEGRAM_WEBAPP_URL = os.getenv('TELEGRAM_WEBAPP_URL', f'{SITE_URL}/miniapp/')
 
+# Google OAuth 2.0 Settings
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
+
 # bePaid Payment Settings (Belarus / Belkart / ERIP / CIS)
 BEPAID_SHOP_ID = os.getenv('BEPAID_SHOP_ID', '4225')
 BEPAID_SECRET_KEY = os.getenv('BEPAID_SECRET_KEY', '3834fbef1fe6ea024ef77f5c79ec7ff1ba710ea6241c08c2f341afda8af4c1c4')

@@ -1,7 +1,12 @@
 import logging
 import hmac
 import hashlib
+import urllib.parse
+import urllib.request
+import json
+import secrets
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -403,6 +408,175 @@ def telegram_auth_callback_view(request):
         user.save()
 
         # Generate VPNKey
+        from apps.vpn.models import VPNKey
+        from apps.vpn.services import get_or_create_default_server, ThreeXUIService
+        server = get_or_create_default_server()
+        key = VPNKey.objects.create(
+            user=user,
+            server=server,
+            traffic_limit_gb=200,
+            max_devices=5,
+        )
+        try:
+            service = ThreeXUIService(server)
+            service.add_client(key)
+        except Exception:
+            pass
+
+        messages.success(request, f"Добро пожаловать в VPN live-dev! Вам начислено 3 дня бесплатного доступа.")
+
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    response = redirect('dashboard')
+    return apply_persistent_auth(request, response, user, remember=True, days=90)
+
+
+def google_login_view(request):
+    """
+    Initiates Google OAuth 2.0 authorization redirect.
+    """
+    client_id = getattr(settings, 'GOOGLE_CLIENT_ID', '').strip()
+    if not client_id:
+        messages.info(
+            request,
+            "Для входа через Google требуется настроить GOOGLE_CLIENT_ID в конфигурации. "
+            "Пока вы можете мгновенно войти через Telegram без пароля!"
+        )
+        return redirect('login')
+
+    state = secrets.token_urlsafe(16)
+    request.session['google_oauth_state'] = state
+
+    redirect_uri = request.build_absolute_uri(reverse('google_callback'))
+    if request.is_secure() or getattr(settings, 'SECURE_PROXY_SSL_HEADER', None):
+        redirect_uri = redirect_uri.replace('http://', 'https://')
+
+    params = {
+        'client_id': client_id,
+        'redirect_uri': redirect_uri,
+        'response_type': 'code',
+        'scope': 'openid email profile',
+        'state': state,
+        'prompt': 'select_account',
+    }
+    google_auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+    return redirect(google_auth_url)
+
+
+def google_callback_view(request):
+    """
+    Handles Google OAuth 2.0 authorization code exchange and user login.
+    """
+    code = request.GET.get('code')
+    state = request.GET.get('state')
+    saved_state = request.session.pop('google_oauth_state', None)
+
+    if not code:
+        error = request.GET.get('error', 'Авторизация через Google была отменена.')
+        messages.error(request, f"Вход через Google: {error}")
+        return redirect('login')
+
+    if not state or state != saved_state:
+        messages.error(request, "Ошибка безопасности сессии (state mismatch). Пожалуйста, попробуйте снова.")
+        return redirect('login')
+
+    client_id = getattr(settings, 'GOOGLE_CLIENT_ID', '').strip()
+    client_secret = getattr(settings, 'GOOGLE_CLIENT_SECRET', '').strip()
+
+    if not client_id or not client_secret:
+        messages.error(request, "Google OAuth не настроен на сервере.")
+        return redirect('login')
+
+    redirect_uri = request.build_absolute_uri(reverse('google_callback'))
+    if request.is_secure() or getattr(settings, 'SECURE_PROXY_SSL_HEADER', None):
+        redirect_uri = redirect_uri.replace('http://', 'https://')
+
+    # Exchange code for tokens
+    token_url = "https://oauth2.googleapis.com/token"
+    token_data = urllib.parse.urlencode({
+        'code': code,
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'redirect_uri': redirect_uri,
+        'grant_type': 'authorization_code',
+    }).encode('utf-8')
+
+    try:
+        req = urllib.request.Request(token_url, data=token_data, headers={'User-Agent': 'VPNLiveDev/1.0'})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            token_resp = json.loads(resp.read().decode('utf-8'))
+            access_token = token_resp.get('access_token')
+    except Exception as e:
+        logger.error(f"Failed to exchange code for Google token: {e}")
+        messages.error(request, "Не удалось получить токен доступа Google. Попробуйте еще раз.")
+        return redirect('login')
+
+    if not access_token:
+        messages.error(request, "Google не вернул access_token.")
+        return redirect('login')
+
+    # Fetch user info
+    userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+    try:
+        userinfo_req = urllib.request.Request(userinfo_url, headers={
+            'Authorization': f'Bearer {access_token}',
+            'User-Agent': 'VPNLiveDev/1.0'
+        })
+        with urllib.request.urlopen(userinfo_req, timeout=10) as resp:
+            user_info = json.loads(resp.read().decode('utf-8'))
+    except Exception as e:
+        logger.error(f"Failed to fetch Google userinfo: {e}")
+        messages.error(request, "Не удалось получить данные профиля Google.")
+        return redirect('login')
+
+    google_sub = user_info.get('sub')
+    email = (user_info.get('email') or '').lower().strip()
+    name = user_info.get('name') or user_info.get('given_name') or ''
+
+    if not email:
+        messages.error(request, "Google не предоставил email для вашего аккаунта.")
+        return redirect('login')
+
+    # Scenario 1: User already logged in and linking Google
+    if request.user.is_authenticated:
+        user = request.user
+        existing = CustomUser.objects.filter(google_id=google_sub).exclude(id=user.id).first()
+        if existing:
+            messages.warning(request, f"Этот Google-аккаунт уже привязан к пользователю {existing.username}.")
+            return redirect('dashboard')
+        user.google_id = google_sub
+        user.save()
+        messages.success(request, f"Google-аккаунт {email} успешно привязан!")
+        return redirect('dashboard')
+
+    # Scenario 2: Login or Register
+    user = CustomUser.objects.filter(google_id=google_sub).first()
+    if not user:
+        user = CustomUser.objects.filter(email__iexact=email).first()
+        if user:
+            user.google_id = google_sub
+            user.save()
+
+    if not user:
+        # Create new user
+        base_username = email.split('@')[0].replace('.', '_').replace('-', '_')
+        username = base_username
+        counter = 1
+        while CustomUser.objects.filter(username=username).exists():
+            username = f"{base_username}_{counter}"
+            counter += 1
+
+        user = CustomUser.objects.create(
+            username=username,
+            email=email,
+            first_name=name,
+            google_id=google_sub,
+            balance=Decimal('10.50'),  # 3 days free trial
+            daily_deduction=Decimal('3.50'),
+        )
+        user.set_unusable_password()
+        user.save()
+
+        # Create VPN key
         from apps.vpn.models import VPNKey
         from apps.vpn.services import get_or_create_default_server, ThreeXUIService
         server = get_or_create_default_server()
