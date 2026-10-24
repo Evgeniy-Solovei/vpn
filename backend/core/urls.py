@@ -30,7 +30,7 @@ urlpatterns = [
     path('vpn/', include('apps.vpn.urls')),
     path('sub/', include('apps.vpn.sub_urls')),
     path('api/', include('apps.api.urls')),
-    re_path(r'^miniapp/(?P<path>.*)$', miniapp_serve, name='miniapp'),
+    re_path(r'^miniapp/(?P<path>.*)$', RedirectView.as_view(url='/dashboard/', permanent=False), name='miniapp'),
     path('', RedirectView.as_view(url='/dashboard/', permanent=False)),
     re_path(r'^static/(?P<path>.*)$', robust_static_serve, name='static_files'),
     re_path(r'^media/(?P<path>.*)$', static_serve, {'document_root': settings.MEDIA_ROOT}, name='media_files'),

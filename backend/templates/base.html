@@ -73,10 +73,6 @@
 
         <!-- Right Side Nav Actions -->
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <a href="/miniapp/" class="nav-miniapp-btn" title="Telegram Mini App">
-            <span>📱 Mini App</span>
-          </a>
-
           {% if user.is_authenticated %}
             <a href="{% url 'tariffs' %}" class="btn btn-secondary" style="padding: 0.45rem 0.95rem; font-size: 0.85rem;">
               <span style="color: var(--accent-emerald); font-weight: 700;">💳 {{ user.balance }} ₽</span>
@@ -122,7 +118,6 @@
           <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
             <a href="{% url 'tariffs' %}" style="color: var(--text-muted); text-decoration: none;">Тарифы</a>
             <a href="{% url 'legal' %}" style="color: #34d399; font-weight: 600; text-decoration: none;">Реквизиты и оферта</a>
-            <a href="/miniapp/" style="color: var(--text-muted); text-decoration: none;">Mini App</a>
             <a href="https://t.me/{{ BOT_USERNAME }}" target="_blank" style="color: var(--text-muted); text-decoration: none;">Telegram бот</a>
             <button type="button" data-modal-target="support-modal" style="background: none; border: none; padding: 0; color: #34d399; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
               <span>💬 Поддержка</span>

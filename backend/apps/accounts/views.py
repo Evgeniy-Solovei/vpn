@@ -209,8 +209,6 @@ def password_reset_confirm_view(request, uidb64, token):
 
 def dashboard_view(request):
     if not request.user.is_authenticated:
-        if request.GET.get('tg') == '1':
-            return redirect('miniapp')
         return redirect(f"{settings.LOGIN_URL}?next={request.get_full_path()}")
 
     user = request.user

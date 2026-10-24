@@ -110,12 +110,30 @@
 </div>
 
 <script>
-  // Automatic Telegram Mini App Forwarding
-  document.addEventListener('DOMContentLoaded', function() {
+  // Automatic Telegram WebApp Seamless Login
+  document.addEventListener('DOMContentLoaded', async function() {
     var tg = window.Telegram && window.Telegram.WebApp;
     var tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
     if (tgUser && tgUser.id) {
-      window.location.replace('/miniapp/');
+      try {
+        var resp = await fetch('/api/tg/sync/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            telegram_id: String(tgUser.id),
+            telegram_username: tgUser.username || '',
+            first_name: tgUser.first_name || ''
+          })
+        });
+        var data = await resp.json();
+        if (data && data.success) {
+          window.location.replace('/dashboard/');
+          return;
+        }
+      } catch (err) {
+        console.error('Auto login in Telegram WebApp failed:', err);
+      }
     }
   });
 </script>
