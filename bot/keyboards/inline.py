@@ -85,18 +85,31 @@ def get_main_menu(vpn_data: dict, user_data: dict, devices_data: dict = None, tr
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def get_devices_menu() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="🗑️ Сбросить все устройства", callback_data="reset_devices")
-        ],
-        [
-            InlineKeyboardButton(text="📲 Скачать INCY на новое устройство", callback_data="download_app")
-        ],
-        [
-            InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")
-        ]
+def get_devices_menu(devices: list = None) -> InlineKeyboardMarkup:
+    buttons = []
+    if devices:
+        for idx, dev in enumerate(devices, 1):
+            dev_id = dev.get('id')
+            dev_name = dev.get('name') or f"Устройство #{idx}"
+            if len(dev_name) > 24:
+                dev_name = dev_name[:22] + "…"
+            buttons.append([
+                InlineKeyboardButton(
+                    text=f"🗑️ Удалить #{idx}: {dev_name}",
+                    callback_data=f"del_dev_{dev_id}"
+                )
+            ])
+
+    buttons.append([
+        InlineKeyboardButton(text="🗑️ Сбросить все устройства", callback_data="reset_devices")
     ])
+    buttons.append([
+        InlineKeyboardButton(text="📲 Скачать INCY на новое устройство", callback_data="download_app")
+    ])
+    buttons.append([
+        InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")
+    ])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 def get_referrals_menu(bot_user: str, ref_code: str) -> InlineKeyboardMarkup:

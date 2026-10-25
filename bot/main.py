@@ -544,8 +544,31 @@ async def cb_view_devices(call: CallbackQuery):
         f"✨ <b>Свободных слотов:</b> {free_slots} из {max_dev}\n\n"
         f"💡 <i>Чтобы добавить новое устройство (iPhone, Android, Windows, Mac или Smart TV), просто установите INCY и нажмите «Подключить в 1 клик».</i>"
     )
-    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_devices_menu())
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_devices_menu(dev_list))
     await call.answer()
+
+
+@dp.callback_query(F.data.startswith("del_dev_"))
+async def cb_delete_device(call: CallbackQuery):
+    dev_id = call.data.replace("del_dev_", "").strip()
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/vpn/devices/delete/",
+                json={
+                    "telegram_id": str(call.from_user.id),
+                    "device_id": dev_id
+                }
+            )
+            res_data = resp.json()
+            if res_data.get('success'):
+                await call.answer("✓ Устройство успешно удалено! Слот освобожден.", show_alert=True)
+            else:
+                await call.answer(f"⚠️ {res_data.get('error', 'Не удалось удалить устройство.')}", show_alert=True)
+        except Exception as e:
+            logger.error(f"Error deleting device: {e}")
+            await call.answer("⚠️ Ошибка соединения с сервером.", show_alert=True)
+    return await cb_view_devices(call)
 
 
 @dp.callback_query(F.data == "reset_devices")

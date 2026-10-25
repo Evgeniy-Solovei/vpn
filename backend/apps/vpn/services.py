@@ -616,30 +616,10 @@ def get_user_devices_info(user, key=None) -> dict:
 
     max_devices = getattr(key, 'max_devices', 5) or 5
 
-    # If no devices registered yet, inspect DeviceAuthKeys
-    existing_devices = list(VPNDevice.objects.filter(user=user, is_active=True).order_by('-last_active_at'))
+    # Clean up any legacy phantom browser records
+    VPNDevice.objects.filter(user=user, client_type='Личный кабинет').delete()
 
-    if not existing_devices:
-        from apps.accounts.models import DeviceAuthKey
-        auth_keys = DeviceAuthKey.objects.filter(user=user).exclude(user_agent__icontains='python-httpx').exclude(user_agent='').order_by('-created_at')[:5]
-        for ak in auth_keys:
-            plat, dname = detect_device_platform_and_name(ak.user_agent)
-            dev_id = f"{user.id}_{plat}"
-            dev, _ = VPNDevice.objects.get_or_create(
-                user=user,
-                device_id=dev_id,
-                defaults={
-                    'key': key,
-                    'device_name': f"{dname} (Личный кабинет)",
-                    'platform': plat,
-                    'client_type': 'Личный кабинет',
-                    'ip_address': ak.ip_address,
-                    'user_agent': ak.user_agent,
-                    'is_active': True
-                }
-            )
-            if dev not in existing_devices:
-                existing_devices.append(dev)
+    existing_devices = list(VPNDevice.objects.filter(user=user, is_active=True).order_by('-last_active_at'))
 
     # Strictly deduplicate devices by platform: 1 Mac, 1 iPhone, etc.
     seen_platforms = set()
@@ -655,20 +635,6 @@ def get_user_devices_info(user, key=None) -> dict:
             except Exception:
                 pass
     existing_devices = unique_devices
-
-    # If still no devices but user has consumed traffic (> 0), register primary INCY device
-    if not existing_devices and key and key.used_traffic_bytes > 0:
-        dev = VPNDevice.objects.create(
-            user=user,
-            key=key,
-            device_id=f"{user.id}_ios",
-            device_name="Apple iPhone (INCY)",
-            platform="ios",
-            client_type="INCY",
-            ip_address="178.12.*.*",
-            is_active=True
-        )
-        existing_devices.append(dev)
 
     now = timezone.now()
     device_list = []
@@ -688,8 +654,6 @@ def get_user_devices_info(user, key=None) -> dict:
         })
 
     connected_count = min(len(device_list), max_devices)
-    if connected_count == 0 and key and key.used_traffic_bytes > 0:
-        connected_count = 1
 
     return {
         'connected_count': connected_count,
@@ -700,8 +664,24 @@ def get_user_devices_info(user, key=None) -> dict:
     }
 
 
+def delete_user_device(user, device_id) -> bool:
+    """Removes a specific registered device for user by PK or device_id."""
+    if not user:
+        return False
+    query = models.Q(user=user)
+    if str(device_id).isdigit():
+        query &= (models.Q(id=int(device_id)) | models.Q(device_id=str(device_id)))
+    else:
+        query &= models.Q(device_id=str(device_id))
+    
+    deleted, _ = VPNDevice.objects.filter(query).delete()
+    return deleted > 0
+
+
 def reset_user_devices(user) -> int:
     """Removes all registered devices and resets session slots for user."""
+    if not user:
+        return 0
     count = VPNDevice.objects.filter(user=user).delete()[0]
     return count
 

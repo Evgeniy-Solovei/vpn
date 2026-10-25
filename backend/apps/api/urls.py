@@ -12,6 +12,7 @@ urlpatterns = [
     path('vpn/switch-server/', views.switch_server_api, name='api_switch_server'),
     path('vpn/devices/', views.devices_list_api, name='api_devices_list'),
     path('vpn/devices/reset/', views.reset_devices_api, name='api_devices_reset'),
+    path('vpn/devices/delete/', views.delete_device_api, name='api_devices_delete'),
     path('vpn/buy-traffic/', views.buy_traffic_api, name='api_buy_traffic'),
     path('vpn/custom-whitelist/', views.update_custom_whitelist_api, name='api_custom_whitelist'),
     path('billing/tariffs/', views.tariffs_list_api, name='api_tariffs_list'),

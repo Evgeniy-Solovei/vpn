@@ -226,12 +226,11 @@ def dashboard_view(request):
         server = get_or_create_default_server()
         key = VPNKey.objects.create(user=user, server=server)
 
-    from apps.vpn.services import ensure_key_in_panel, ensure_key_in_all_active_servers, sync_key_traffic, register_user_device, get_user_devices_info
+    from apps.vpn.services import ensure_key_in_panel, ensure_key_in_all_active_servers, sync_key_traffic, get_user_devices_info
     try:
         ensure_key_in_panel(key)
         ensure_key_in_all_active_servers(key)
         sync_key_traffic(key)
-        register_user_device(user, request=request, key=key, client_type='Личный кабинет')
     except Exception:
         pass
     devices_info = get_user_devices_info(user, key=key)

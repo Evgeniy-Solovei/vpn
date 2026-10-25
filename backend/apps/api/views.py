@@ -680,6 +680,42 @@ def reset_devices_api(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
+@csrf_exempt
+def delete_device_api(request):
+    """Deletes a specific registered device for user."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        user = None
+        if request.user.is_authenticated:
+            user = request.user
+        elif data.get('telegram_id'):
+            user = CustomUser.objects.filter(telegram_id=str(data.get('telegram_id'))).first()
+        elif data.get('user_id'):
+            user = CustomUser.objects.filter(id=data.get('user_id')).first()
+
+        if not user:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        device_id = data.get('device_id') or data.get('id')
+        if not device_id:
+            return JsonResponse({'success': False, 'error': 'device_id is required'}, status=400)
+
+        from apps.vpn.services import delete_user_device, get_user_devices_info
+        deleted = delete_user_device(user, device_id)
+        devices_info = get_user_devices_info(user)
+        return JsonResponse({
+            'success': True,
+            'deleted': deleted,
+            'message': 'Устройство успешно удалено' if deleted else 'Устройство не найдено или уже удалено',
+            'devices': devices_info
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+
 
 
 

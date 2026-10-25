@@ -560,38 +560,84 @@ function initServerSwitcher() {
 // ==========================================
 function initDevicesManagement() {
   const btnReset = document.getElementById('btn-reset-devices');
-  if (!btnReset) return;
-
-  btnReset.addEventListener('click', async () => {
-    if (!confirm('Вы уверены, что хотите сбросить все привязанные устройства и освободить 5 слотов?')) {
-      return;
-    }
-
-    try {
-      btnReset.disabled = true;
-      btnReset.textContent = 'Сбрасываем...';
-      const res = await fetch('/api/vpn/devices/reset/', {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': getCookie('csrftoken'),
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast('✓ Все устройства сброшены! Все 5 слотов свободны.');
-        setTimeout(() => window.location.reload(), 900);
-      } else {
-        showToast('⚠️ ' + (data.error || 'Не удалось сбросить устройства'));
-        btnReset.disabled = false;
-        btnReset.textContent = '🗑️ Сбросить устройства';
+  if (btnReset) {
+    btnReset.addEventListener('click', async () => {
+      if (!confirm('Вы уверены, что хотите сбросить все привязанные устройства и освободить 5 слотов?')) {
+        return;
       }
-    } catch (err) {
-      console.error('Reset devices error:', err);
-      showToast('⚠️ Ошибка соединения с сервером');
-      btnReset.disabled = false;
-      btnReset.textContent = '🗑️ Сбросить устройства';
-    }
+
+      try {
+        btnReset.disabled = true;
+        btnReset.textContent = 'Сбрасываем...';
+        const res = await fetch('/api/vpn/devices/reset/', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✓ Все устройства сброшены! Все 5 слотов свободны.');
+          setTimeout(() => window.location.reload(), 800);
+        } else {
+          showToast('⚠️ ' + (data.error || 'Не удалось сбросить устройства'));
+          btnReset.disabled = false;
+          btnReset.textContent = '🗑️ Сбросить все устройства';
+        }
+      } catch (err) {
+        console.error('Reset devices error:', err);
+        showToast('⚠️ Ошибка соединения с сервером');
+        btnReset.disabled = false;
+        btnReset.textContent = '🗑️ Сбросить все устройства';
+      }
+    });
+  }
+
+  // Individual device deletion
+  document.querySelectorAll('.btn-delete-device').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const devId = btn.getAttribute('data-device-id');
+      const devName = btn.getAttribute('data-device-name') || 'устройство';
+      if (!confirm(`Удалить «${devName}» из привязанных устройств? Слот будет немедленно освобожден.`)) {
+        return;
+      }
+
+      btn.disabled = true;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>⏳</span> <span style="font-size: 0.72rem;">Удаляем...</span>';
+
+      try {
+        const res = await fetch('/api/vpn/devices/delete/', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ device_id: devId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✓ Устройство удалено! Слот освобожден.');
+          const row = btn.closest('.device-card-row');
+          if (row) {
+            row.style.opacity = '0.3';
+            row.style.pointerEvents = 'none';
+          }
+          setTimeout(() => window.location.reload(), 700);
+        } else {
+          showToast('⚠️ ' + (data.error || 'Не удалось удалить устройство'));
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      } catch (err) {
+        console.error('Delete device error:', err);
+        showToast('⚠️ Ошибка соединения с сервером');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    });
   });
 }
 

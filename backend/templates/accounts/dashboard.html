@@ -644,7 +644,7 @@
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
       <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">📱 Мои устройства</h3>
       <span class="status-pill pill-emerald" style="font-size: 0.75rem; padding: 0.2rem 0.6rem;">
-        {{ devices_info.connected_count|default:1 }} из {{ devices_info.max_devices|default:5 }} слотов занято
+        {{ devices_info.connected_count|default:0 }} из {{ devices_info.max_devices|default:5 }} слотов занято
       </span>
     </div>
     <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.2rem; line-height: 1.45;">
@@ -654,20 +654,24 @@
     <!-- Devices List -->
     <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem;">
       {% for dev in devices_info.devices %}
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.75rem 0.9rem; display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 0.65rem;">
-            <span style="font-size: 1.3rem;">{{ dev.icon }}</span>
-            <div>
-              <div style="font-size: 0.85rem; font-weight: 700; color: #fff;">{{ dev.name }}</div>
+        <div class="device-card-row" data-device-id="{{ dev.id }}" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.75rem 0.9rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0; flex: 1;">
+            <span style="font-size: 1.3rem; flex-shrink: 0;">{{ dev.icon }}</span>
+            <div style="min-width: 0;">
+              <div style="font-size: 0.85rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ dev.name }}</div>
               <div style="font-size: 0.72rem; color: var(--text-muted);">IP: {{ dev.masked_ip }} • {{ dev.last_active }}</div>
             </div>
           </div>
-          <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
             {% if dev.is_online %}
               <span class="status-pill pill-emerald" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">🟢 Онлайн</span>
             {% else %}
               <span class="status-pill" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.06); color: var(--text-dim);">Активен</span>
             {% endif %}
+            <button type="button" class="btn btn-secondary btn-delete-device" data-device-id="{{ dev.id }}" data-device-name="{{ dev.name }}" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; border-color: rgba(239, 68, 68, 0.35); color: #fca5a5; display: inline-flex; align-items: center; gap: 0.25rem;" title="Удалить это устройство">
+              <span>🗑️</span>
+              <span style="font-size: 0.72rem;">Удалить</span>
+            </button>
           </div>
         </div>
       {% empty %}
@@ -680,12 +684,12 @@
     <!-- Free slots note -->
     <div style="background: rgba(16, 185, 129, 0.06); border: 1px dashed rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 1.25rem; font-size: 0.8rem; color: #6ee7b7; display: flex; align-items: center; gap: 0.5rem;">
       <span>✨</span>
-      <span>Свободно для подключения: <strong>{{ devices_info.devices_left|default:4 }} устройств</strong> из 5.</span>
+      <span>Свободно для подключения: <strong>{{ devices_info.devices_left|default:5 }} устройств</strong> из 5.</span>
     </div>
 
     <div style="display: flex; gap: 0.6rem;">
       <button type="button" class="btn btn-secondary" id="btn-reset-devices" style="flex: 1; justify-content: center; font-size: 0.82rem; border-color: rgba(239, 68, 68, 0.3); color: #fca5a5;">
-        🗑️ Сбросить устройства
+        🗑️ Сбросить все устройства
       </button>
       <button type="button" class="btn btn-secondary modal-close" style="flex: 1; justify-content: center; font-size: 0.82rem;">
         Закрыть
@@ -815,63 +819,6 @@
     </div>
 
     <button type="button" class="btn btn-secondary btn-block modal-close">Закрыть</button>
-  </div>
-</div>
-
-
-<!-- Devices Management Modal -->
-<div class="modal-overlay" id="devices-modal">
-  <div class="modal-body" style="max-width: 520px;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">📱 Мои устройства</h3>
-      <span class="status-pill pill-emerald" style="font-size: 0.75rem; padding: 0.2rem 0.6rem;">
-        {{ devices_info.connected_count|default:1 }} из {{ devices_info.max_devices|default:5 }} слотов занято
-      </span>
-    </div>
-    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.2rem; line-height: 1.45;">
-      Вы можете использовать один аккаунт одновременно на <strong>5 любых устройствах</strong> (iPhone, iPad, Android, Windows, Mac, Smart TV или роутер) без доплат.
-    </p>
-
-    <!-- Devices List -->
-    <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem;">
-      {% for dev in devices_info.devices %}
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.75rem 0.9rem; display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 0.65rem;">
-            <span style="font-size: 1.3rem;">{{ dev.icon }}</span>
-            <div>
-              <div style="font-size: 0.85rem; font-weight: 700; color: #fff;">{{ dev.name }}</div>
-              <div style="font-size: 0.72rem; color: var(--text-muted);">IP: {{ dev.masked_ip }} • {{ dev.last_active }}</div>
-            </div>
-          </div>
-          <div>
-            {% if dev.is_online %}
-              <span class="status-pill pill-emerald" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">🟢 Онлайн</span>
-            {% else %}
-              <span class="status-pill" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.06); color: var(--text-dim);">Активен</span>
-            {% endif %}
-          </div>
-        </div>
-      {% empty %}
-        <div style="text-align: center; padding: 1.2rem; background: rgba(255,255,255,0.02); border-radius: 10px; color: var(--text-muted); font-size: 0.85rem;">
-          Нет активных подключений. Добавьте VLESS-ключ в INCY.
-        </div>
-      {% endfor %}
-    </div>
-
-    <!-- Free slots note -->
-    <div style="background: rgba(16, 185, 129, 0.06); border: 1px dashed rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 1.25rem; font-size: 0.8rem; color: #6ee7b7; display: flex; align-items: center; gap: 0.5rem;">
-      <span>✨</span>
-      <span>Свободно для подключения: <strong>{{ devices_info.devices_left|default:4 }} устройств</strong> из 5.</span>
-    </div>
-
-    <div style="display: flex; gap: 0.6rem;">
-      <button type="button" class="btn btn-secondary" id="btn-reset-devices" style="flex: 1; justify-content: center; font-size: 0.82rem; border-color: rgba(239, 68, 68, 0.3); color: #fca5a5;">
-        🗑️ Сбросить устройства
-      </button>
-      <button type="button" class="btn btn-secondary modal-close" style="flex: 1; justify-content: center; font-size: 0.82rem;">
-        Закрыть
-      </button>
-    </div>
   </div>
 </div>
 

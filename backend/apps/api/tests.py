@@ -328,6 +328,54 @@ class ApiTestCase(TestCase):
         self.assertEqual(reset_data['cleared'], 1)
         self.assertEqual(reset_data['devices']['connected_count'], 0)
 
+    def test_delete_device_api(self):
+        """Test deleting individual device by ID."""
+        user = User.objects.create_user(
+            username='devuser2',
+            email='devuser2@test.com',
+            password='password123',
+            telegram_id='444555666'
+        )
+        from apps.vpn.models import VPNDevice
+        dev1 = VPNDevice.objects.create(
+            user=user,
+            device_id='dev1_ios',
+            device_name='iPhone 15',
+            platform='ios'
+        )
+        dev2 = VPNDevice.objects.create(
+            user=user,
+            device_id='dev2_mac',
+            device_name='MacBook Pro',
+            platform='macos'
+        )
+
+        # Delete dev1 via Telegram ID
+        del_resp = self.client.post(
+            reverse('api_devices_delete'),
+            data=json.dumps({'telegram_id': '444555666', 'device_id': dev1.id}),
+            content_type='application/json'
+        )
+        self.assertEqual(del_resp.status_code, 200)
+        del_data = del_resp.json()
+        self.assertTrue(del_data['success'])
+        self.assertTrue(del_data['deleted'])
+        self.assertEqual(del_data['devices']['connected_count'], 1)
+        self.assertFalse(VPNDevice.objects.filter(id=dev1.id).exists())
+        self.assertTrue(VPNDevice.objects.filter(id=dev2.id).exists())
+
+        # Delete dev2 via authenticated session
+        self.client.force_login(user)
+        del_resp2 = self.client.post(
+            reverse('api_devices_delete'),
+            data=json.dumps({'device_id': dev2.id}),
+            content_type='application/json'
+        )
+        self.assertEqual(del_resp2.status_code, 200)
+        self.assertTrue(del_resp2.json()['success'])
+        self.assertEqual(del_resp2.json()['devices']['connected_count'], 0)
+        self.assertFalse(VPNDevice.objects.filter(user=user).exists())
+
 
 
 
