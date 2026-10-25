@@ -257,10 +257,67 @@ function highlightUserPlatformInModal() {
   }
 }
 
+function getIncyDownloadInfo() {
+  const ua = navigator.userAgent || '';
+  if (/iPad|iPhone|iPod/.test(ua)) {
+    return { name: 'iOS', url: 'https://apps.apple.com/app/incy/id6756943388', icon: '🍏' };
+  }
+  if (/Android/i.test(ua)) {
+    return { name: 'Android', url: 'https://play.google.com/store/apps/details?id=llc.itdev.incy', icon: '🤖' };
+  }
+  if (/Macintosh|Mac OS X/i.test(ua)) {
+    return { name: 'macOS', url: 'https://incy.app/skachat/', icon: '🍎' };
+  }
+  if (/Windows/i.test(ua)) {
+    return { name: 'Windows', url: 'https://incy.app/skachat/', icon: '💻' };
+  }
+  return { name: 'ПК / Компьютер', url: 'https://incy.app/skachat/', icon: '💻' };
+}
+
+function showDownloadModal(downloadInfo) {
+  let modal = document.getElementById('app-not-installed-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.id = 'app-not-installed-modal';
+    modal.style.zIndex = '99999';
+    modal.innerHTML = `
+      <div class="modal-body" style="max-width: 440px; text-align: center; border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 10px 40px rgba(0,0,0,0.8); background: rgba(18, 22, 34, 0.98); border-radius: 1.25rem; padding: 2rem 1.5rem;">
+        <div style="width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 50%; background: rgba(56, 189, 248, 0.15); border: 2px solid rgba(56, 189, 248, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+          ${downloadInfo.icon || '📲'}
+        </div>
+        <h3 style="color: #fff; font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">
+          Приложение INCY ещё не установлено
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 1.25rem;">
+          Для подключения VPN установите бесплатное приложение INCY для вашей системы (<strong>${downloadInfo.name}</strong>).
+        </p>
+        <a href="${downloadInfo.url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-block" style="font-size: 0.95rem; font-weight: 700; padding: 0.85rem; justify-content: center; margin-bottom: 0.85rem; text-decoration: none; width: 100%;">
+          📥 Скачать INCY для ${downloadInfo.name}
+        </a>
+        <div style="background: rgba(16, 185, 129, 0.1); border-radius: 8px; padding: 0.6rem; font-size: 0.78rem; color: #34d399; margin-bottom: 1rem; line-height: 1.4;">
+          ✓ Ваш ключ уже скопирован в буфер!<br>После установки приложения просто нажмите <strong>«Подключить»</strong> ещё раз.
+        </div>
+        <button type="button" class="btn btn-secondary btn-block modal-close" style="font-size: 0.82rem; width: 100%;">Понятно, закрыть</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.querySelector('.modal-close').addEventListener('click', () => {
+      modal.classList.remove('active');
+    });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('active');
+    });
+  } else {
+    modal.classList.add('active');
+  }
+}
+
 function initIncyDeeplinkFallback() {
   document.querySelectorAll('a[href^="incy://"], a[href^="vless://"], .btn-smart-connect, #btn-incy-connect').forEach(link => {
     link.addEventListener('click', (e) => {
-      // 100% блокируем переход текущей страницы и открытие любых вкладок
+      // Блокируем стандартную навигацию текущей страницы
       if (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -282,33 +339,53 @@ function initIncyDeeplinkFallback() {
         navigator.clipboard.writeText(copyVal).catch(() => {});
       }
 
-      showToast('✓ Ключ скопирован в буфер! Запускаем INCY...');
+      const downloadInfo = getIncyDownloadInfo();
+      let appLaunched = false;
 
-      // 2. Запускаем приложение через кастомный протокол
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent || '');
-      if (isIOS) {
-        // На iOS открываем через временный клик, не трогая текущий URL страницы
-        const tempA = document.createElement('a');
-        tempA.href = deeplinkUrl;
-        tempA.style.display = 'none';
-        document.body.appendChild(tempA);
-        tempA.click();
-        setTimeout(() => { try { tempA.remove(); } catch (_) {} }, 2000);
-      } else {
-        // На ПК / Mac / Android - через скрытый iframe
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = deeplinkUrl;
-        document.body.appendChild(iframe);
-        setTimeout(() => {
-          try { iframe.remove(); } catch (_) {}
-        }, 3000);
-      }
+      // Отслеживаем, открылось ли приложение (потеря фокуса / скрытие вкладки)
+      const onBlur = () => {
+        appLaunched = true;
+      };
+      const onVisibility = () => {
+        if (document.hidden) {
+          appLaunched = true;
+        }
+      };
 
-      // 3. Подсказка через 1.5 сек (СТРОГО БЕЗ редиректов и БЕЗ новых вкладок!)
+      window.addEventListener('blur', onBlur, { once: true });
+      document.addEventListener('visibilitychange', onVisibility, { once: true });
+
+      showToast('Запускаем приложение INCY...');
+
+      // 2. Пытаемся запустить приложение через протокол (vless:// или incy://)
+      const tempA = document.createElement('a');
+      tempA.href = deeplinkUrl;
+      tempA.style.display = 'none';
+      document.body.appendChild(tempA);
+      tempA.click();
+      setTimeout(() => { try { tempA.remove(); } catch (_) {} }, 2000);
+
+      // 3. Проверка через 1400 мс: открылось ли приложение?
       setTimeout(() => {
-        showToast('✓ Готово! В приложении INCY нажмите круглую кнопку «Подключить»');
-      }, 1500);
+        window.removeEventListener('blur', onBlur);
+        document.removeEventListener('visibilitychange', onVisibility);
+
+        // Если окно браузера осталось на месте и не теряло фокус -> приложения НЕТ на устройстве!
+        if (!appLaunched && !document.hidden) {
+          showToast(`⚠️ INCY не найдено. Открываем скачивание для ${downloadInfo.name}...`);
+          
+          // Открываем вкладку скачивания в НОВОЙ вкладке (текущая страница никуда не уходит)
+          try {
+            window.open(downloadInfo.url, '_blank');
+          } catch (_) {}
+          
+          // Показываем понятную модалку со ссылкой на скачивание
+          showDownloadModal(downloadInfo);
+        } else {
+          // Приложение установлено и открылось!
+          showToast('✓ Приложение INCY запущено! Сервер добавлен автоматически');
+        }
+      }, 1400);
     });
   });
 }
