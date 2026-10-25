@@ -19,6 +19,7 @@ class CustomUser(AbstractUser):
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('3.50'), verbose_name="Баланс (₽) [1 день теста]")
     daily_deduction = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('3.50'), verbose_name="Ежедневное списание (₽)")
     autopay = models.BooleanField(default=True, verbose_name="Автоплатеж (автоматическое списание)")
+    last_billed_date = models.DateField(null=True, blank=True, verbose_name="Дата последнего списания")
     
     referral_code = models.CharField(max_length=16, unique=True, blank=True, verbose_name="Реферальный код")
     referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals', verbose_name="Кто пригласил")
@@ -38,6 +39,60 @@ class CustomUser(AbstractUser):
                 code = generate_ref_code()
             self.referral_code = code
         super().save(*args, **kwargs)
+
+    def apply_daily_deductions(self) -> int:
+        """
+        Calculates elapsed calendar days since last_billed_date and deducts daily fee.
+        If balance reaches 0, deactivates VPN keys and disconnects from 3X-UI.
+        Returns number of days charged.
+        """
+        from datetime import date
+        today = date.today()
+        last_date = self.last_billed_date or (self.created_at.date() if self.created_at else today)
+
+        days_passed = (today - last_date).days
+        if days_passed <= 0:
+            if not self.last_billed_date:
+                self.last_billed_date = last_date
+                self.save(update_fields=['last_billed_date'])
+            return 0
+
+        total_charge = Decimal(days_passed) * (self.daily_deduction or Decimal('3.50'))
+        old_balance = self.balance
+        new_balance = max(Decimal('0.00'), old_balance - total_charge)
+        self.balance = new_balance
+        self.last_billed_date = today
+        self.save(update_fields=['balance', 'last_billed_date', 'updated_at'])
+
+        # Record billing deduction transaction
+        try:
+            from apps.billing.models import Transaction
+            Transaction.objects.create(
+                user=self,
+                amount=-total_charge,
+                payment_method='sbp',
+                status='completed',
+                description=f"Ежедневная оплата VPN ({days_passed} дн. по {self.daily_deduction} ₽)"
+            )
+        except Exception:
+            pass
+
+        # If balance depleted, deactivate keys and remove from panels
+        if self.balance <= Decimal('0.00'):
+            try:
+                from apps.vpn.services import ThreeXUIService
+                for key in self.vpn_keys.all():
+                    key.is_active = False
+                    key.save(update_fields=['is_active'])
+                    try:
+                        svc = ThreeXUIService(key.server)
+                        svc.delete_client(key)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+        return days_passed
 
     @property
     def days_left(self) -> int:

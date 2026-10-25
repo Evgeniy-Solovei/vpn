@@ -215,6 +215,10 @@ def dashboard_view(request):
         return redirect(f"{settings.LOGIN_URL}?next={request.get_full_path()}")
 
     user = request.user
+    try:
+        user.apply_daily_deductions()
+    except Exception:
+        pass
     
     # Get or create VPN key (preserve selected server)
     key = VPNKey.objects.filter(user=user).first()

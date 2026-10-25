@@ -321,5 +321,32 @@ class BillingTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Тарифы и пополнение баланса")
 
+    def test_daily_billing_deductions_applied_correctly(self):
+        """Daily billing deduction charges 3.50 ₽ per elapsed day and management command runs cleanly."""
+        from datetime import date, timedelta
+        from django.core.management import call_command
+
+        test_user = User.objects.create_user(
+            username='dailyuser',
+            email='dailyuser@test.com',
+            password='Password123',
+            balance=Decimal('10.50'),
+            daily_deduction=Decimal('3.50'),
+            last_billed_date=date.today() - timedelta(days=2)
+        )
+
+        # 2 days have passed -> charge 2 * 3.50 = 7.00 ₽ -> remaining balance 3.50 ₽
+        call_command('process_daily_billing')
+
+        test_user.refresh_from_db()
+        self.assertEqual(test_user.balance, Decimal('3.50'))
+        self.assertEqual(test_user.days_left, 1)
+        self.assertEqual(test_user.last_billed_date, date.today())
+
+        # Second call today does not double-charge
+        call_command('process_daily_billing')
+        test_user.refresh_from_db()
+        self.assertEqual(test_user.balance, Decimal('3.50'))
+
 
 

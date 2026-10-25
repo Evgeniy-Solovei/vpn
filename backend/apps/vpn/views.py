@@ -19,6 +19,10 @@ def subscription_view(request, token):
     """
     key = get_object_or_404(VPNKey, sub_token=token)
     user = key.user
+    try:
+        user.apply_daily_deductions()
+    except Exception:
+        pass
 
     # If user has no active balance
     if not user.has_active_subscription:

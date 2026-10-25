@@ -14,6 +14,11 @@ logger = logging.getLogger(__name__)
 
 
 def build_user_response(user, is_new=False):
+    try:
+        user.apply_daily_deductions()
+    except Exception:
+        pass
+
     key = VPNKey.objects.filter(user=user).first()
     if not key:
         server = get_or_create_default_server()

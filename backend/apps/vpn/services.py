@@ -33,9 +33,13 @@ DIRECT_DOMAINS = [
     "vk-portal.net", "*.vk-portal.net", "vkuser.net", "*.vkuser.net", "vk-cdn.net", "*.vk-cdn.net",
     "vkcache.com", "*.vkcache.com", "vk.me", "*.vk.me", "vk.cc", "*.vk.cc",
     "vkplay.ru", "*.vkplay.ru", "m.vk.com", "api.vk.com",
-    # E-commerce & Services
-    "ozon.ru", "*.ozon.ru", "wildberries.ru", "*.wildberries.ru",
+    # E-commerce & Marketplaces (Wildberries, Ozon, Avito)
+    "ozon.ru", "*.ozon.ru", "ozonusercontent.com", "*.ozonusercontent.com",
+    "wildberries.ru", "*.wildberries.ru", "wb.ru", "*.wb.ru", "wbstatic.net", "*.wbstatic.net",
     "avito.ru", "*.avito.ru", "market.yandex.ru", "hh.ru", "*.hh.ru",
+    # Belarusian Banks
+    "belarusbank.by", "*.belarusbank.by", "priorbank.by", "*.priorbank.by",
+    "alfa-bank.by", "*.alfa-bank.by", "mtbank.by", "*.mtbank.by",
     # Streaming & Media (RF)
     "kinopoisk.ru", "*.kinopoisk.ru", "ivi.ru", "*.ivi.ru",
     "okko.tv", "*.okko.tv", "rutube.ru", "*.rutube.ru", "smotrim.ru",
@@ -273,9 +277,22 @@ def get_incy_routing_dict(key=None) -> dict:
         "domain:tinkoff.ru",
         "domain:alfabank.ru",
         "domain:vtb.ru",
+        "domain:gazprombank.ru",
         "domain:gosuslugi.ru",
         "domain:nalog.ru",
         "domain:mos.ru",
+        "domain:belarusbank.by",
+        "domain:priorbank.by",
+        # E-commerce & Marketplaces
+        "domain:wildberries.ru",
+        "domain:wb.ru",
+        "domain:wbstatic.net",
+        "domain:ozon.ru",
+        "domain:ozonusercontent.com",
+        "domain:avito.ru",
+        "domain:dzen.ru",
+        "domain:yandex.ru",
+        "domain:ya.ru",
         # TLDs
         "domain:ru",
         "domain:by",
