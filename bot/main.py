@@ -410,16 +410,19 @@ async def cb_view_whitelist(call: CallbackQuery):
     else:
         custom_str = "📋 <b>Ваши персональные сайты:</b> <i>пока нет (все сайты .ru и .by уже встроены по умолчанию)</i>"
 
+    routing_deeplink = vpn_info.get('routing_deeplink')
+
     text = (
         f"🛡️ <b>Управление Белым списком сайтов (Split-Tunneling)</b>\n\n"
         f"Сайты из белого списка открываются <b>напрямую на полной скорости вашего интернета</b> без шифрования и задержек.\n\n"
         f"• Режим: {status_str}\n"
         f"• Обход РФ и РБ: {ru_by_str}\n\n"
         f"{custom_str}\n\n"
-        f"💡 <i>Банки (Сбер, Т-Банк, Беларусбанк), Госуслуги, Ozon, WB и сервисы Яндекса не блокируются и работают напрямую!</i>\n\n"
+        f"💡 <i>ВКонтакте, Банки (Сбер, Т-Банк, Беларусбанк), Госуслуги, Ozon, WB и сервисы Яндекса работают напрямую!</i>\n\n"
+        f"📱 <i>Если приложение ВК ругается на VPN — нажмите <b>«⚡ Включить обход в INCY»</b> ниже, чтобы применить правила в 1 клик.</i>\n\n"
         f"👇 Нажмите <b>«➕ Добавить сайт в исключения»</b>, чтобы внести свой домен:"
     )
-    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_whitelist_menu(whitelist_active, len(custom_domains)))
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_whitelist_menu(whitelist_active, len(custom_domains), routing_deeplink))
     await call.answer()
 
 

@@ -306,6 +306,17 @@ class VPNKey(models.Model):
         site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
         return f"{site_url}/vpn/connect/{self.sub_token}/"
 
+    def get_routing_url(self) -> str:
+        site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
+        return f"{site_url}/vpn/routing/{self.sub_token}/"
+
+    def get_incy_routing_deeplink(self) -> str:
+        import json, base64
+        from .services import get_incy_routing_dict
+        cfg = get_incy_routing_dict(self)
+        encoded = base64.b64encode(json.dumps(cfg).encode('utf-8')).decode('utf-8')
+        return f"incy://routing/onadd/{encoded}"
+
 
 class UserServerTraffic(models.Model):
     """Tracks traffic usage per user per server for multi-server aggregation."""

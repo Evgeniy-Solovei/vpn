@@ -88,6 +88,17 @@ def pac_view(request, token):
     return HttpResponse(pac_content, content_type="application/x-ns-proxy-autoconfig")
 
 
+def routing_view(request, token):
+    """
+    Returns dynamic JSON routing configuration for INCY client.
+    URL: /vpn/routing/<token>/
+    """
+    key = get_object_or_404(VPNKey, sub_token=token)
+    from .services import get_incy_routing_dict
+    routing_data = get_incy_routing_dict(key)
+    return JsonResponse(routing_data, json_dumps_params={'ensure_ascii': False, 'indent': 2})
+
+
 def qr_code_view(request, token):
     """Generates a dynamic QR code for the VPN key or subscription URL."""
     key = get_object_or_404(VPNKey, sub_token=token)
@@ -175,6 +186,7 @@ def incy_redirect_view(request, token):
     return render(request, 'vpn/connect.html', {
         'key': key,
         'incy_url': key.get_incy_url(),
+        'routing_deeplink': key.get_incy_routing_deeplink(),
         'hiddify_url': key.get_hiddify_url(),
         'streisand_url': key.get_streisand_url(),
         'v2box_url': key.get_v2box_url(),

@@ -68,6 +68,8 @@ def build_user_response(user, is_new=False):
             'vless_url': key.get_vless_url(),
             'sub_url': key.get_sub_url(),
             'incy_url': key.get_incy_url(),
+            'routing_deeplink': key.get_incy_routing_deeplink(),
+            'routing_url': key.get_routing_url(),
             'connect_url': key.get_connect_url(),
             'whitelist_enabled': key.whitelist_enabled,
             'custom_whitelist': key.custom_whitelist,

@@ -149,7 +149,7 @@ def get_traffic_menu() -> InlineKeyboardMarkup:
     ])
 
 
-def get_whitelist_menu(whitelist_enabled: bool, custom_domains_count: int) -> InlineKeyboardMarkup:
+def get_whitelist_menu(whitelist_enabled: bool, custom_domains_count: int, routing_deeplink: str = None) -> InlineKeyboardMarkup:
     ru_by_btn = "🇷🇺 🇧🇾 Режим .ru и .by: 🟢 НАПРЯМУЮ" if whitelist_enabled else "🇷🇺 🇧🇾 Режим .ru и .by: ⚪ ЧЕРЕЗ VPN"
     toggle_btn = "🛡️ Выключить белый список" if whitelist_enabled else "🛡️ Включить белый список"
 
@@ -161,6 +161,10 @@ def get_whitelist_menu(whitelist_enabled: bool, custom_domains_count: int) -> In
             InlineKeyboardButton(text="➕ Добавить сайт в исключения", callback_data="add_wl_site")
         ]
     ]
+    if routing_deeplink:
+        buttons.append([
+            InlineKeyboardButton(text="⚡ Включить обход в INCY (ВК, Банки)", url=routing_deeplink)
+        ])
     if custom_domains_count > 0:
         buttons.append([
             InlineKeyboardButton(text=f"🗑️ Очистить мои сайты ({custom_domains_count})", callback_data="clear_wl_sites")

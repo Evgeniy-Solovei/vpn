@@ -27,8 +27,12 @@ DIRECT_DOMAINS = [
     "mir-connect.ru", "nspk.ru", "*.nspk.ru", "sbp.nspk.ru",
     # Ecosystems & Search
     "yandex.ru", "*.yandex.ru", "ya.ru", "*.ya.ru", "yastatic.net",
-    "mail.ru", "*.mail.ru", "vk.com", "*.vk.com", "vkvideo.ru", "*.vkvideo.ru",
-    "ok.ru", "*.ok.ru", "dzen.ru", "*.dzen.ru",
+    "mail.ru", "*.mail.ru", "ok.ru", "*.ok.ru", "dzen.ru", "*.dzen.ru",
+    # VK Ecosystem (Full bypass for VK app, video, music and CDNs)
+    "vk.com", "*.vk.com", "vkvideo.ru", "*.vkvideo.ru", "userapi.com", "*.userapi.com",
+    "vk-portal.net", "*.vk-portal.net", "vkuser.net", "*.vkuser.net", "vk-cdn.net", "*.vk-cdn.net",
+    "vkcache.com", "*.vkcache.com", "vk.me", "*.vk.me", "vk.cc", "*.vk.cc",
+    "vkplay.ru", "*.vkplay.ru", "m.vk.com", "api.vk.com",
     # E-commerce & Services
     "ozon.ru", "*.ozon.ru", "wildberries.ru", "*.wildberries.ru",
     "avito.ru", "*.avito.ru", "market.yandex.ru", "hh.ru", "*.hh.ru",
@@ -236,6 +240,97 @@ function FindProxyForURL(url, host) {{
     return "{proxy_host}";
 }}
 """
+
+
+def get_incy_routing_dict(key=None) -> dict:
+    """
+    Generates dynamic routing JSON profile for INCY application.
+    Enforces direct access for VK ecosystem, banks, Gosuslugi, RU/BY domains,
+    and user-specified custom domains without tunneling through France.
+    """
+    direct_sites = [
+        "geosite:private",
+        "geosite:category-ru",
+        "geosite:category-gov-ru",
+        "geosite:whitelist",
+        "geosite:yandex",
+        "geosite:vk",
+        "geosite:mailru",
+        # Explicit VK domains
+        "domain:vk.com",
+        "domain:userapi.com",
+        "domain:vk-portal.net",
+        "domain:vkuser.net",
+        "domain:vk-cdn.net",
+        "domain:vkcache.com",
+        "domain:vk.me",
+        "domain:vk.cc",
+        "domain:vkplay.ru",
+        # Banks & Government
+        "domain:sber.ru",
+        "domain:sberbank.ru",
+        "domain:tbank.ru",
+        "domain:tinkoff.ru",
+        "domain:alfabank.ru",
+        "domain:vtb.ru",
+        "domain:gosuslugi.ru",
+        "domain:nalog.ru",
+        "domain:mos.ru",
+        # TLDs
+        "domain:ru",
+        "domain:by",
+        "domain:xn--p1ai",
+        "domain:su",
+    ]
+
+    if key:
+        for d in key.get_custom_domains():
+            clean = d.strip().lower()
+            if clean and f"domain:{clean}" not in direct_sites:
+                direct_sites.append(f"domain:{clean}")
+
+    return {
+        "Name": "VPN live-dev Умный обход РФ/РБ",
+        "GlobalProxy": "true",
+        "UseChunkFiles": "true",
+        "RemoteDns": "8.8.8.8",
+        "DomesticDns": "77.88.8.8",
+        "RemoteDNSType": "DoH",
+        "RemoteDNSDomain": "https://8.8.8.8/dns-query",
+        "RemoteDNSIP": "8.8.8.8",
+        "DomesticDNSType": "DoH",
+        "DomesticDNSDomain": "https://77.88.8.8/dns-query",
+        "DomesticDNSIP": "77.88.8.8",
+        "Geoipurl": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geoip/release/geoip.dat",
+        "Geositeurl": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite/release/geosite.dat",
+        "LastUpdated": str(int(time.time())),
+        "RouteOrder": "block-proxy-direct",
+        "DirectSites": direct_sites,
+        "DirectIp": [
+            "geoip:private",
+            "geoip:direct",
+            "geoip:ru",
+            "geoip:by"
+        ],
+        "ProxySites": [
+            "geosite:youtube",
+            "geosite:instagram",
+            "geosite:twitter",
+            "geosite:openai",
+            "geosite:telegram",
+            "geosite:google-play",
+            "geosite:github"
+        ],
+        "ProxyIp": [],
+        "BlockSites": [
+            "geosite:win-spy",
+            "geosite:torrent",
+            "geosite:category-ads"
+        ],
+        "BlockIp": [],
+        "DomainStrategy": "IPIfNonMatch",
+        "FakeDNS": "false"
+    }
 
 
 def check_server_health(server: VPNServer, timeout: float = 2.5) -> dict:

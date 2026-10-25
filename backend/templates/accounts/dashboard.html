@@ -735,6 +735,17 @@
       </span>
     </div>
 
+    <!-- INCY 1-click routing button -->
+    <div style="background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+      <div>
+        <div style="font-size: 0.82rem; font-weight: 700; color: #fff;">📱 Для приложения INCY на телефоне:</div>
+        <div style="font-size: 0.72rem; color: var(--text-dim);">Убирает ошибку «Включен VPN» в приложении ВК и банках</div>
+      </div>
+      <a href="{{ vpn_key.get_incy_routing_deeplink }}" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.35rem 0.75rem; border-color: #a78bfa; color: #c4b5fd; text-decoration: none; white-space: nowrap;">
+        ⚡ Включить обход в INCY
+      </a>
+    </div>
+
     <div style="display: flex; gap: 0.75rem;">
       <button type="button" class="btn btn-secondary modal-close" style="flex: 1;">Отмена</button>
       <button type="button" id="save-custom-whitelist-btn" class="btn btn-primary" style="flex: 1.5;">
