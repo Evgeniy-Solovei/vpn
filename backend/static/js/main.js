@@ -206,8 +206,8 @@ function getAppStoreInfo() {
   if (/Macintosh|Mac OS X/i.test(ua) && !(/iPad|iPhone|iPod/.test(ua)) && !(platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
     return {
       platform: 'mac',
-      storeName: 'Mac App Store',
-      storeUrl: 'https://apps.apple.com/app/incy/id6756943388',
+      storeName: 'Mac (скачать DMG)',
+      storeUrl: 'https://github.com/INCY-DEV/incy-platforms/releases/download/latest/incy-macos-arm64.dmg',
       selector: '.btn-store-mac'
     };
   }
@@ -261,13 +261,13 @@ function getIncyDownloadInfo() {
   const ua = navigator.userAgent || navigator.vendor || window.opera || '';
   const platform = navigator.platform || '';
 
-  // 1. Apple Mac (macOS) -> Mac App Store
+  // 1. Apple Mac (macOS) -> Direct DMG (bypasses App Store regional block)
   if (/Macintosh|Mac OS X/i.test(ua) && !(/iPad|iPhone|iPod/.test(ua)) && !(platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
     return {
       name: 'Mac (macOS)',
-      url: 'https://apps.apple.com/app/incy/id6756943388',
+      url: 'https://github.com/INCY-DEV/incy-platforms/releases/download/latest/incy-macos-arm64.dmg',
       icon: '🍎',
-      storeName: 'App Store'
+      storeName: 'скачать DMG для Mac'
     };
   }
 

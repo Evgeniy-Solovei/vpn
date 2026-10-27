@@ -268,16 +268,19 @@ def get_yookassa_pay_button(checkout_url: str, amount: int, days: int) -> Inline
 def get_download_menu(connect_url: str = None) -> InlineKeyboardMarkup:
     buttons = [
         [
-            InlineKeyboardButton(text="🍏 Для iPhone, iPad и Mac (App Store)", url="https://apps.apple.com/app/incy/id6756943388"),
+            InlineKeyboardButton(text="🍏 Для iPhone / iPad (App Store)", url="https://apps.apple.com/app/incy/id6756943388"),
+        ],
+        [
+            InlineKeyboardButton(text="🍎 Для Mac (Прямой DMG файл)", url="https://github.com/INCY-DEV/incy-platforms/releases/download/latest/incy-macos-arm64.dmg"),
         ],
         [
             InlineKeyboardButton(text="🤖 Для Android (Google Play)", url="https://play.google.com/store/apps/details?id=llc.itdev.incy"),
         ],
         [
-            InlineKeyboardButton(text="💻 Для Windows (Скачать setup.exe)", url="https://github.com/INCY-DEV/incy-platforms/releases/download/latest/incy-windows-setup.exe"),
+            InlineKeyboardButton(text="💻 Для Windows (setup.exe)", url="https://github.com/INCY-DEV/incy-platforms/releases/download/latest/incy-windows-setup.exe"),
         ],
         [
-            InlineKeyboardButton(text="📦 Прямой APK (для Android)", url="https://github.com/INCY-DEV/incy-platforms/releases/download/latest/Incy.apk"),
+            InlineKeyboardButton(text="📦 Прямой APK (Android)", url="https://github.com/INCY-DEV/incy-platforms/releases/download/latest/Incy.apk"),
         ],
     ]
     if connect_url:
