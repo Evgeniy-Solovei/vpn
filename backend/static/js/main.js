@@ -202,7 +202,17 @@ function getAppStoreInfo() {
   const ua = navigator.userAgent || navigator.vendor || window.opera || '';
   const platform = navigator.platform || '';
 
-  // 1. iOS (iPhone, iPad, iPod)
+  // 1. Apple Mac
+  if (/Macintosh|Mac OS X/i.test(ua) && !(/iPad|iPhone|iPod/.test(ua)) && !(platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    return {
+      platform: 'mac',
+      storeName: 'Mac App Store',
+      storeUrl: 'https://apps.apple.com/app/incy/id6756943388',
+      selector: '.btn-store-mac'
+    };
+  }
+
+  // 2. iOS (iPhone, iPad, iPod)
   if (/iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
     return {
       platform: 'ios',
@@ -212,7 +222,7 @@ function getAppStoreInfo() {
     };
   }
 
-  // 2. Android
+  // 3. Android
   if (/android/i.test(ua)) {
     return {
       platform: 'android',
@@ -222,21 +232,11 @@ function getAppStoreInfo() {
     };
   }
 
-  // 3. macOS
-  if (/Macintosh|Mac OS X/i.test(ua) && !(/iPad|iPhone|iPod/.test(ua))) {
-    return {
-      platform: 'mac',
-      storeName: 'сайт INCY для Mac',
-      storeUrl: 'https://incy.app/skachat/',
-      selector: '.btn-store-mac'
-    };
-  }
-
   // 4. Windows / Linux / other PC
   return {
     platform: 'windows',
-    storeName: 'сайт INCY для Windows',
-    storeUrl: 'https://incy.app/skachat/',
+    storeName: 'Windows (setup.exe)',
+    storeUrl: 'https://github.com/INCY-DEV/incy-platforms/releases/download/latest/incy-windows-setup.exe',
     selector: '.btn-store-windows'
   };
 }
@@ -258,60 +258,94 @@ function highlightUserPlatformInModal() {
 }
 
 function getIncyDownloadInfo() {
-  const ua = navigator.userAgent || '';
-  if (/iPad|iPhone|iPod/.test(ua)) {
-    return { name: 'iOS', url: 'https://apps.apple.com/app/incy/id6756943388', icon: '🍏' };
+  const ua = navigator.userAgent || navigator.vendor || window.opera || '';
+  const platform = navigator.platform || '';
+
+  // 1. Apple Mac (macOS) -> Mac App Store
+  if (/Macintosh|Mac OS X/i.test(ua) && !(/iPad|iPhone|iPod/.test(ua)) && !(platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    return {
+      name: 'Mac (macOS)',
+      url: 'https://apps.apple.com/app/incy/id6756943388',
+      icon: '🍎',
+      storeName: 'App Store'
+    };
   }
-  if (/Android/i.test(ua)) {
-    return { name: 'Android', url: 'https://play.google.com/store/apps/details?id=llc.itdev.incy', icon: '🤖' };
+
+  // 2. Apple iPhone / iPad -> App Store
+  if (/iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    return {
+      name: 'iPhone / iPad',
+      url: 'https://apps.apple.com/app/incy/id6756943388',
+      icon: '🍏',
+      storeName: 'App Store'
+    };
   }
-  if (/Macintosh|Mac OS X/i.test(ua)) {
-    return { name: 'macOS', url: 'https://incy.app/skachat/', icon: '🍎' };
+
+  // 3. Android -> Google Play
+  if (/android/i.test(ua)) {
+    return {
+      name: 'Android',
+      url: 'https://play.google.com/store/apps/details?id=llc.itdev.incy',
+      icon: '🤖',
+      storeName: 'Google Play'
+    };
   }
+
+  // 4. Windows -> Direct setup.exe download
   if (/Windows/i.test(ua)) {
-    return { name: 'Windows', url: 'https://incy.app/skachat/', icon: '💻' };
+    return {
+      name: 'Windows',
+      url: 'https://github.com/INCY-DEV/incy-platforms/releases/download/latest/incy-windows-setup.exe',
+      icon: '💻',
+      storeName: 'setup.exe'
+    };
   }
-  return { name: 'ПК / Компьютер', url: 'https://incy.app/skachat/', icon: '💻' };
+
+  return {
+    name: 'Компьютер',
+    url: 'https://github.com/INCY-DEV/incy-platforms/releases/download/latest/incy-windows-setup.exe',
+    icon: '💻',
+    storeName: 'Скачать INCY'
+  };
 }
 
 function showDownloadModal(downloadInfo) {
   let modal = document.getElementById('app-not-installed-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.className = 'modal-overlay active';
-    modal.id = 'app-not-installed-modal';
-    modal.style.zIndex = '99999';
-    modal.innerHTML = `
-      <div class="modal-body" style="max-width: 440px; text-align: center; border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 10px 40px rgba(0,0,0,0.8); background: rgba(18, 22, 34, 0.98); border-radius: 1.25rem; padding: 2rem 1.5rem;">
-        <div style="width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 50%; background: rgba(56, 189, 248, 0.15); border: 2px solid rgba(56, 189, 248, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
-          ${downloadInfo.icon || '📲'}
-        </div>
-        <h3 style="color: #fff; font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">
-          Приложение INCY ещё не установлено
-        </h3>
-        <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 1.25rem;">
-          Для подключения VPN установите бесплатное приложение INCY для вашей системы (<strong>${downloadInfo.name}</strong>).
-        </p>
-        <a href="${downloadInfo.url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-block" style="font-size: 0.95rem; font-weight: 700; padding: 0.85rem; justify-content: center; margin-bottom: 0.85rem; text-decoration: none; width: 100%;">
-          📥 Скачать INCY для ${downloadInfo.name}
-        </a>
-        <div style="background: rgba(16, 185, 129, 0.1); border-radius: 8px; padding: 0.6rem; font-size: 0.78rem; color: #34d399; margin-bottom: 1rem; line-height: 1.4;">
-          ✓ Ваш ключ уже скопирован в буфер!<br>После установки приложения просто нажмите <strong>«Подключить»</strong> ещё раз.
-        </div>
-        <button type="button" class="btn btn-secondary btn-block modal-close" style="font-size: 0.82rem; width: 100%;">Понятно, закрыть</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    modal.querySelector('.modal-close').addEventListener('click', () => {
-      modal.classList.remove('active');
-    });
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.classList.remove('active');
-    });
-  } else {
-    modal.classList.add('active');
+  if (modal) {
+    try { modal.remove(); } catch (_) {}
   }
+  modal = document.createElement('div');
+  modal.className = 'modal-overlay active';
+  modal.id = 'app-not-installed-modal';
+  modal.style.zIndex = '99999';
+  modal.innerHTML = `
+    <div class="modal-body" style="max-width: 440px; text-align: center; border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 10px 40px rgba(0,0,0,0.8); background: rgba(18, 22, 34, 0.98); border-radius: 1.25rem; padding: 2rem 1.5rem;">
+      <div style="width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 50%; background: rgba(56, 189, 248, 0.15); border: 2px solid rgba(56, 189, 248, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+        ${downloadInfo.icon || '📲'}
+      </div>
+      <h3 style="color: #fff; font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">
+        Приложение INCY ещё не установлено
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 1.25rem;">
+        Для подключения установите бесплатное приложение INCY в <strong>${downloadInfo.storeName || downloadInfo.name}</strong>.
+      </p>
+      <a href="${downloadInfo.url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-block" style="font-size: 0.95rem; font-weight: 700; padding: 0.85rem; justify-content: center; margin-bottom: 0.85rem; text-decoration: none; width: 100%;">
+        📥 Открыть ${downloadInfo.storeName || downloadInfo.name}
+      </a>
+      <div style="background: rgba(16, 185, 129, 0.1); border-radius: 8px; padding: 0.6rem; font-size: 0.78rem; color: #34d399; margin-bottom: 1rem; line-height: 1.4;">
+        ✓ Ключ уже скопирован в буфер!<br>После установки вернитесь сюда и нажмите <strong>«Подключить»</strong> ещё раз.
+      </div>
+      <button type="button" class="btn btn-secondary btn-block modal-close" style="font-size: 0.82rem; width: 100%;">Понятно, закрыть</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelector('.modal-close').addEventListener('click', () => {
+    modal.classList.remove('active');
+  });
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('active');
+  });
 }
 
 function initIncyDeeplinkFallback() {
