@@ -158,21 +158,7 @@ class ThreeXUIService:
             "subId": key.sub_token
         }
 
-        # 1. Try modern 3X-UI update endpoint first (in case client already exists)
-        update_payload = {
-            "email": email,
-            "client": client_settings,
-            "inboundIds": [self.server.panel_inbound_id]
-        }
-        try:
-            resp = self.client.post(f"{self.base_url}/panel/api/clients/update/{email}", json=update_payload, cookies=self.cookies, headers=headers)
-            if resp.status_code == 200 and resp.json().get('success'):
-                logger.info(f"Successfully updated client {email} in 3X-UI (expiryTime: {expiry_ms})")
-                return True
-        except Exception:
-            pass
-
-        # 2. Try modern 3X-UI add endpoint
+        # 1. Try modern 3X-UI add endpoint
         modern_payload = {
             "client": client_settings,
             "inboundIds": [self.server.panel_inbound_id]
@@ -180,10 +166,20 @@ class ThreeXUIService:
         try:
             resp = self.client.post(f"{self.base_url}/panel/api/clients/add", json=modern_payload, cookies=self.cookies, headers=headers)
             if resp.status_code == 200 and resp.json().get('success'):
-                logger.info(f"Successfully added client {key.user.username} to 3X-UI (modern API)")
+                logger.info(f"Successfully added client {key.user.username} to 3X-UI")
                 return True
         except Exception as e:
-            logger.debug(f"Modern 3X-UI clients/add failed, falling back: {e}")
+            logger.debug(f"Modern 3X-UI clients/add failed, attempting refresh: {e}")
+
+        # 2. If client exists, delete and re-add to ensure fresh expiryTime and enable: True
+        try:
+            self.delete_client(key)
+            resp = self.client.post(f"{self.base_url}/panel/api/clients/add", json=modern_payload, cookies=self.cookies, headers=headers)
+            if resp.status_code == 200 and resp.json().get('success'):
+                logger.info(f"Successfully refreshed client {email} in 3X-UI with new expiry")
+                return True
+        except Exception as e:
+            logger.debug(f"Re-add client failed: {e}")
 
         # 3. Fallback to legacy inbounds/addClient
         legacy_payload = {
