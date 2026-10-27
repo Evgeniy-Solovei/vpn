@@ -540,9 +540,9 @@
         <span style="width: 22px; height: 22px; border-radius: 50%; background: #10b981; color: #000; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">2</span>
         Шаг 2: Нажмите для моментального подключения
       </div>
-      <button type="button" id="btn-incy-connect" data-connect-url="{{ vpn_key.get_vless_url }}" class="btn btn-primary btn-block btn-smart-connect" style="font-size: 0.95rem; font-weight: 700; padding: 0.85rem; justify-content: center; border: none; cursor: pointer;">
+      <a href="{{ vpn_key.get_incy_url }}" id="btn-incy-connect" data-incy-url="{{ vpn_key.get_incy_url }}" data-vless-url="{{ vpn_key.get_vless_url }}" class="btn btn-primary btn-block btn-smart-connect" style="font-size: 0.95rem; font-weight: 700; padding: 0.85rem; justify-content: center; text-decoration: none;">
         ⚡ Подключить в приложении INCY
-      </button>
+      </a>
       <div style="margin-top: 0.6rem; background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 0.55rem 0.75rem; font-size: 0.78rem; color: #34d399; display: flex; align-items: center; gap: 0.45rem;">
         <span>👉</span>
         <span><b>Шаг 3:</b> В приложении INCY нажмите круглую кнопку <b>«Подключить»</b> — готово!</span>

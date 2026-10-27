@@ -260,42 +260,28 @@ function highlightUserPlatformInModal() {
 
 function initIncyDeeplinkFallback() {
   document.querySelectorAll('a[href^="incy://"], a[href^="vless://"], .btn-smart-connect, #btn-incy-connect').forEach(link => {
-    link.addEventListener('click', (e) => {
-      // Блокируем стандартную навигацию текущей страницы
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
+    link.addEventListener('click', () => {
+      const incyUrl = link.getAttribute('data-incy-url') || (link.getAttribute('href') && link.getAttribute('href').startsWith('incy://') ? link.getAttribute('href') : '');
+      const vlessUrl = link.getAttribute('data-vless-url') || (link.getAttribute('data-connect-url') && link.getAttribute('data-connect-url').startsWith('vless://') ? link.getAttribute('data-connect-url') : '');
+      const deeplink = incyUrl || link.getAttribute('data-connect-url') || link.getAttribute('href');
 
-      const deeplinkUrl = link.getAttribute('data-connect-url') || link.getAttribute('href');
-      if (!deeplinkUrl) return;
-
-      const isSub = deeplinkUrl.startsWith('incy://');
+      // 1. Всегда гарантированно копируем VLESS ключ в буфер обмена
       const vlessBtn = document.getElementById('btn-copy-vless') || document.querySelector('[data-copy^="vless://"]');
-      const subBtn = document.querySelector('[data-copy*="/sub/"]');
-      
-      const copyVal = isSub 
-        ? (subBtn ? subBtn.getAttribute('data-copy') : '') 
-        : (vlessBtn ? vlessBtn.getAttribute('data-copy') : deeplinkUrl);
-
-      // 1. Копируем ключ в буфер обмена сразу
+      const copyVal = vlessUrl || (vlessBtn ? vlessBtn.getAttribute('data-copy') : '') || deeplink;
       if (copyVal && navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(copyVal).catch(() => {});
       }
 
-      showToast('✓ Ключ скопирован в буфер! Запускаем INCY...');
+      showToast('✓ Ключ в буфере! Запускаем INCY...');
 
-      // 2. Запускаем приложение через кастомный протокол (vless:// или incy://)
-      const tempA = document.createElement('a');
-      tempA.href = deeplinkUrl;
-      tempA.style.display = 'none';
-      document.body.appendChild(tempA);
-      tempA.click();
-      setTimeout(() => { try { tempA.remove(); } catch (_) {} }, 2000);
+      // 2. Напрямую открываем протокол если элемент не имел собственного href
+      if (deeplink && (!link.getAttribute('href') || link.getAttribute('href') === '#')) {
+        window.location.href = deeplink;
+      }
 
-      // 3. Подсказка через 1.2 сек (СТРОГО БЕЗ редиректов и БЕЗ новых вкладок!)
+      // 3. Подсказка через 1.2 сек
       setTimeout(() => {
-        showToast('✓ Готово! В приложении INCY нажмите круглую кнопку «Подключить»');
+        showToast('✓ Готово! В приложении INCY нажмите «Подключить»');
       }, 1200);
     });
   });

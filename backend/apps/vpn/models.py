@@ -274,7 +274,9 @@ class VPNKey(models.Model):
         return url
 
     def get_sub_url(self) -> str:
-        site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
+        site_url = getattr(settings, 'SITE_URL', 'https://vpn.live-dev.by').rstrip('/')
+        if not site_url.startswith('https://') and 'localhost' not in site_url and '127.0.0.1' not in site_url:
+            site_url = site_url.replace('http://', 'https://')
         return f"{site_url}/sub/{self.sub_token}"
 
     def get_incy_url(self) -> str:
@@ -298,16 +300,21 @@ class VPNKey(models.Model):
         return f"v2box://install-sub?url={quote(sub_url)}&name=VPN%20live-dev"
 
     def get_pac_url(self) -> str:
-        # Proxy Auto-Config URL for in-browser usage without installing applications
-        site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
+        site_url = getattr(settings, 'SITE_URL', 'https://vpn.live-dev.by').rstrip('/')
+        if not site_url.startswith('https://') and 'localhost' not in site_url and '127.0.0.1' not in site_url:
+            site_url = site_url.replace('http://', 'https://')
         return f"{site_url}/vpn/pac/{self.sub_token}/"
 
     def get_connect_url(self) -> str:
-        site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
+        site_url = getattr(settings, 'SITE_URL', 'https://vpn.live-dev.by').rstrip('/')
+        if not site_url.startswith('https://') and 'localhost' not in site_url and '127.0.0.1' not in site_url:
+            site_url = site_url.replace('http://', 'https://')
         return f"{site_url}/vpn/connect/{self.sub_token}/"
 
     def get_routing_url(self) -> str:
-        site_url = getattr(settings, 'SITE_URL', 'http://vpn.live-dev.by').rstrip('/')
+        site_url = getattr(settings, 'SITE_URL', 'https://vpn.live-dev.by').rstrip('/')
+        if not site_url.startswith('https://') and 'localhost' not in site_url and '127.0.0.1' not in site_url:
+            site_url = site_url.replace('http://', 'https://')
         return f"{site_url}/vpn/routing/{self.sub_token}/"
 
     def get_incy_routing_deeplink(self) -> str:
