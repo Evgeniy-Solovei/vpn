@@ -226,10 +226,9 @@ def dashboard_view(request):
         server = get_or_create_default_server()
         key = VPNKey.objects.create(user=user, server=server)
 
-    from apps.vpn.services import ensure_key_in_panel, ensure_key_in_all_active_servers, sync_key_traffic, get_user_devices_info
+    from apps.vpn.services import sync_key_traffic, get_user_devices_info
     try:
-        ensure_key_in_panel(key)
-        ensure_key_in_all_active_servers(key)
+        user.sync_vpn_access()
         sync_key_traffic(key)
     except Exception:
         pass

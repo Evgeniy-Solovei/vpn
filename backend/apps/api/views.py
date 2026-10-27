@@ -26,10 +26,10 @@ def build_user_response(user, is_new=False):
     else:
         server = key.server
 
-    from apps.vpn.services import sync_key_traffic, ensure_key_in_panel, get_user_devices_info, reset_user_devices
+    from apps.vpn.services import sync_key_traffic, get_user_devices_info, reset_user_devices
     try:
         sync_key_traffic(key)
-        ensure_key_in_panel(key)
+        user.sync_vpn_access()
     except Exception:
         pass
 
@@ -271,10 +271,10 @@ def tg_link_account_view(request):
         link_code.delete()  # Consumed
 
         # Ensure key is synced in 3X-UI
-        from apps.vpn.services import ensure_key_in_panel
-        key = user.vpn_keys.first()
-        if key:
-            ensure_key_in_panel(key)
+        try:
+            user.sync_vpn_access()
+        except Exception:
+            pass
 
         return JsonResponse({
             'success': True,
@@ -418,9 +418,8 @@ def switch_server_api(request):
             key.server = server
             key.save()
 
-        from apps.vpn.services import ensure_key_in_panel
         try:
-            ensure_key_in_panel(key)
+            user.sync_vpn_access()
         except Exception:
             pass
 

@@ -114,7 +114,15 @@ class ThreeXUIService:
             logger.error(f"Error connecting to 3X-UI at {self.base_url}: {e}")
             return False
 
-    def add_client(self, key: VPNKey) -> bool:
+    def add_or_update_client(self, key: VPNKey) -> bool:
+        """
+        Adds or updates client in 3X-UI inbound with dynamic expiryTime.
+        If user has NO active subscription or key is inactive, purges client from 3X-UI!
+        """
+        if not key or not key.user or not key.user.has_active_subscription or not key.is_active:
+            self.delete_client(key)
+            return False
+
         if not self.login():
             logger.info("3X-UI not configured or unreachable; using local key generation mode.")
             return True
@@ -130,19 +138,41 @@ class ThreeXUIService:
             except (ValueError, TypeError):
                 tg_id = 0
 
+        # Calculate exact expiration timestamp in ms based on user balance
+        expiry_ms = 0
+        if key.user.daily_deduction > 0 and key.user.balance > 0:
+            days_remaining = float(key.user.balance / key.user.daily_deduction)
+            expiry_dt = timezone.now() + timezone.timedelta(days=days_remaining)
+            expiry_ms = int(expiry_dt.timestamp() * 1000)
+
+        email = f"{key.user.username}_{key.user.id}"
         client_settings = {
             "id": str(key.key_uuid),
             "flow": "xtls-rprx-vision",
-            "email": f"{key.user.username}_{key.user.id}",
+            "email": email,
             "limitIp": getattr(key, 'max_devices', 5) or 5,
             "totalGB": 0,
-            "expiryTime": 0,
+            "expiryTime": expiry_ms,
             "enable": True,
             "tgId": tg_id,
             "subId": key.sub_token
         }
 
-        # 1. Try modern 3X-UI v3.x+ API (/panel/api/clients/add)
+        # 1. Try modern 3X-UI update endpoint first (in case client already exists)
+        update_payload = {
+            "email": email,
+            "client": client_settings,
+            "inboundIds": [self.server.panel_inbound_id]
+        }
+        try:
+            resp = self.client.post(f"{self.base_url}/panel/api/clients/update/{email}", json=update_payload, cookies=self.cookies, headers=headers)
+            if resp.status_code == 200 and resp.json().get('success'):
+                logger.info(f"Successfully updated client {email} in 3X-UI (expiryTime: {expiry_ms})")
+                return True
+        except Exception:
+            pass
+
+        # 2. Try modern 3X-UI add endpoint
         modern_payload = {
             "client": client_settings,
             "inboundIds": [self.server.panel_inbound_id]
@@ -155,7 +185,7 @@ class ThreeXUIService:
         except Exception as e:
             logger.debug(f"Modern 3X-UI clients/add failed, falling back: {e}")
 
-        # 2. Fallback to legacy inbounds/addClient
+        # 3. Fallback to legacy inbounds/addClient
         legacy_payload = {
             "id": self.server.panel_inbound_id,
             "settings": json.dumps({"clients": [client_settings]})
@@ -171,6 +201,9 @@ class ThreeXUIService:
             logger.error(f"Error calling addClient on 3X-UI: {e}")
             return False
 
+    def add_client(self, key: VPNKey) -> bool:
+        return self.add_or_update_client(key)
+
     def delete_client(self, key: VPNKey) -> bool:
         if not self.login():
             return True
@@ -183,6 +216,7 @@ class ThreeXUIService:
         try:
             resp = self.client.post(f"{self.base_url}/panel/api/clients/del/{email}", cookies=self.cookies, headers=headers)
             if resp.status_code == 200 and resp.json().get('success'):
+                logger.info(f"Successfully deleted client {email} from 3X-UI")
                 return True
         except Exception:
             pass
@@ -489,12 +523,15 @@ def sync_key_traffic(key: VPNKey):
 
 
 def ensure_key_in_panel(key: VPNKey):
-    """Ensures client key UUID is registered in 3X-UI inbound on the server."""
+    """Ensures client key UUID is synced with 3X-UI inbound on the server."""
     if not key or not key.server or not key.server.panel_url:
         return False
     try:
         svc = ThreeXUIService(key.server)
-        return svc.add_client(key)
+        if not key.user.has_active_subscription or not key.is_active:
+            svc.delete_client(key)
+            return False
+        return svc.add_or_update_client(key)
     except Exception as e:
         logger.debug(f"Error in ensure_key_in_panel: {e}")
         return False
@@ -502,20 +539,24 @@ def ensure_key_in_panel(key: VPNKey):
 
 def ensure_key_in_all_active_servers(key: VPNKey) -> int:
     """
-    Ensures client key UUID is registered across ALL active VPN servers with panels.
-    Guarantees seamless multi-server subscription support (/sub/<token>) and instant server switching.
+    Ensures client key UUID is synced across ALL active VPN servers with panels.
+    If user subscription expired or key is inactive, purges client from all panels.
     """
     if not key or not key.user:
         return 0
     synced = 0
     active_servers = VPNServer.objects.filter(is_active=True).exclude(panel_url__isnull=True).exclude(panel_url='')
+    is_valid = key.user.has_active_subscription and key.is_active
     for srv in active_servers:
         try:
             svc = ThreeXUIService(srv)
-            if svc.add_client(key):
-                synced += 1
+            if is_valid:
+                if svc.add_or_update_client(key):
+                    synced += 1
+            else:
+                svc.delete_client(key)
         except Exception as e:
-            logger.debug(f"Error registering key on server {srv.clean_name}: {e}")
+            logger.debug(f"Error syncing key on server {srv.clean_name}: {e}")
     return synced
 
 

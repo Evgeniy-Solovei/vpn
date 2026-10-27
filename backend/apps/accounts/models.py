@@ -40,6 +40,23 @@ class CustomUser(AbstractUser):
             self.referral_code = code
         super().save(*args, **kwargs)
 
+    def sync_vpn_access(self):
+        """
+        Synchronizes user's VPN access state across all servers.
+        If subscription is active: marks keys active and provisions them in 3X-UI with calculated expiryTime.
+        If subscription is expired: marks keys inactive and removes them from all 3X-UI panels immediately.
+        """
+        try:
+            from apps.vpn.services import ensure_key_in_all_active_servers
+            is_valid = self.has_active_subscription
+            for key in self.vpn_keys.all():
+                if key.is_active != is_valid:
+                    key.is_active = is_valid
+                    key.save(update_fields=['is_active'])
+                ensure_key_in_all_active_servers(key)
+        except Exception:
+            pass
+
     def apply_daily_deductions(self) -> int:
         """
         Calculates elapsed calendar days since last_billed_date and deducts daily fee.
@@ -55,6 +72,8 @@ class CustomUser(AbstractUser):
             if not self.last_billed_date:
                 self.last_billed_date = last_date
                 self.save(update_fields=['last_billed_date'])
+            if self.balance <= Decimal('0.00'):
+                self.sync_vpn_access()
             return 0
 
         total_charge = Decimal(days_passed) * (self.daily_deduction or Decimal('3.50'))
@@ -77,20 +96,8 @@ class CustomUser(AbstractUser):
         except Exception:
             pass
 
-        # If balance depleted, deactivate keys and remove from panels
-        if self.balance <= Decimal('0.00'):
-            try:
-                from apps.vpn.services import ThreeXUIService
-                for key in self.vpn_keys.all():
-                    key.is_active = False
-                    key.save(update_fields=['is_active'])
-                    try:
-                        svc = ThreeXUIService(key.server)
-                        svc.delete_client(key)
-                    except Exception:
-                        pass
-            except Exception:
-                pass
+        # Sync VPN access across all panels (cuts off if balance <= 0, updates expiryTime if balance > 0)
+        self.sync_vpn_access()
 
         return days_passed
 

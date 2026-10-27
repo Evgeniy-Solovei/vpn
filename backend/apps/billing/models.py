@@ -123,6 +123,10 @@ class Transaction(models.Model):
             self.user.balance += self.amount
             self.user.save()
             self.save()
+            try:
+                self.user.sync_vpn_access()
+            except Exception:
+                pass
 
             # Referral reward: 5 days free to referrer upon first real payment
             if self.user.referred_by:
@@ -170,6 +174,10 @@ class PromoCode(models.Model):
         bonus_rub = Decimal(self.days) * daily_price
         user.balance += bonus_rub
         user.save(update_fields=['balance'])
+        try:
+            user.sync_vpn_access()
+        except Exception:
+            pass
         self.users.add(user)
         self.used_count += 1
         self.save(update_fields=['used_count'])
@@ -212,6 +220,10 @@ class PaymentOrder(models.Model):
             self.user.balance += self.amount_rub
             self.user.save(update_fields=['balance'])
             self.save(update_fields=['status', 'paid_at'])
+            try:
+                self.user.sync_vpn_access()
+            except Exception:
+                pass
 
             # Record corresponding transaction
             tx = Transaction.objects.create(
@@ -286,6 +298,10 @@ class YooKassaOrder(models.Model):
             self.user.balance += self.amount_rub
             self.user.save(update_fields=['balance'])
             self.save(update_fields=['status', 'paid_at'])
+            try:
+                self.user.sync_vpn_access()
+            except Exception:
+                pass
 
             # Record corresponding transaction
             tx = Transaction.objects.create(

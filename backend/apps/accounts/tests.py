@@ -606,6 +606,49 @@ class AccountsTestCase(TestCase):
         self.assertEqual(target.balance, Decimal('32.00'))
         self.assertFalse(User.objects.filter(username='tg_99887711').exists())
 
+    def test_expired_balance_deactivates_vpn_access(self):
+        """When user balance reaches 0, VPN access is revoked and keys are marked inactive."""
+        from datetime import date, timedelta
+        from apps.vpn.models import VPNKey, VPNServer
+        from apps.vpn.services import get_or_create_default_server
+
+        server = get_or_create_default_server()
+        user = User.objects.create_user(
+            username='expuser',
+            email='exp@test.com',
+            password='password123',
+            balance=Decimal('3.50'),
+            daily_deduction=Decimal('3.50'),
+            last_billed_date=date.today() - timedelta(days=1)
+        )
+        key = VPNKey.objects.create(user=user, server=server, is_active=True)
+        self.assertTrue(user.has_active_subscription)
+        self.assertTrue(key.is_active)
+
+        # Apply deduction -> balance becomes 0.00
+        days = user.apply_daily_deductions()
+        self.assertEqual(days, 1)
+        user.refresh_from_db()
+        key.refresh_from_db()
+        self.assertEqual(user.balance, Decimal('0.00'))
+        self.assertFalse(user.has_active_subscription)
+        self.assertFalse(key.is_active)
+
+        # Ensure topup restores active subscription and syncs VPN access
+        from apps.billing.models import Transaction
+        tx = Transaction.objects.create(
+            user=user,
+            amount=Decimal('105.00'),
+            payment_method='sbp',
+            status='pending'
+        )
+        tx.complete()
+        user.refresh_from_db()
+        key.refresh_from_db()
+        self.assertEqual(user.balance, Decimal('105.00'))
+        self.assertTrue(user.has_active_subscription)
+        self.assertTrue(key.is_active)
+
 
 
 
