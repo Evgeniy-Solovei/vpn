@@ -113,6 +113,41 @@ def routing_view(request, token):
     return JsonResponse(routing_data, json_dumps_params={'ensure_ascii': False, 'indent': 2})
 
 
+def wireguard_view(request, token):
+    """
+    Returns WireGuard .conf configuration file.
+    URL: /vpn/wg/<token>/
+    """
+    key = get_object_or_404(VPNKey, sub_token=token)
+    conf = key.get_wireguard_config()
+    response = HttpResponse(conf, content_type="text/plain; charset=utf-8")
+    response['Content-Disposition'] = f'attachment; filename="live-dev-stockholm-{key.user.username}.conf"'
+    return response
+
+
+def wireguard_qr_view(request, token):
+    """Generates a dynamic QR code for WireGuard client configuration."""
+    key = get_object_or_404(VPNKey, sub_token=token)
+    conf = key.get_wireguard_config()
+
+    if HAS_QRCODE:
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=8,
+            border=2,
+        )
+        qr.add_data(conf)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="#10b981", back_color="#0a0b0e")
+
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        return HttpResponse(buffer.getvalue(), content_type="image/png")
+    else:
+        return HttpResponse("qrcode not installed", status=500)
+
+
 def qr_code_view(request, token):
     """Generates a dynamic QR code for the VPN key or subscription URL."""
     key = get_object_or_404(VPNKey, sub_token=token)
@@ -201,6 +236,7 @@ def incy_redirect_view(request, token):
         'key': key,
         'incy_url': key.get_incy_url(),
         'routing_deeplink': key.get_incy_routing_deeplink(),
+        'wireguard_url': key.get_wireguard_url(),
         'hiddify_url': key.get_hiddify_url(),
         'streisand_url': key.get_streisand_url(),
         'v2box_url': key.get_v2box_url(),

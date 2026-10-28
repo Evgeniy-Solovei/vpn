@@ -562,13 +562,16 @@
     </div>
 
     <!-- Fallback / copy buttons -->
-    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
       <button type="button" class="btn btn-secondary" data-copy="{{ vpn_key.get_sub_url }}" style="flex: 1.1; font-size: 0.78rem; justify-content: center;" title="Скопировать ссылку со всеми серверами">
-        🔗 Подписка (все серверы)
+        🔗 Подписка
       </button>
       <button type="button" class="btn btn-secondary" data-copy="{{ vpn_key.get_vless_url }}" style="flex: 1; font-size: 0.78rem; justify-content: center;" title="Скопировать ключ VLESS">
         📋 Ключ VLESS
       </button>
+      <a href="{{ vpn_key.get_wireguard_url }}" class="btn btn-secondary" style="flex: 1; font-size: 0.78rem; justify-content: center; text-decoration: none; color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);" download title="Скачать конфигурационный файл WireGuard">
+        ⚡ WireGuard .conf
+      </a>
       <button type="button" class="btn btn-secondary" data-modal-target="qr-modal" style="flex: 0.7; font-size: 0.78rem; justify-content: center;">
         📱 QR-код
       </button>

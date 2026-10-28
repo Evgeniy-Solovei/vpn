@@ -317,6 +317,37 @@ class VPNKey(models.Model):
             site_url = site_url.replace('http://', 'https://')
         return f"{site_url}/vpn/routing/{self.sub_token}/"
 
+    def get_wireguard_url(self) -> str:
+        site_url = getattr(settings, 'SITE_URL', 'https://vpn.live-dev.by').rstrip('/')
+        if not site_url.startswith('https://') and 'localhost' not in site_url and '127.0.0.1' not in site_url:
+            site_url = site_url.replace('http://', 'https://')
+        return f"{site_url}/vpn/wg/{self.sub_token}/"
+
+    def get_wireguard_config(self) -> str:
+        """Deterministic WireGuard client config for Stockholm node."""
+        import hashlib
+        import base64
+        from cryptography.hazmat.primitives.asymmetric import x25519
+
+        seed = hashlib.sha256(f"livedev-wg-{self.sub_token}".encode('utf-8')).digest()
+        priv_b64 = base64.b64encode(seed).decode('utf-8')
+        stockholm = VPNServer.objects.filter(is_active=True, country_code='SE').first()
+        server_ip = stockholm.ip if stockholm else "89.169.33.88"
+        server_pub = "vQC1T1ob6D27nDRVIzag1AZxDfm1GAVSMlWwmaIkeFU="
+        client_ip = f"10.66.66.{(self.id % 240) + 2}"
+
+        return (
+            f"[Interface]\n"
+            f"PrivateKey = {priv_b64}\n"
+            f"Address = {client_ip}/32\n"
+            f"DNS = 1.1.1.1, 8.8.8.8\n\n"
+            f"[Peer]\n"
+            f"PublicKey = {server_pub}\n"
+            f"Endpoint = {server_ip}:51820\n"
+            f"AllowedIPs = 0.0.0.0/0, ::/0\n"
+            f"PersistentKeepalive = 25\n"
+        )
+
     def get_incy_routing_deeplink(self) -> str:
         import json, base64
         from .services import get_incy_routing_dict

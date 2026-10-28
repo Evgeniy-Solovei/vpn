@@ -340,7 +340,7 @@ def get_incy_routing_dict(key=None) -> dict:
 
     result = {
         "Name": "VPN live-dev Умный обход РФ/РБ",
-        "GlobalProxy": "true",
+        "GlobalProxy": "false",
         "UseChunkFiles": "true",
         "RemoteDns": "8.8.8.8",
         "DomesticDns": "77.88.8.8",
@@ -353,7 +353,7 @@ def get_incy_routing_dict(key=None) -> dict:
         "Geoipurl": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geoip/release/geoip.dat",
         "Geositeurl": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite/release/geosite.dat",
         "LastUpdated": str(int(time.time())),
-        "RouteOrder": "block-proxy-direct",
+        "RouteOrder": "block-direct-proxy",
         "DirectSites": direct_sites,
         "DirectIp": [
             "geoip:private",
