@@ -289,12 +289,15 @@ def get_incy_routing_dict(key=None) -> dict:
     if whitelist_enabled:
         direct_sites = [
             "geosite:private",
-            "geosite:ru",
-            "geosite:by",
+            "geosite:category-ru",
             "geosite:category-gov-ru",
             "geosite:vk",
             "geosite:yandex",
             "geosite:mailru",
+            "domain:ru",
+            "domain:by",
+            "domain:su",
+            "domain:xn--p1ai",
             # Explicit VK Ecosystem (prevents "VPN detected" banner in VK app/web)
             "domain:vk.com",
             "domain:vk.ru",
@@ -422,7 +425,6 @@ def get_incy_routing_dict(key=None) -> dict:
         "ProxyIp": [],
         "BlockSites": [
             "geosite:win-spy",
-            "geosite:torrent",
             "geosite:category-ads"
         ],
         "BlockIp": [],
