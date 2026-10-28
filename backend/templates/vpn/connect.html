@@ -69,6 +69,12 @@
           </div>
         </a>
       </div>
+
+      <div style="font-size: 0.74rem; text-align: center; margin-top: 0.65rem;">
+        <a href="#" data-modal-target="appstore-region-modal" style="color: #fbbf24; text-decoration: underline; font-weight: 600;">
+          ⚠️ Недоступно в РФ App Store? Инструкция как скачать за 2 мин (без карты)
+        </a>
+      </div>
     </div>
 
     <!-- STEP 2: Connect in 1 click -->
@@ -141,6 +147,53 @@
       </a>
     </div>
 
+  </div>
+</div>
+
+<!-- App Store Region Guide Modal -->
+<div class="modal-overlay" id="appstore-region-modal">
+  <div class="modal-body" style="max-width: 500px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <span style="font-size: 1.5rem;">🍏</span>
+        <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin: 0;">Как скачать INCY из App Store</h3>
+      </div>
+      <button type="button" class="btn btn-secondary modal-close" style="padding: 0.35rem 0.65rem;">✕</button>
+    </div>
+
+    <div style="background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 10px; padding: 0.75rem 0.95rem; margin-bottom: 1rem; font-size: 0.78rem; color: #fbbf24; line-height: 1.45;">
+      Apple скрыла INCY в российском регионе App Store по требованию РКН. Чтобы скачать его, достаточно переключить регион App Store на <b>Казахстан</b> или <b>Турцию</b> (зарубежная карта <b>НЕ нужна</b>, баланс и подписки не теряются).
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.82rem; color: #e2e8f0; margin-bottom: 1.25rem;">
+      <div style="display: flex; gap: 0.65rem; align-items: flex-start;">
+        <span style="width: 22px; height: 22px; border-radius: 50%; background: #38bdf8; color: #000; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0;">1</span>
+        <div>Откройте приложение <b>App Store</b> на iPhone и нажмите на <b>свою аватарку</b> в правом верхнем углу.</div>
+      </div>
+      <div style="display: flex; gap: 0.65rem; align-items: flex-start;">
+        <span style="width: 22px; height: 22px; border-radius: 50%; background: #38bdf8; color: #000; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0;">2</span>
+        <div>Нажмите на свое имя и email вверху → выберите пункт <b>«Страна/регион»</b> → <b>«Изменить страну или регион»</b>.</div>
+      </div>
+      <div style="display: flex; gap: 0.65rem; align-items: flex-start;">
+        <span style="width: 22px; height: 22px; border-radius: 50%; background: #38bdf8; color: #000; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0;">3</span>
+        <div>Выберите <b>Казахстан</b> (или Турцию) и примите условия соглашения.</div>
+      </div>
+      <div style="display: flex; gap: 0.65rem; align-items: flex-start;">
+        <span style="width: 22px; height: 22px; border-radius: 50%; background: #38bdf8; color: #000; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0;">4</span>
+        <div>В способе оплаты выберите <b>«Нет» (None)</b>. В адресе напишите любой город (например, <i>Алматы</i>) и индекс (<i>050000</i>).</div>
+      </div>
+      <div style="display: flex; gap: 0.65rem; align-items: flex-start;">
+        <span style="width: 22px; height: 22px; border-radius: 50%; background: #10b981; color: #000; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0;">5</span>
+        <div>Нажмите <b>«Готово»</b>. Теперь откройте поиск App Store, введите <b>INCY</b> и скачайте приложение!</div>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; display: flex; justify-content: space-between; gap: 0.5rem;">
+      <a href="https://apps.apple.com/app/incy/id6756943388" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="flex: 1; justify-content: center; font-size: 0.85rem;">
+        🍏 Открыть INCY в App Store
+      </a>
+      <button type="button" class="btn btn-secondary modal-close" style="font-size: 0.85rem;">Закрыть</button>
+    </div>
   </div>
 </div>
 {% endblock %}
