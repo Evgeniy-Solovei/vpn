@@ -336,7 +336,9 @@ def get_incy_routing_dict(key=None) -> dict:
             if clean and f"domain:{clean}" not in direct_sites:
                 direct_sites.append(f"domain:{clean}")
 
-    return {
+    routing_url = key.get_routing_url() if key else ""
+
+    result = {
         "Name": "VPN live-dev Умный обход РФ/РБ",
         "GlobalProxy": "true",
         "UseChunkFiles": "true",
@@ -378,6 +380,13 @@ def get_incy_routing_dict(key=None) -> dict:
         "DomainStrategy": "IPIfNonMatch",
         "FakeDNS": "false"
     }
+
+    if routing_url:
+        result["sourceURL"] = routing_url
+        result["sourceLastUpdated"] = str(int(time.time()))
+        result["updateInterval"] = 24
+
+    return result
 
 
 def check_server_health(server: VPNServer, timeout: float = 2.5) -> dict:

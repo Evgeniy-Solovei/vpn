@@ -253,11 +253,10 @@
           </div>
         </div>
 
-        <label class="switch-label">
-          <input type="checkbox" id="whitelist-toggle" {% if vpn_key.whitelist_enabled %}checked{% endif %} style="display: none;">
-          <span class="toggle-switch"></span>
-        </label>
-      </div>
+          <div class="status-pill pill-active" style="font-size: 0.72rem; padding: 0.25rem 0.65rem;">
+            ✓ Всегда активен
+          </div>
+        </div>
 
       <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.85rem;">
         Сервисы РФ открываются напрямую на полной скорости провайдера без капчи и блокировок:
@@ -273,14 +272,10 @@
         <span class="ru-service-tag">🟣 Ozon & WB</span>
       </div>
 
-      <div class="whitelist-status-row">
-        <div id="whitelist-badge" class="status-pill {% if vpn_key.whitelist_enabled %}pill-active{% else %}pill-amber{% endif %}" style="font-size: 0.75rem;">
-          {% if vpn_key.whitelist_enabled %}
-            ✓ Белый список включен (РФ напрямую)
-          {% else %}
-            ✕ Выключен (весь трафик через VPN)
-          {% endif %}
-        </div>
+      <div class="whitelist-status-row" style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.78rem; color: #34d399; font-weight: 700;">
+          ✓ РФ и РБ идут напрямую с сим-карты
+        </span>
 
         <button type="button" class="btn btn-secondary" data-modal-target="custom-whitelist-modal" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; border-color: rgba(167, 139, 250, 0.3); color: #c4b5fd;">
           ⚙️ Мои сайты (<span id="custom-whitelist-count">{{ vpn_key.get_custom_domains|length }}</span>)
