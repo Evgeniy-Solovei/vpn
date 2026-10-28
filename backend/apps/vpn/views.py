@@ -77,13 +77,14 @@ def subscription_view(request, token):
     response['profile-web-page-url'] = 'https://vpn.live-dev.by'
     response['content-disposition'] = f'attachment; filename="vpn-livedev-{user.username}.txt"'
     
-    # Auto-apply Smart Bypass routing directly inside INCY subscription response
-    try:
-        response['Routing'] = key.get_incy_routing_deeplink()
-        response['Autorouting'] = key.get_routing_url()
-        response['routing-geo-update-interval'] = '24'
-    except Exception:
-        pass
+    # Auto-apply Smart Bypass routing directly inside INCY subscription response if enabled
+    if key.whitelist_enabled:
+        try:
+            response['Routing'] = key.get_incy_routing_deeplink()
+            response['Autorouting'] = key.get_routing_url()
+            response['routing-geo-update-interval'] = '24'
+        except Exception:
+            pass
 
     # Subscription info header: upload=0; download=bytes; total=bytes; expire=timestamp
     days_seconds = user.days_left * 86400

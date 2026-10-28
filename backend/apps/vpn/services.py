@@ -278,56 +278,23 @@ function FindProxyForURL(url, host) {{
 
 def get_incy_routing_dict(key=None) -> dict:
     """
-    Generates dynamic routing JSON profile for INCY application.
-    Enforces direct access for VK ecosystem, banks, Gosuslugi, RU/BY domains,
-    and user-specified custom domains without tunneling through France.
+    Generates routing JSON profile for INCY application.
+    Uses reliable UDP DNS (77.88.8.8 and 1.1.1.1) to avoid DoH handshake failures.
+    Preserves global proxy mode so selected server handles web traffic seamlessly.
     """
     direct_sites = [
         "geosite:private",
-        "geosite:category-ru",
         "geosite:category-gov-ru",
-        "geosite:whitelist",
-        "geosite:yandex",
-        "geosite:vk",
-        "geosite:mailru",
-        # Explicit VK domains
-        "domain:vk.com",
-        "domain:userapi.com",
-        "domain:vk-portal.net",
-        "domain:vkuser.net",
-        "domain:vk-cdn.net",
-        "domain:vkcache.com",
-        "domain:vk.me",
-        "domain:vk.cc",
-        "domain:vkplay.ru",
         # Banks & Government
-        "domain:sber.ru",
+        "domain:gosuslugi.ru",
         "domain:sberbank.ru",
+        "domain:sber.ru",
         "domain:tbank.ru",
         "domain:tinkoff.ru",
         "domain:alfabank.ru",
         "domain:vtb.ru",
-        "domain:gazprombank.ru",
-        "domain:gosuslugi.ru",
         "domain:nalog.ru",
         "domain:mos.ru",
-        "domain:belarusbank.by",
-        "domain:priorbank.by",
-        # E-commerce & Marketplaces
-        "domain:wildberries.ru",
-        "domain:wb.ru",
-        "domain:wbstatic.net",
-        "domain:ozon.ru",
-        "domain:ozonusercontent.com",
-        "domain:avito.ru",
-        "domain:dzen.ru",
-        "domain:yandex.ru",
-        "domain:ya.ru",
-        # TLDs
-        "domain:ru",
-        "domain:by",
-        "domain:xn--p1ai",
-        "domain:su",
     ]
 
     if key:
@@ -339,27 +306,24 @@ def get_incy_routing_dict(key=None) -> dict:
     routing_url = key.get_routing_url() if key else ""
 
     result = {
-        "Name": "VPN live-dev Умный обход РФ/РБ",
-        "GlobalProxy": "false",
+        "Name": "VPN live-dev (Весь трафик)",
+        "GlobalProxy": "true",
         "UseChunkFiles": "true",
-        "RemoteDns": "8.8.8.8",
+        "RemoteDns": "1.1.1.1",
         "DomesticDns": "77.88.8.8",
-        "RemoteDNSType": "DoH",
-        "RemoteDNSDomain": "https://8.8.8.8/dns-query",
-        "RemoteDNSIP": "8.8.8.8",
-        "DomesticDNSType": "DoH",
-        "DomesticDNSDomain": "https://77.88.8.8/dns-query",
+        "RemoteDNSType": "UDP",
+        "RemoteDNSDomain": "",
+        "RemoteDNSIP": "1.1.1.1",
+        "DomesticDNSType": "UDP",
+        "DomesticDNSDomain": "",
         "DomesticDNSIP": "77.88.8.8",
         "Geoipurl": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geoip/release/geoip.dat",
         "Geositeurl": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite/release/geosite.dat",
         "LastUpdated": str(int(time.time())),
-        "RouteOrder": "block-direct-proxy",
+        "RouteOrder": "block-proxy-direct",
         "DirectSites": direct_sites,
         "DirectIp": [
-            "geoip:private",
-            "geoip:direct",
-            "geoip:ru",
-            "geoip:by"
+            "geoip:private"
         ],
         "ProxySites": [
             "geosite:youtube",
