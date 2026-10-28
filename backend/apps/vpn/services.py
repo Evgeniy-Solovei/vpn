@@ -295,10 +295,12 @@ def get_incy_routing_dict(key=None) -> dict:
             "geosite:mailru",
             # Explicit VK Ecosystem (prevents "VPN detected" banner in VK app/web)
             "domain:vk.com",
+            "domain:vk.ru",
             "domain:userapi.com",
-            "domain:vk-portal.net",
-            "domain:vkuser.net",
             "domain:vk-cdn.net",
+            "domain:vkuseraudio.net",
+            "domain:vkuser.net",
+            "domain:vk-portal.net",
             "domain:vkcache.com",
             "domain:vk.me",
             "domain:vk.cc",
@@ -306,6 +308,7 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:vkvideo.ru",
             "domain:m.vk.com",
             "domain:api.vk.com",
+            "domain:vk.link",
             # Russian Government & Public Services
             "domain:gosuslugi.ru",
             "domain:nalog.ru",
@@ -349,10 +352,26 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:rutube.ru",
             "domain:smotrim.ru",
         ]
+        # VKontakte (AS47541) and domestic media IP CIDR blocks
+        # Routes raw socket connections from official VK iOS/Android app directly
+        vk_ip_subnets = [
+            "87.240.128.0/18",
+            "93.186.224.0/20",
+            "95.142.192.0/20",
+            "95.213.0.0/17",
+            "185.32.248.0/22",
+            "185.131.68.0/23",
+            "79.137.128.0/17",
+            "5.181.61.0/24",
+            "89.221.235.0/24",
+            "91.231.132.0/22",
+            "217.69.128.0/20",
+        ]
         direct_ips = [
             "geoip:private",
             "geoip:ru",
-            "geoip:by"
+            "geoip:by",
+            *vk_ip_subnets,
         ]
         route_order = "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, РФ)"
