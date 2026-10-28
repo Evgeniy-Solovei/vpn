@@ -269,16 +269,17 @@ function initIncyDeeplinkFallback() {
 
       const incyUrl = link.getAttribute('data-incy-url') || (href.startsWith('incy://') ? href : '');
       const vlessUrl = link.getAttribute('data-vless-url') || (link.getAttribute('data-connect-url') && link.getAttribute('data-connect-url').startsWith('vless://') ? link.getAttribute('data-connect-url') : '');
+      const subBtn = document.querySelector('[data-copy*="/sub/"]');
+      const subUrl = link.getAttribute('data-sub-url') || (subBtn ? subBtn.getAttribute('data-copy') : '');
       const deeplink = incyUrl || link.getAttribute('data-connect-url') || href;
 
-      // 1. Всегда гарантированно копируем VLESS ключ в буфер обмена
-      const vlessBtn = document.getElementById('btn-copy-vless') || document.querySelector('[data-copy^="vless://"]');
-      const copyVal = vlessUrl || (vlessBtn ? vlessBtn.getAttribute('data-copy') : '') || deeplink;
+      // 1. Копируем ссылку на ПОДПИСКУ (содержит все серверы кластера)
+      const copyVal = subUrl || vlessUrl || deeplink;
       if (copyVal && navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(copyVal).catch(() => {});
       }
 
-      showToast('✓ Ключ в буфере! Запускаем INCY...');
+      showToast('✓ Ссылка подписки (все серверы) в буфере! Запускаем INCY...');
 
       // 2. Напрямую открываем протокол если элемент не имел собственного href
       if (deeplink && (!link.getAttribute('href') || link.getAttribute('href') === '#')) {
