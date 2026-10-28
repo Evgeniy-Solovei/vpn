@@ -114,16 +114,16 @@ function initBackgroundCanvas() {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(${this.color}, ${this.alpha})`;
-      ctx.shadowBlur = this.radius * 3.5;
-      ctx.shadowColor = `rgba(${this.color}, 0.8)`;
       ctx.fill();
-      ctx.shadowBlur = 0;
     }
   }
 
   for (let i = 0; i < particleCount; i++) {
     particles.push(new Particle(true));
   }
+
+  let animId = null;
+  let isRunning = true;
 
   function animate() {
     ctx.clearRect(0, 0, width, height);
@@ -149,9 +149,25 @@ function initBackgroundCanvas() {
         }
       }
     }
-    requestAnimationFrame(animate);
   }
-  animate();
+
+  function loop() {
+    if (!isRunning) return;
+    animate();
+    animId = requestAnimationFrame(loop);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      isRunning = false;
+      if (animId) cancelAnimationFrame(animId);
+    } else {
+      isRunning = true;
+      animId = requestAnimationFrame(loop);
+    }
+  });
+
+  loop();
 }
 
 // ==========================================
@@ -259,39 +275,43 @@ function highlightUserPlatformInModal() {
 
 
 function initIncyDeeplinkFallback() {
-  document.querySelectorAll('a[href^="incy://"], a[href^="vless://"], .btn-smart-connect, #btn-incy-connect').forEach(link => {
-    link.addEventListener('click', () => {
+  document.querySelectorAll('a[href^="incy://"], a[href^="happ://"], a[href^="vless://"], .btn-smart-connect, #btn-incy-connect').forEach(link => {
+    link.addEventListener('click', (e) => {
       const href = link.getAttribute('href') || '';
+      
+      // 1. Routing bypass links (incy://routing/onadd/... or happ://routing/onadd/...)
       if (href.startsWith('incy://routing/') || href.startsWith('happ://routing/')) {
+        e.preventDefault();
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(href).catch(() => {});
         }
-        showToast('🛡️ Активируем умный обход в приложении INCY...');
+        showToast('🛡️ Активируем умный обход в INCY...');
+        window.location.href = href;
         return;
       }
 
+      // 2. Cluster subscription links
       const incyUrl = link.getAttribute('data-incy-url') || (href.startsWith('incy://') ? href : '');
-      const vlessUrl = link.getAttribute('data-vless-url') || (link.getAttribute('data-connect-url') && link.getAttribute('data-connect-url').startsWith('vless://') ? link.getAttribute('data-connect-url') : '');
       const subBtn = document.querySelector('[data-copy*="/sub/"]');
       const subUrl = link.getAttribute('data-sub-url') || (subBtn ? subBtn.getAttribute('data-copy') : '');
-      const deeplink = incyUrl || link.getAttribute('data-connect-url') || href;
+      const deeplink = incyUrl || (subUrl ? 'incy://add/' + encodeURIComponent(subUrl) : href);
 
-      // 1. Копируем ссылку на ПОДПИСКУ (содержит все серверы кластера)
-      const copyVal = subUrl || vlessUrl || deeplink;
+      // Always copy subscription URL to clipboard so user can also paste in app
+      const copyVal = subUrl || deeplink;
       if (copyVal && navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(copyVal).catch(() => {});
       }
 
-      showToast('✓ Ссылка подписки (все серверы) в буфере! Запускаем INCY...');
+      showToast('✓ Все серверы в буфере! Запускаем INCY...');
 
-      // 2. Напрямую открываем протокол если элемент не имел собственного href
-      if (deeplink && (!link.getAttribute('href') || link.getAttribute('href') === '#')) {
+      // Force protocol navigation so Chrome / Safari on macOS and iOS trigger application open
+      if (deeplink && deeplink.startsWith('incy://')) {
+        e.preventDefault();
         window.location.href = deeplink;
       }
 
-      // 3. Подсказка через 1.2 сек
       setTimeout(() => {
-        showToast('✓ Готово! В приложении INCY нажмите «Подключить»');
+        showToast('✓ В приложении INCY нажмите «Подключить»');
       }, 1200);
     });
   });
