@@ -278,24 +278,89 @@ function FindProxyForURL(url, host) {{
 
 def get_incy_routing_dict(key=None) -> dict:
     """
-    Generates routing JSON profile for INCY application.
-    Uses reliable UDP DNS (77.88.8.8 and 1.1.1.1) to avoid DoH handshake failures.
-    Preserves global proxy mode so selected server handles web traffic seamlessly.
+    Generates dynamic routing JSON profile for INCY application.
+    Uses reliable UDP DNS (77.88.8.8 and 1.1.1.1) to eliminate DoH handshake failures.
+    When whitelist_enabled=True: routes VK, banks, Gosuslugi, domestic media & marketplaces
+    directly (bypassing VPN to eliminate 'VPN detected' banners), while proxying blocked sites.
+    When whitelist_enabled=False: routes all traffic through the active VPN node.
     """
-    direct_sites = [
-        "geosite:private",
-        "geosite:category-gov-ru",
-        # Banks & Government
-        "domain:gosuslugi.ru",
-        "domain:sberbank.ru",
-        "domain:sber.ru",
-        "domain:tbank.ru",
-        "domain:tinkoff.ru",
-        "domain:alfabank.ru",
-        "domain:vtb.ru",
-        "domain:nalog.ru",
-        "domain:mos.ru",
-    ]
+    whitelist_enabled = getattr(key, 'whitelist_enabled', True) if key else True
+
+    if whitelist_enabled:
+        direct_sites = [
+            "geosite:private",
+            "geosite:category-gov-ru",
+            "geosite:vk",
+            "geosite:yandex",
+            "geosite:mailru",
+            # Explicit VK Ecosystem (prevents "VPN detected" banner in VK app/web)
+            "domain:vk.com",
+            "domain:userapi.com",
+            "domain:vk-portal.net",
+            "domain:vkuser.net",
+            "domain:vk-cdn.net",
+            "domain:vkcache.com",
+            "domain:vk.me",
+            "domain:vk.cc",
+            "domain:vkplay.ru",
+            "domain:vkvideo.ru",
+            "domain:m.vk.com",
+            "domain:api.vk.com",
+            # Russian Government & Public Services
+            "domain:gosuslugi.ru",
+            "domain:nalog.ru",
+            "domain:mos.ru",
+            "domain:pbr.ru",
+            "domain:cbr.ru",
+            # Banks & Payment Systems (RU & BY)
+            "domain:sberbank.ru",
+            "domain:sber.ru",
+            "domain:tbank.ru",
+            "domain:tinkoff.ru",
+            "domain:alfabank.ru",
+            "domain:vtb.ru",
+            "domain:gazprombank.ru",
+            "domain:raiffeisen.ru",
+            "domain:mir-connect.ru",
+            "domain:nspk.ru",
+            "domain:sbp.nspk.ru",
+            "domain:belarusbank.by",
+            "domain:priorbank.by",
+            "domain:alfa-bank.by",
+            "domain:mtbank.by",
+            # Ecosystems, Search & Mail
+            "domain:yandex.ru",
+            "domain:ya.ru",
+            "domain:yastatic.net",
+            "domain:dzen.ru",
+            "domain:mail.ru",
+            "domain:ok.ru",
+            # Marketplaces & Anti-DDoS Portals
+            "domain:avito.ru",
+            "domain:wildberries.ru",
+            "domain:wb.ru",
+            "domain:wbstatic.net",
+            "domain:ozon.ru",
+            "domain:ozonusercontent.com",
+            # Streaming & Media (RF)
+            "domain:kinopoisk.ru",
+            "domain:ivi.ru",
+            "domain:okko.tv",
+            "domain:rutube.ru",
+            "domain:smotrim.ru",
+        ]
+        direct_ips = [
+            "geoip:private",
+            "geoip:ru",
+            "geoip:by"
+        ]
+        route_order = "block-direct-proxy"
+        profile_name = "VPN live-dev Умный обход (ВК, Банки, РФ)"
+    else:
+        direct_sites = ["geosite:private"]
+        direct_ips = ["geoip:private"]
+        route_order = "block-proxy-direct"
+        profile_name = "VPN live-dev (Весь трафик)"
 
     if key:
         for d in key.get_custom_domains():
@@ -306,7 +371,7 @@ def get_incy_routing_dict(key=None) -> dict:
     routing_url = key.get_routing_url() if key else ""
 
     result = {
-        "Name": "VPN live-dev (Весь трафик)",
+        "Name": profile_name,
         "GlobalProxy": "true",
         "UseChunkFiles": "true",
         "RemoteDns": "1.1.1.1",
@@ -320,11 +385,9 @@ def get_incy_routing_dict(key=None) -> dict:
         "Geoipurl": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geoip/release/geoip.dat",
         "Geositeurl": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite/release/geosite.dat",
         "LastUpdated": str(int(time.time())),
-        "RouteOrder": "block-proxy-direct",
+        "RouteOrder": route_order,
         "DirectSites": direct_sites,
-        "DirectIp": [
-            "geoip:private"
-        ],
+        "DirectIp": direct_ips,
         "ProxySites": [
             "geosite:youtube",
             "geosite:instagram",
@@ -332,7 +395,10 @@ def get_incy_routing_dict(key=None) -> dict:
             "geosite:openai",
             "geosite:telegram",
             "geosite:google-play",
-            "geosite:github"
+            "geosite:github",
+            "geosite:meta",
+            "geosite:facebook",
+            "geosite:discord"
         ],
         "ProxyIp": [],
         "BlockSites": [
