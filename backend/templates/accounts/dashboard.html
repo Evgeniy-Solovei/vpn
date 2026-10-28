@@ -286,6 +286,15 @@
           ⚙️ Мои сайты (<span id="custom-whitelist-count">{{ vpn_key.get_custom_domains|length }}</span>)
         </button>
       </div>
+
+      <div style="margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px solid rgba(255, 255, 255, 0.06);">
+        <a href="{{ vpn_key.get_incy_routing_deeplink }}" class="btn btn-secondary btn-block" style="font-size: 0.78rem; font-weight: 700; padding: 0.5rem; justify-content: center; border-color: rgba(167, 139, 250, 0.4); color: #c4b5fd; text-decoration: none; width: 100%;">
+          ⚡ Активировать обход в INCY на телефоне
+        </a>
+        <span style="font-size: 0.7rem; color: var(--text-dim); display: block; text-align: center; margin-top: 0.3rem;">
+          Нажмите на телефоне, чтобы INCY пустил сервисы РФ мимо VPN
+        </span>
+      </div>
     </div>
 
     <!-- Card 4: Speed & Traffic Limits (FUP Protection) -->
@@ -542,6 +551,11 @@
       </div>
       <a href="{{ vpn_key.get_incy_url }}" id="btn-incy-connect" data-incy-url="{{ vpn_key.get_incy_url }}" data-vless-url="{{ vpn_key.get_vless_url }}" class="btn btn-primary btn-block btn-smart-connect" style="font-size: 0.95rem; font-weight: 700; padding: 0.85rem; justify-content: center; text-decoration: none;">
         ⚡ Подключить в приложении INCY
+      </a>
+
+      <!-- Routing bypass button -->
+      <a href="{{ vpn_key.get_incy_routing_deeplink }}" class="btn btn-secondary btn-block" style="font-size: 0.8rem; font-weight: 700; padding: 0.55rem; justify-content: center; border-color: rgba(167, 139, 250, 0.4); color: #c4b5fd; text-decoration: none; margin-top: 0.5rem; width: 100%;">
+        🛡️ Включить умный обход (ВК, Банки, Госуслуги напрямую)
       </a>
       <div style="margin-top: 0.6rem; background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 0.55rem 0.75rem; font-size: 0.78rem; color: #34d399; display: flex; align-items: center; gap: 0.45rem;">
         <span>👉</span>

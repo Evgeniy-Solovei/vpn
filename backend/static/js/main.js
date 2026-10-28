@@ -261,9 +261,15 @@ function highlightUserPlatformInModal() {
 function initIncyDeeplinkFallback() {
   document.querySelectorAll('a[href^="incy://"], a[href^="vless://"], .btn-smart-connect, #btn-incy-connect').forEach(link => {
     link.addEventListener('click', () => {
-      const incyUrl = link.getAttribute('data-incy-url') || (link.getAttribute('href') && link.getAttribute('href').startsWith('incy://') ? link.getAttribute('href') : '');
+      const href = link.getAttribute('href') || '';
+      if (href.startsWith('incy://routing/')) {
+        showToast('🛡️ Активируем обход РФ в приложении INCY...');
+        return;
+      }
+
+      const incyUrl = link.getAttribute('data-incy-url') || (href.startsWith('incy://') ? href : '');
       const vlessUrl = link.getAttribute('data-vless-url') || (link.getAttribute('data-connect-url') && link.getAttribute('data-connect-url').startsWith('vless://') ? link.getAttribute('data-connect-url') : '');
-      const deeplink = incyUrl || link.getAttribute('data-connect-url') || link.getAttribute('href');
+      const deeplink = incyUrl || link.getAttribute('data-connect-url') || href;
 
       // 1. Всегда гарантированно копируем VLESS ключ в буфер обмена
       const vlessBtn = document.getElementById('btn-copy-vless') || document.querySelector('[data-copy^="vless://"]');
