@@ -103,9 +103,14 @@
           <div style="font-size: 0.8rem; font-weight: 700; color: #fff;">🛡️ Умный обход (ВК, Банки, Госуслуги):</div>
           <div style="font-size: 0.72rem; color: var(--text-dim);">Пускает сервисы РФ напрямую с вашей сим-карты/Wi-Fi мимо Европы</div>
         </div>
-        <a href="{{ routing_deeplink }}" class="btn btn-secondary" style="font-size: 0.76rem; padding: 0.35rem 0.75rem; color: #c4b5fd; border-color: #a78bfa; text-decoration: none;">
-          ⚡ Применить обход
-        </a>
+        <div style="display: flex; gap: 0.4rem;">
+          <a href="{{ routing_deeplink }}" class="btn btn-secondary" style="font-size: 0.76rem; padding: 0.35rem 0.75rem; color: #c4b5fd; border-color: #a78bfa; text-decoration: none;">
+            ⚡ Применить обход
+          </a>
+          <button type="button" class="btn btn-secondary" data-copy="{{ routing_deeplink }}" title="Скопировать ссылку обхода" style="font-size: 0.76rem; padding: 0.35rem 0.55rem; color: #c4b5fd; border-color: #a78bfa;">
+            📋
+          </button>
+        </div>
       </div>
 
       <!-- WireGuard Alternative Card -->

@@ -262,8 +262,11 @@ function initIncyDeeplinkFallback() {
   document.querySelectorAll('a[href^="incy://"], a[href^="vless://"], .btn-smart-connect, #btn-incy-connect').forEach(link => {
     link.addEventListener('click', () => {
       const href = link.getAttribute('href') || '';
-      if (href.startsWith('incy://routing/')) {
-        showToast('🛡️ Активируем обход РФ в приложении INCY...');
+      if (href.startsWith('incy://routing/') || href.startsWith('happ://routing/')) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(href).catch(() => {});
+        }
+        showToast('🛡️ Активируем умный обход в приложении INCY...');
         return;
       }
 
@@ -418,9 +421,14 @@ function initServerSwitcher() {
         // Update links & copy attributes
         const incyBtn = document.getElementById('btn-incy-connect');
         if (incyBtn) {
-          const newUrl = data.vpn.vless_url || data.vpn.connect_url;
-          incyBtn.setAttribute('data-connect-url', newUrl);
-          if (incyBtn.tagName === 'A') incyBtn.href = newUrl;
+          const subUrl = data.vpn.sub_url || incyBtn.getAttribute('data-sub-url');
+          const incyUrl = data.vpn.incy_url || (subUrl ? 'incy://add/' + encodeURIComponent(subUrl) : '');
+          if (incyUrl) {
+            incyBtn.setAttribute('data-incy-url', incyUrl);
+            if (incyBtn.tagName === 'A') incyBtn.href = incyUrl;
+          }
+          if (subUrl) incyBtn.setAttribute('data-sub-url', subUrl);
+          if (data.vpn.vless_url) incyBtn.setAttribute('data-vless-url', data.vpn.vless_url);
         }
 
         const vlessBtn = document.getElementById('btn-copy-vless');
@@ -570,9 +578,14 @@ function initKeyRegeneration() {
         showToast('Ключ успешно обновлен!');
         const incyBtn = document.getElementById('btn-incy-connect');
         if (incyBtn) {
-          const newUrl = data.vless_url || data.connect_url;
-          incyBtn.setAttribute('data-connect-url', newUrl);
-          if (incyBtn.tagName === 'A') incyBtn.href = newUrl;
+          const subUrl = data.sub_url || incyBtn.getAttribute('data-sub-url');
+          const incyUrl = data.incy_url || (subUrl ? 'incy://add/' + encodeURIComponent(subUrl) : '');
+          if (incyUrl) {
+            incyBtn.setAttribute('data-incy-url', incyUrl);
+            if (incyBtn.tagName === 'A') incyBtn.href = incyUrl;
+          }
+          if (subUrl) incyBtn.setAttribute('data-sub-url', subUrl);
+          if (data.vless_url) incyBtn.setAttribute('data-vless-url', data.vless_url);
         }
 
         const copyBtn = document.getElementById('btn-copy-vless');

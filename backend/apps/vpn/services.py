@@ -289,6 +289,8 @@ def get_incy_routing_dict(key=None) -> dict:
     if whitelist_enabled:
         direct_sites = [
             "geosite:private",
+            "geosite:ru",
+            "geosite:by",
             "geosite:category-gov-ru",
             "geosite:vk",
             "geosite:yandex",
@@ -387,24 +389,22 @@ def get_incy_routing_dict(key=None) -> dict:
             if clean and f"domain:{clean}" not in direct_sites:
                 direct_sites.append(f"domain:{clean}")
 
-    routing_url = key.get_routing_url() if key else ""
-
     result = {
         "Name": profile_name,
         "GlobalProxy": "true",
-        "UseChunkFiles": "true",
-        "RemoteDns": "1.1.1.1",
-        "DomesticDns": "77.88.8.8",
-        "RemoteDNSType": "UDP",
-        "RemoteDNSDomain": "",
+        "RouteOrder": route_order,
+        "RemoteDNSType": "DoH",
+        "RemoteDNSDomain": "https://cloudflare-dns.com/dns-query",
         "RemoteDNSIP": "1.1.1.1",
-        "DomesticDNSType": "UDP",
+        "DomesticDNSType": "DoU",
         "DomesticDNSDomain": "",
         "DomesticDNSIP": "77.88.8.8",
         "Geoipurl": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geoip/release/geoip.dat",
         "Geositeurl": "https://cdn.jsdelivr.net/gh/hydraponique/roscomvpn-geosite/release/geosite.dat",
         "LastUpdated": str(int(time.time())),
-        "RouteOrder": route_order,
+        "DnsHosts": {
+            "cloudflare-dns.com": "1.1.1.1"
+        },
         "DirectSites": direct_sites,
         "DirectIp": direct_ips,
         "ProxySites": [
@@ -427,13 +427,9 @@ def get_incy_routing_dict(key=None) -> dict:
         ],
         "BlockIp": [],
         "DomainStrategy": "IPIfNonMatch",
-        "FakeDNS": "false"
+        "FakeDNS": "false",
+        "UseChunkFiles": "true"
     }
-
-    if routing_url:
-        result["sourceURL"] = routing_url
-        result["sourceLastUpdated"] = str(int(time.time()))
-        result["updateInterval"] = 24
 
     return result
 

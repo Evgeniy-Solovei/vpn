@@ -286,11 +286,16 @@
       </div>
 
       <div style="margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px solid rgba(255, 255, 255, 0.06);">
-        <a href="{{ vpn_key.get_incy_routing_deeplink }}" class="btn btn-secondary btn-block" style="font-size: 0.78rem; font-weight: 700; padding: 0.5rem; justify-content: center; border-color: rgba(167, 139, 250, 0.4); color: #c4b5fd; text-decoration: none; width: 100%;">
-          ⚡ Активировать обход в INCY на телефоне
-        </a>
+        <div style="display: flex; gap: 0.5rem;">
+          <a href="{{ vpn_key.get_incy_routing_deeplink }}" class="btn btn-secondary" style="flex: 1; font-size: 0.78rem; font-weight: 700; padding: 0.5rem; justify-content: center; border-color: rgba(167, 139, 250, 0.4); color: #c4b5fd; text-decoration: none;">
+            ⚡ Активировать обход в INCY
+          </a>
+          <button type="button" class="btn btn-secondary" data-copy="{{ vpn_key.get_incy_routing_deeplink }}" title="Скопировать ссылку обхода" style="font-size: 0.78rem; padding: 0.5rem 0.65rem; border-color: rgba(167, 139, 250, 0.4); color: #c4b5fd;">
+            📋
+          </button>
+        </div>
         <span style="font-size: 0.7rem; color: var(--text-dim); display: block; text-align: center; margin-top: 0.3rem;">
-          Нажмите на телефоне, чтобы INCY пустил сервисы РФ мимо VPN
+          Нажмите на телефоне, чтобы INCY пустил сервисы РФ и ВК мимо VPN
         </span>
       </div>
     </div>
@@ -557,9 +562,14 @@
       </a>
 
       <!-- Routing bypass button -->
-      <a href="{{ vpn_key.get_incy_routing_deeplink }}" class="btn btn-secondary btn-block" style="font-size: 0.8rem; font-weight: 700; padding: 0.55rem; justify-content: center; border-color: rgba(167, 139, 250, 0.4); color: #c4b5fd; text-decoration: none; margin-top: 0.5rem; width: 100%;">
-        🛡️ Включить умный обход (ВК, Банки, Госуслуги напрямую)
-      </a>
+      <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+        <a href="{{ vpn_key.get_incy_routing_deeplink }}" class="btn btn-secondary" style="flex: 1; font-size: 0.8rem; font-weight: 700; padding: 0.55rem; justify-content: center; border-color: rgba(167, 139, 250, 0.4); color: #c4b5fd; text-decoration: none;">
+          🛡️ Включить умный обход (ВК, Банки напрямую)
+        </a>
+        <button type="button" class="btn btn-secondary" data-copy="{{ vpn_key.get_incy_routing_deeplink }}" title="Скопировать ссылку обхода" style="font-size: 0.8rem; padding: 0.55rem 0.75rem; border-color: rgba(167, 139, 250, 0.4); color: #c4b5fd;">
+          📋
+        </button>
+      </div>
       <div style="margin-top: 0.6rem; background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 0.55rem 0.75rem; font-size: 0.78rem; color: #34d399; display: flex; align-items: center; gap: 0.45rem;">
         <span>👉</span>
         <span><b>Шаг 3:</b> В приложении появится группа подписки со всеми 5 серверами. Выберите нужную страну и нажмите <b>«Подключить»</b>!</span>
@@ -829,9 +839,14 @@
         <div style="font-size: 0.82rem; font-weight: 700; color: #fff;">📱 Для приложения INCY на телефоне:</div>
         <div style="font-size: 0.72rem; color: var(--text-dim);">Убирает ошибку «Включен VPN» в приложении ВК и банках</div>
       </div>
-      <a href="{{ vpn_key.get_incy_routing_deeplink }}" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.35rem 0.75rem; border-color: #a78bfa; color: #c4b5fd; text-decoration: none; white-space: nowrap;">
-        ⚡ Включить обход в INCY
-      </a>
+      <div style="display: flex; gap: 0.4rem;">
+        <a href="{{ vpn_key.get_incy_routing_deeplink }}" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.35rem 0.75rem; border-color: #a78bfa; color: #c4b5fd; text-decoration: none; white-space: nowrap;">
+          ⚡ Включить обход в INCY
+        </a>
+        <button type="button" class="btn btn-secondary" data-copy="{{ vpn_key.get_incy_routing_deeplink }}" title="Скопировать ссылку обхода" style="font-size: 0.78rem; padding: 0.35rem 0.6rem; border-color: #a78bfa; color: #c4b5fd;">
+          📋
+        </button>
+      </div>
     </div>
 
     <div style="display: flex; gap: 0.75rem;">

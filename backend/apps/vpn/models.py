@@ -280,9 +280,14 @@ class VPNKey(models.Model):
         return f"{site_url}/sub/{self.sub_token}"
 
     def get_incy_url(self) -> str:
-        # INCY deep link scheme format for 1-click import of all cluster servers
+        # INCY deep link scheme format for 1-click cluster subscription import
         sub_url = self.get_sub_url()
-        return f"incy://import/{sub_url}"
+        return f"incy://add/{quote(sub_url, safe='')}"
+
+    def get_happ_url(self) -> str:
+        # Happ deep link scheme format for 1-click cluster subscription import
+        sub_url = self.get_sub_url()
+        return f"happ://add/{quote(sub_url, safe='')}"
 
     def get_hiddify_url(self) -> str:
         # Hiddify deep link scheme format
@@ -352,8 +357,17 @@ class VPNKey(models.Model):
         import json, base64
         from .services import get_incy_routing_dict
         cfg = get_incy_routing_dict(self)
-        encoded = base64.b64encode(json.dumps(cfg).encode('utf-8')).decode('utf-8')
+        raw_json = json.dumps(cfg, separators=(',', ':'), ensure_ascii=False)
+        encoded = base64.urlsafe_b64encode(raw_json.encode('utf-8')).decode('utf-8').rstrip('=')
         return f"incy://routing/onadd/{encoded}"
+
+    def get_happ_routing_deeplink(self) -> str:
+        import json, base64
+        from .services import get_incy_routing_dict
+        cfg = get_incy_routing_dict(self)
+        raw_json = json.dumps(cfg, separators=(',', ':'), ensure_ascii=False)
+        encoded = base64.urlsafe_b64encode(raw_json.encode('utf-8')).decode('utf-8').rstrip('=')
+        return f"happ://routing/onadd/{encoded}"
 
 
 class UserServerTraffic(models.Model):
