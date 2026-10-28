@@ -571,26 +571,42 @@ def sync_all_keys_to_panel() -> int:
     return synced
 
 
-def detect_device_platform_and_name(ua: str) -> tuple[str, str]:
+def detect_device_platform_and_name(ua: str) -> tuple[Optional[str], Optional[str]]:
     """Parses User-Agent to determine platform and friendly device name."""
     ua_str = (ua or "").lower()
 
+    # Ignore automated scripts, health-checks, curl, python
+    if any(bot in ua_str for bot in ["curl", "python", "wget", "aiohttp", "urllib", "go-http-client"]):
+        return None, None
+
+    # Check Mac FIRST (macOS also uses CFNetwork and Darwin!)
+    if "macintosh" in ua_str or "mac os x" in ua_str or "macos" in ua_str:
+        return "macos", "Apple Mac"
+
+    # iOS (iPhone / iPad)
     if "iphone" in ua_str:
         return "ios", "Apple iPhone"
     if "ipad" in ua_str:
         return "ios", "Apple iPad"
     if "cfnetwork" in ua_str or "darwin" in ua_str:
-        return "ios", "Apple Устройство (iOS)"
+        return "ios", "Apple iPhone"
+
+    # Android
     if "android" in ua_str:
         return "android", "Android Смартфон"
-    if "macintosh" in ua_str or "mac os x" in ua_str:
-        return "macos", "Apple Mac"
+
+    # Windows
     if "windows" in ua_str:
         return "windows", "Windows Компьютер"
+
+    # Smart TV
     if "tv" in ua_str or "tizen" in ua_str or "webos" in ua_str or "bravia" in ua_str:
         return "tv", "Smart TV"
+
+    # Routers
     if "sing-box" in ua_str or "v2ray" in ua_str or "xray" in ua_str or "clash" in ua_str:
-        return "router", "Роутер / Sing-box"
+        return "router", "Роутер"
+
     return "other", "Мобильное устройство"
 
 
@@ -613,6 +629,8 @@ def register_user_device(user, request=None, key=None, client_type="INCY") -> Op
             ip = request.META.get('REMOTE_ADDR')
 
     platform, device_name = detect_device_platform_and_name(ua)
+    if not platform:
+        return None
 
     # Strictly deterministic per user + platform to prevent duplicates
     device_id = f"{user.id}_{platform}"
@@ -653,8 +671,10 @@ def get_user_devices_info(user, key=None) -> dict:
 
     max_devices = getattr(key, 'max_devices', 5) or 5
 
-    # Clean up any legacy phantom browser records
+    # Clean up any legacy phantom browser records, curl, or stale test tools
     VPNDevice.objects.filter(user=user, client_type='Личный кабинет').delete()
+    VPNDevice.objects.filter(user=user, user_agent__icontains='curl').delete()
+    VPNDevice.objects.filter(user=user, user_agent__icontains='python').delete()
 
     existing_devices = list(VPNDevice.objects.filter(user=user, is_active=True).order_by('-last_active_at'))
 
