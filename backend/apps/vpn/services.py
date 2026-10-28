@@ -380,11 +380,13 @@ def get_incy_routing_dict(key=None) -> dict:
         ]
         route_order = "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, РФ)"
+        global_proxy = "false"
     else:
         direct_sites = ["geosite:private"]
         direct_ips = ["geoip:private"]
         route_order = "block-proxy-direct"
         profile_name = "VPN live-dev (Весь трафик)"
+        global_proxy = "true"
 
     if key:
         for d in key.get_custom_domains():
@@ -394,7 +396,7 @@ def get_incy_routing_dict(key=None) -> dict:
 
     result = {
         "Name": profile_name,
-        "GlobalProxy": "true",
+        "GlobalProxy": global_proxy,
         "RouteOrder": route_order,
         "RemoteDNSType": "DoH",
         "RemoteDNSDomain": "https://cloudflare-dns.com/dns-query",
