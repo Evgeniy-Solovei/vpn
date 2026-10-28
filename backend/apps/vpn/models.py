@@ -355,19 +355,21 @@ class VPNKey(models.Model):
 
     def get_incy_routing_deeplink(self) -> str:
         import json, base64
+        from urllib.parse import quote
         from .services import get_incy_routing_dict
         cfg = get_incy_routing_dict(self)
         raw_json = json.dumps(cfg, separators=(',', ':'), ensure_ascii=False)
-        encoded = base64.urlsafe_b64encode(raw_json.encode('utf-8')).decode('utf-8').rstrip('=')
-        return f"incy://routing/onadd/{encoded}"
+        encoded = base64.b64encode(raw_json.encode('utf-8')).decode('utf-8')
+        return f"incy://routing/onadd/{quote(encoded, safe='')}"
 
     def get_happ_routing_deeplink(self) -> str:
         import json, base64
+        from urllib.parse import quote
         from .services import get_incy_routing_dict
         cfg = get_incy_routing_dict(self)
         raw_json = json.dumps(cfg, separators=(',', ':'), ensure_ascii=False)
-        encoded = base64.urlsafe_b64encode(raw_json.encode('utf-8')).decode('utf-8').rstrip('=')
-        return f"happ://routing/onadd/{encoded}"
+        encoded = base64.b64encode(raw_json.encode('utf-8')).decode('utf-8')
+        return f"happ://routing/onadd/{quote(encoded, safe='')}"
 
 
 class UserServerTraffic(models.Model):

@@ -281,12 +281,10 @@ function initIncyDeeplinkFallback() {
       
       // 1. Routing bypass links (incy://routing/onadd/... or happ://routing/onadd/...)
       if (href.startsWith('incy://routing/') || href.startsWith('happ://routing/')) {
-        e.preventDefault();
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(href).catch(() => {});
         }
         showToast('🛡️ Активируем умный обход в INCY...');
-        window.location.href = href;
         return;
       }
 
@@ -304,15 +302,9 @@ function initIncyDeeplinkFallback() {
 
       showToast('✓ Все серверы в буфере! Запускаем INCY...');
 
-      // Force protocol navigation so Chrome / Safari on macOS and iOS trigger application open
-      if (deeplink && deeplink.startsWith('incy://')) {
-        e.preventDefault();
-        window.location.href = deeplink;
-      }
-
       setTimeout(() => {
-        showToast('✓ В приложении INCY нажмите «Подключить»');
-      }, 1200);
+        showToast('👉 В приложении INCY нажмите «Подключить»');
+      }, 1500);
     });
   });
 }

@@ -298,35 +298,99 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:by",
             "domain:su",
             "domain:xn--p1ai",
-            # Explicit VK Ecosystem (prevents "VPN detected" banner in VK app/web)
+            # Explicit VK Ecosystem (prevents 'VPN detected' banner in VK app/web)
             "domain:vk.com",
             "domain:vk.ru",
+            "domain:vk.me",
+            "domain:vk.cc",
+            "domain:vk.link",
             "domain:userapi.com",
             "domain:vk-cdn.net",
             "domain:vkuseraudio.net",
             "domain:vkuser.net",
             "domain:vk-portal.net",
             "domain:vkcache.com",
-            "domain:vk.me",
-            "domain:vk.cc",
             "domain:vkplay.ru",
             "domain:vkvideo.ru",
             "domain:m.vk.com",
             "domain:api.vk.com",
-            "domain:vk.link",
+            "domain:oauth.vk.com",
+            "domain:login.vk.com",
+            "domain:id.vk.com",
+            "domain:connect.vk.com",
+            "domain:vkforms.ru",
+            "domain:vklive.net",
+            "domain:vkclips.ru",
+            "domain:vk-apps.com",
+            "domain:vkcalls.ru",
+            # Mail.ru Ecosystem (Mail app, Cloud, Auth, Imap/Smtp)
+            "domain:mail.ru",
+            "domain:e.mail.ru",
+            "domain:inbox.ru",
+            "domain:bk.ru",
+            "domain:list.ru",
+            "domain:imgsmail.ru",
+            "domain:cloud.mail.ru",
+            "domain:m.mail.ru",
+            "domain:api.mail.ru",
+            "domain:auth.mail.ru",
+            "domain:filin.mail.ru",
+            "domain:octavius.mail.ru",
+            "domain:target.my.com",
+            "domain:my.games",
+            # Bitrix24 Ecosystem (Bitrix24 cloud portals, CRM, mobile app)
+            "domain:bitrix24.ru",
+            "domain:bitrix24.by",
+            "domain:bitrix24.com",
+            "domain:bitrix24.kz",
+            "domain:b24.by",
+            "domain:b24-am.com",
+            "domain:bitrix.info",
+            "domain:bitrix.cloud",
+            "domain:bitrix24.site",
+            "domain:1c-bitrix.ru",
+            "domain:bitrix.ru",
+            "domain:bx.vc",
+            "domain:bitrix24.net",
+            "domain:bitrix24.eu",
+            # Sberbank Ecosystem (Online app, API, ID, Kuper/SberMarket)
+            "domain:sberbank.ru",
+            "domain:sberbank.com",
+            "domain:sber.ru",
+            "domain:sberid.ru",
+            "domain:sberprime.ru",
+            "domain:spasibosberbank.ru",
+            "domain:sberauto.com",
+            "domain:sbermegamarket.ru",
+            "domain:megamarket.ru",
+            "domain:sbermarket.ru",
+            "domain:kuper.ru",
+            "domain:sberbank-tele.com",
+            "domain:sberleasing.ru",
+            "domain:sberinvest.ru",
+            "domain:domclick.ru",
             # Russian Government & Public Services
             "domain:gosuslugi.ru",
+            "domain:gosuslugi.by",
+            "domain:esia.gosuslugi.ru",
+            "domain:pgu.mos.ru",
             "domain:nalog.ru",
+            "domain:nalog.gov.ru",
             "domain:mos.ru",
             "domain:pbr.ru",
             "domain:cbr.ru",
+            "domain:customs.gov.ru",
+            "domain:fssp.gov.ru",
+            "domain:mvd.ru",
             # Banks & Payment Systems (RU & BY)
-            "domain:sberbank.ru",
-            "domain:sber.ru",
             "domain:tbank.ru",
             "domain:tinkoff.ru",
+            "domain:tcsbank.ru",
             "domain:alfabank.ru",
+            "domain:alfa-bank.by",
+            "domain:alfabank.by",
             "domain:vtb.ru",
+            "domain:vtb.by",
             "domain:gazprombank.ru",
             "domain:raiffeisen.ru",
             "domain:mir-connect.ru",
@@ -334,32 +398,44 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:sbp.nspk.ru",
             "domain:belarusbank.by",
             "domain:priorbank.by",
-            "domain:alfa-bank.by",
             "domain:mtbank.by",
-            # Ecosystems, Search & Mail
+            "domain:belinvestbank.by",
+            "domain:statusbank.by",
+            "domain:bsb.by",
+            "domain:bnb.by",
+            # Ecosystems, Search & Media
             "domain:yandex.ru",
+            "domain:yandex.by",
             "domain:ya.ru",
             "domain:yastatic.net",
             "domain:dzen.ru",
-            "domain:mail.ru",
             "domain:ok.ru",
-            # Marketplaces & Anti-DDoS Portals
+            # Marketplaces & Logistics
             "domain:avito.ru",
             "domain:wildberries.ru",
             "domain:wb.ru",
             "domain:wbstatic.net",
             "domain:ozon.ru",
             "domain:ozonusercontent.com",
+            "domain:cdek.ru",
+            "domain:pochta.ru",
             # Streaming & Media (RF)
             "domain:kinopoisk.ru",
             "domain:ivi.ru",
             "domain:okko.tv",
             "domain:rutube.ru",
             "domain:smotrim.ru",
+            "domain:premier.one",
+            "domain:kion.ru",
+            "domain:more.tv",
         ]
-        # VKontakte (AS47541) and domestic media IP CIDR blocks
-        # Routes raw socket connections from official VK iOS/Android app directly
-        vk_ip_subnets = [
+        # Dedicated domestic IP CIDR blocks (AS47541, AS34700, AS197695, AS47764, AS13238, etc.)
+        # Direct routing guarantees raw socket connections bypass the VPN tunnel
+        direct_ips = [
+            "geoip:private",
+            "geoip:ru",
+            "geoip:by",
+            # VK (AS47541 & edge nodes)
             "87.240.128.0/18",
             "93.186.224.0/20",
             "95.142.192.0/20",
@@ -371,22 +447,43 @@ def get_incy_routing_dict(key=None) -> dict:
             "89.221.235.0/24",
             "91.231.132.0/22",
             "217.69.128.0/20",
-        ]
-        direct_ips = [
-            "geoip:private",
-            "geoip:ru",
-            "geoip:by",
-            *vk_ip_subnets,
+            "217.69.132.0/22",
+            "217.69.136.0/21",
+            # Sberbank (AS34700 & AS197695)
+            "194.54.14.0/23",
+            "194.54.12.0/24",
+            "193.243.144.0/22",
+            "84.252.128.0/19",
+            "91.223.180.0/22",
+            "185.150.152.0/22",
+            "195.239.210.0/24",
+            "194.186.207.0/24",
+            "212.45.1.0/24",
+            # Mail.ru (AS47764)
+            "94.100.176.0/20",
+            "94.100.180.0/22",
+            "217.69.139.0/24",
+            "128.140.168.0/21",
+            # Yandex (AS13238)
+            "87.250.224.0/19",
+            "93.158.128.0/18",
+            "213.180.192.0/19",
+            "5.255.255.0/24",
+            # T-Bank (AS41994)
+            "91.194.226.0/23",
+            "185.148.80.0/22",
+            # Alfa-Bank (AS15944)
+            "217.12.96.0/20",
         ]
         route_order = "block-direct-proxy"
-        profile_name = "VPN live-dev Умный обход (ВК, Банки, РФ)"
-        global_proxy = "false"
+        profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
+        global_proxy = False
     else:
         direct_sites = ["geosite:private"]
         direct_ips = ["geoip:private"]
         route_order = "block-proxy-direct"
         profile_name = "VPN live-dev (Весь трафик)"
-        global_proxy = "true"
+        global_proxy = True
 
     if key:
         for d in key.get_custom_domains():
@@ -431,8 +528,8 @@ def get_incy_routing_dict(key=None) -> dict:
         ],
         "BlockIp": [],
         "DomainStrategy": "IPIfNonMatch",
-        "FakeDNS": "false",
-        "UseChunkFiles": "true"
+        "FakeDNS": False,
+        "UseChunkFiles": True
     }
 
     return result
