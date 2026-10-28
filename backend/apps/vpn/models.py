@@ -280,9 +280,9 @@ class VPNKey(models.Model):
         return f"{site_url}/sub/{self.sub_token}"
 
     def get_incy_url(self) -> str:
-        # INCY deep link scheme format for 1-click import
+        # INCY deep link scheme format for 1-click import of all cluster servers
         sub_url = self.get_sub_url()
-        return f"incy://install-config?url={quote(sub_url)}"
+        return f"incy://import/{sub_url}"
 
     def get_hiddify_url(self) -> str:
         # Hiddify deep link scheme format

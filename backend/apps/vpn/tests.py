@@ -38,7 +38,7 @@ class VPNTestCase(TestCase):
     def test_incy_and_connect_urls(self):
         """INCY and connect URLs must be properly formed."""
         incy_url = self.key.get_incy_url()
-        self.assertTrue(incy_url.startswith("incy://install-config?url="))
+        self.assertTrue(incy_url.startswith("incy://import/"))
 
         connect_url = self.key.get_connect_url()
         self.assertIn(f"/vpn/connect/{self.key.sub_token}/", connect_url)
