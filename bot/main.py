@@ -398,32 +398,66 @@ async def cb_view_whitelist(call: CallbackQuery):
     vpn_info = data.get('vpn', {})
     whitelist_active = vpn_info.get('whitelist_enabled', True)
     custom_domains = vpn_info.get('custom_domains', [])
+    custom_proxy = vpn_info.get('custom_proxy_domains', [])
+    direct_zones = vpn_info.get('direct_zones', ['ru', 'by', 'su', 'рф'])
 
-    status_str = "🟢 <b>ВКЛЮЧЕН</b> (ресурсы РФ и РБ идут напрямую)" if whitelist_active else "⚪ <b>ВЫКЛЮЧЕН</b> (весь трафик через VPN)"
-    ru_by_str = "🟢 <b>Все сайты .ru и .by</b> открываются напрямую без VPN" if whitelist_active else "⚪ Сайты .ru и .by идут через зарубежный сервер"
+    ru_active = 'ru' in direct_zones
+    by_active = 'by' in direct_zones
+
+    ru_str = "🟢 <b>.ru, .рф:</b> НАПРЯМУЮ" if ru_active else "⚪ <b>.ru, .рф:</b> ЧЕРЕЗ VPN"
+    by_str = "🟢 <b>.by:</b> НАПРЯМУЮ" if by_active else "⚪ <b>.by:</b> ЧЕРЕЗ VPN"
 
     dom_lines = []
     if custom_domains:
-        for idx, dom in enumerate(custom_domains[:15], 1):
-            dom_lines.append(f"  {idx}. <code>{dom}</code>")
-        custom_str = "📋 <b>Ваши персональные сайты-исключения:</b>\n" + "\n".join(dom_lines)
-    else:
-        custom_str = "📋 <b>Ваши персональные сайты:</b> <i>пока нет (все сайты .ru и .by уже встроены по умолчанию)</i>"
+        for idx, dom in enumerate(custom_domains[:10], 1):
+            dom_lines.append(f"  🟢 {idx}. <code>{dom}</code> (без VPN)")
+    if custom_proxy:
+        for idx, dom in enumerate(custom_proxy[:10], 1):
+            dom_lines.append(f"  🚀 {idx}. <code>{dom}</code> (строго через VPN)")
+
+    custom_str = "📋 <b>Ваши персональные сайты:</b>\n" + "\n".join(dom_lines) if dom_lines else "📋 <b>Персональные сайты:</b> <i>пока не добавлены</i>"
 
     routing_deeplink = vpn_info.get('routing_deeplink')
 
     text = (
-        f"🛡️ <b>Управление Белым списком сайтов (Split-Tunneling)</b>\n\n"
-        f"Сайты из белого списка открываются <b>напрямую на полной скорости вашего интернета</b> без шифрования и задержек.\n\n"
-        f"• Режим: {status_str}\n"
-        f"• Обход РФ и РБ: {ru_by_str}\n\n"
+        f"🛡️ <b>Настройка маршрутизации и исключений</b>\n\n"
+        f"Сайты напрямую открываются с вашего домашнего IP (без расхода квоты и блокировок ВК/банков):\n\n"
+        f"• {ru_str}\n"
+        f"• {by_str}\n\n"
         f"{custom_str}\n\n"
-        f"💡 <i>ВКонтакте, Банки (Сбер, Т-Банк, Беларусбанк), Госуслуги, Ozon, WB и сервисы Яндекса работают напрямую!</i>\n\n"
-        f"📱 <i>Если приложение ВК ругается на VPN — нажмите <b>«⚡ Включить обход в INCY»</b> ниже, чтобы применить правила в 1 клик.</i>\n\n"
-        f"👇 Нажмите <b>«➕ Добавить сайт в исключения»</b>, чтобы внести свой домен:"
+        f"💡 <i>ВК, Mail.ru, банки, Госуслуги, Ozon, WB работают напрямую!</i>\n\n"
+        f"ℹ️ <i>После изменения настроек просто нажмите «Обновить» (стрелочки) в приложении Incy.</i>"
     )
-    await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_whitelist_menu(whitelist_active, len(custom_domains), routing_deeplink))
+    await call.message.edit_text(
+        text,
+        parse_mode="HTML",
+        reply_markup=get_whitelist_menu(
+            whitelist_active,
+            len(custom_domains),
+            routing_deeplink,
+            direct_zones=direct_zones,
+            custom_proxy_count=len(custom_proxy)
+        )
+    )
     await call.answer()
+
+
+@dp.callback_query(F.data.in_(["toggle_zone_ru", "toggle_zone_by"]))
+async def cb_toggle_zone(call: CallbackQuery):
+    zone = "ru" if call.data == "toggle_zone_ru" else "by"
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/vpn/custom-whitelist/",
+                json={"telegram_id": str(call.from_user.id), "action": "toggle_zone", "zone": zone}
+            )
+            res_data = resp.json()
+            msg = res_data.get('message', 'Настройки зоны обновлены')
+            await call.answer(msg, show_alert=True)
+        except Exception as e:
+            logger.error(f"Error toggling zone {zone}: {e}")
+            await call.answer("Ошибка при переключении зоны", show_alert=True)
+    return await cb_view_whitelist(call)
 
 
 @dp.callback_query(F.data.in_(["toggle_ru_by", "toggle_whitelist_quick"]))
@@ -436,12 +470,29 @@ async def cb_toggle_ru_by(call: CallbackQuery):
             )
             res_data = resp.json()
             is_active = res_data.get('whitelist_enabled')
-            msg = "✓ Обход .ru и .by ВКЛЮЧЕН (напрямую)!" if is_active else "✓ Обход .ru и .by ВЫКЛЮЧЕН (через VPN)"
+            msg = "✓ Обход РФ и РБ ВКЛЮЧЕН!" if is_active else "✓ Обход РФ и РБ ВЫКЛЮЧЕН (весь трафик в VPN)"
             await call.answer(msg, show_alert=True)
         except Exception as e:
             logger.error(f"Error toggling whitelist: {e}")
             await call.answer("Ошибка при переключении", show_alert=True)
     return await cb_view_whitelist(call)
+
+
+@dp.callback_query(F.data == "add_proxy_site")
+async def cb_add_proxy_site(call: CallbackQuery):
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="◀️ Назад к белому списку", callback_data="view_whitelist")]
+    ])
+    text = (
+        f"🚀 <b>Добавить сайт строго через VPN</b>\n\n"
+        f"Отправьте мне в чат домен с префиксом <code>vpn</code>, например:\n"
+        f"• <code>vpn blocked-news.ru</code>\n"
+        f"• <code>vpn rutracker.org</code>\n\n"
+        f"Этот сайт гарантированно пойдёт через сервер Франции, даже если он на .ru или .by!"
+    )
+    await call.message.edit_text(text, parse_mode="HTML", reply_markup=kb)
+    await call.answer()
 
 
 @dp.callback_query(F.data == "clear_wl_sites")
@@ -782,28 +833,37 @@ async def cmd_promo(message: Message):
 @dp.message(F.text & ~F.text.startswith("/"))
 async def handle_user_text_message(message: Message):
     text = (message.text or "").strip()
-    # Check if text looks like a domain or URL to whitelist
-    words = text.replace(",", " ").split()
+    is_proxy_req = text.lower().startswith("vpn ") or text.lower().startswith("впн ")
+    action_type = "append_proxy" if is_proxy_req else "append"
+    if is_proxy_req:
+        clean_input = text.split(" ", 1)[1].strip()
+    else:
+        clean_input = text
+
+    # Check if text looks like a domain or URL
+    words = clean_input.replace(",", " ").split()
     has_domain = any("." in w and len(w) > 3 and not w.startswith("/") for w in words)
-    if has_domain and len(text) < 500:
-        clean_text = text.replace("http://", "").replace("https://", "").strip()
+    if has_domain and len(clean_input) < 500:
+        clean_text = clean_input.replace("http://", "").replace("https://", "").strip()
         async with httpx.AsyncClient(timeout=10.0) as client:
             try:
                 resp = await client.post(
                     f"{WEB_API_URL}/vpn/custom-whitelist/",
-                    json={"telegram_id": str(message.from_user.id), "action": "append", "domain": clean_text}
+                    json={"telegram_id": str(message.from_user.id), "action": action_type, "domain": clean_text}
                 )
                 res_data = resp.json()
                 if res_data.get('success'):
                     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
                     kb = InlineKeyboardMarkup(inline_keyboard=[
-                        [InlineKeyboardButton(text="🛡️ Открыть Белый список", callback_data="view_whitelist")],
+                        [InlineKeyboardButton(text="🛡️ Открыть настройки", callback_data="view_whitelist")],
                         [InlineKeyboardButton(text="🏠 В главное меню", callback_data="main_menu")]
                     ])
+                    route_desc = "<b>строго через VPN</b>" if is_proxy_req else "<b>напрямую без VPN</b>"
                     await message.answer(
-                        f"✅ <b>Сайт(ы) успешно добавлены в белый список!</b>\n\n"
-                        f"Домены: <code>{clean_text}</code>\n\n"
-                        f"Они будут открываться <b>напрямую без VPN</b> на полной скорости вашего интернета.",
+                        f"✅ <b>Сайт(ы) успешно настроены!</b>\n\n"
+                        f"Домены: <code>{clean_text}</code>\n"
+                        f"Маршрут: {route_desc}\n\n"
+                        f"ℹ️ <i>Нажмите «Обновить» (стрелочки) в приложении Incy, чтобы применить.</i>",
                         parse_mode="HTML",
                         reply_markup=kb
                     )

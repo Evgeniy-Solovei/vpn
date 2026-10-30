@@ -801,36 +801,55 @@
       Сайты из белого списка открываются <strong>напрямую мимо VPN</strong> на полной скорости вашего интернета (без капчи и задержек).
     </p>
 
+    <!-- Zones Management -->
     <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 0.85rem; margin-bottom: 1rem;">
-      <div style="font-weight: 700; color: #34d399; font-size: 0.88rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
-        <span>🇷🇺 🇧🇾</span> Все ресурсы РФ и Беларуси (.ru, .by, .рф, .su)
+      <div style="font-weight: 700; color: #34d399; font-size: 0.88rem; margin-bottom: 0.35rem; display: flex; align-items: center; justify-content: space-between;">
+        <span>🌐 Доменные зоны напрямую (без VPN)</span>
+        <span style="font-size: 0.72rem; color: var(--text-dim);">нажмите для вкл/выкл</span>
       </div>
-      <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.45;">
-        При включенном белом списке <strong>все сайты РФ и РБ</strong>, банки (Сбер, Т-Банк, Беларусбанк), Госуслуги, маркетплейсы (Ozon, Wildberries) и сервисы Яндекса открываются <strong>напрямую на полной скорости</strong> без расхода VPN-трафика и капчи.
+      <p style="font-size: 0.76rem; color: var(--text-muted); margin: 0 0 0.6rem 0; line-height: 1.4;">
+        Выбранные зоны открываются напрямую с вашего домашнего IP (без расхода квоты и блокировок ВК/банков):
       </p>
+      <div id="direct-zones-container" style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
+        <button type="button" class="zone-pill-btn btn btn-secondary active" data-zone="ru" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; border-color: rgba(52, 211, 153, 0.4); color: #34d399;">
+          🇷🇺 .ru, .рф <span class="zone-status">✓</span>
+        </button>
+        <button type="button" class="zone-pill-btn btn btn-secondary active" data-zone="by" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; border-color: rgba(52, 211, 153, 0.4); color: #34d399;">
+          🇧🇾 .by <span class="zone-status">✓</span>
+        </button>
+        <button type="button" class="zone-pill-btn btn btn-secondary active" data-zone="su" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; border-color: rgba(52, 211, 153, 0.4); color: #34d399;">
+          🌐 .su <span class="zone-status">✓</span>
+        </button>
+      </div>
+      <input type="hidden" id="direct-zones-hidden" value="{{ vpn_key.direct_zones|default:'ru,by,su,рф' }}">
     </div>
 
-    <!-- Quick Presets -->
-    <div style="display: flex; gap: 0.45rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
-      <button type="button" class="btn btn-secondary" id="preset-add-by" style="font-size: 0.72rem; padding: 0.25rem 0.55rem;">
-        🇧🇾 + Добавить .by
-      </button>
-      <button type="button" class="btn btn-secondary" id="preset-add-ru" style="font-size: 0.72rem; padding: 0.25rem 0.55rem;">
-        🇷🇺 + Добавить .ru, .рф
-      </button>
-      <button type="button" class="btn btn-secondary" id="preset-clear-whitelist" style="font-size: 0.72rem; padding: 0.25rem 0.55rem; color: #fca5a5;">
-        🗑️ Очистить
-      </button>
-    </div>
-
+    <!-- Direct Domains Input -->
     <div style="margin-bottom: 1rem;">
-      <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.4rem;">
-        Список доменов (через запятую или с новой строки):
+      <label style="font-size: 0.8rem; font-weight: 600; color: #fff; display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+        <span>🟢 Мои сайты напрямую (мимо VPN):</span>
+        <span style="font-size: 0.72rem; color: var(--text-dim); font-weight: normal;">по одному на строку</span>
       </label>
-      <textarea id="custom-whitelist-input" class="form-input" rows="5" style="font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.5;" placeholder="*.ru&#10;*.by&#10;mycompany.com&#10;provider.by">{{ vpn_key.custom_whitelist }}</textarea>
-      <span style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.35rem; display: block;">
-        💡 Не нужно вводить https:// или слеши — просто домены (например <code>work.corp</code> или <code>game-server.net</code>).
+      <textarea id="custom-whitelist-input" class="form-input" rows="3" style="font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.4;" placeholder="mycompany.com&#10;corp-portal.net">{{ vpn_key.custom_whitelist }}</textarea>
+      <span style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem; display: block;">
+        💡 Для сайтов, которым нужен ваш домашний IP (например, рабочий портал или банк на .com).
       </span>
+    </div>
+
+    <!-- Proxy Domains Input -->
+    <div style="margin-bottom: 1.1rem; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 8px; padding: 0.75rem;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: #c4b5fd; display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+        <span>🚀 Сайты строго через VPN (даже если .ru / .by):</span>
+        <span style="font-size: 0.72rem; color: var(--text-dim); font-weight: normal;">по одному на строку</span>
+      </label>
+      <textarea id="custom-proxy-input" class="form-input" rows="3" style="font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.4; border-color: rgba(139, 92, 246, 0.3);" placeholder="rutracker.org&#10;blocked-news.ru">{{ vpn_key.custom_proxy_list }}</textarea>
+      <span style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem; display: block;">
+        💡 Если какой-то сайт на .ru или .by заблокирован провайдером — впишите его сюда, и он пойдёт через Францию.
+      </span>
+    </div>
+
+    <div style="background: rgba(255,255,255,0.03); border-radius: 6px; padding: 0.5rem 0.75rem; margin-bottom: 1rem; font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+      <span>ℹ️</span> После сохранения просто нажмите <strong>«Обновить» (стрелочки)</strong> в приложении Incy.
     </div>
 
     <!-- INCY 1-click routing button -->

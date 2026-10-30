@@ -162,29 +162,34 @@ def get_traffic_menu() -> InlineKeyboardMarkup:
     ])
 
 
-def get_whitelist_menu(whitelist_enabled: bool, custom_domains_count: int, routing_deeplink: str = None) -> InlineKeyboardMarkup:
-    ru_by_btn = "🇷🇺 🇧🇾 Режим .ru и .by: 🟢 НАПРЯМУЮ" if whitelist_enabled else "🇷🇺 🇧🇾 Режим .ru и .by: ⚪ ЧЕРЕЗ VPN"
-    toggle_btn = "🛡️ Выключить белый список" if whitelist_enabled else "🛡️ Включить белый список"
+def get_whitelist_menu(whitelist_enabled: bool, custom_domains_count: int, routing_deeplink: str = None, direct_zones: list = None, custom_proxy_count: int = 0) -> InlineKeyboardMarkup:
+    zones = direct_zones if direct_zones is not None else ['ru', 'by', 'su', 'рф']
+    ru_active = 'ru' in zones
+    by_active = 'by' in zones
+
+    ru_btn = f"🇷🇺 .ru: {'🟢 ПРЯМО' if ru_active else '⚪ В VPN'}"
+    by_btn = f"🇧🇾 .by: {'🟢 ПРЯМО' if by_active else '⚪ В VPN'}"
 
     buttons = [
         [
-            InlineKeyboardButton(text=ru_by_btn, callback_data="toggle_ru_by")
+            InlineKeyboardButton(text=ru_btn, callback_data="toggle_zone_ru"),
+            InlineKeyboardButton(text=by_btn, callback_data="toggle_zone_by"),
         ],
         [
-            InlineKeyboardButton(text="➕ Добавить сайт в исключения", callback_data="add_wl_site")
+            InlineKeyboardButton(text="🟢 Добавить сайт БЕЗ VPN", callback_data="add_wl_site"),
+        ],
+        [
+            InlineKeyboardButton(text="🚀 Добавить сайт ЧЕРЕЗ VPN", callback_data="add_proxy_site"),
         ]
     ]
+    if custom_domains_count > 0 or custom_proxy_count > 0:
+        buttons.append([
+            InlineKeyboardButton(text=f"🗑️ Очистить мои сайты ({custom_domains_count + custom_proxy_count})", callback_data="clear_wl_sites")
+        ])
     if routing_deeplink:
         buttons.append([
-            InlineKeyboardButton(text="⚡ Включить обход в INCY (ВК, Банки)", url=routing_deeplink)
+            InlineKeyboardButton(text="⚡ Включить обход в INCY", url=routing_deeplink)
         ])
-    if custom_domains_count > 0:
-        buttons.append([
-            InlineKeyboardButton(text=f"🗑️ Очистить мои сайты ({custom_domains_count})", callback_data="clear_wl_sites")
-        ])
-    buttons.append([
-        InlineKeyboardButton(text=toggle_btn, callback_data="toggle_whitelist_quick")
-    ])
     buttons.append([
         InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")
     ])

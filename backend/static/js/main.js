@@ -683,44 +683,61 @@ function initBuyTraffic() {
 // ==========================================
 function initCustomWhitelist() {
   const saveBtn = document.getElementById('save-custom-whitelist-btn');
-  const textarea = document.getElementById('custom-whitelist-input');
-  if (!saveBtn || !textarea) return;
+  const directTextarea = document.getElementById('custom-whitelist-input');
+  const proxyTextarea = document.getElementById('custom-proxy-input');
+  const zonesHidden = document.getElementById('direct-zones-hidden');
+  const zonePills = document.querySelectorAll('.zone-pill-btn');
+  if (!saveBtn || !directTextarea) return;
 
-  const btnBy = document.getElementById('preset-add-by');
-  const btnRu = document.getElementById('preset-add-ru');
-  const btnClear = document.getElementById('preset-clear-whitelist');
+  // Initialize zone pills from hidden input
+  if (zonesHidden && zonePills.length > 0) {
+    const activeZones = (zonesHidden.value || 'ru,by,su,рф').toLowerCase().split(',');
+    zonePills.forEach(btn => {
+      const z = btn.getAttribute('data-zone');
+      const isActive = activeZones.includes(z);
+      updatePillUI(btn, isActive);
 
-  if (btnBy) {
-    btnBy.addEventListener('click', () => {
-      const cur = textarea.value.trim();
-      const byRule = '*.by';
-      if (!cur.includes(byRule)) {
-        textarea.value = cur ? cur + '\n' + byRule : byRule;
-        showToast('✓ Добавлено правило *.by в список');
-      }
+      btn.addEventListener('click', () => {
+        const currentlyActive = btn.classList.contains('active');
+        const nextActive = !currentlyActive;
+        updatePillUI(btn, nextActive);
+
+        // Update hidden field
+        const curList = [];
+        zonePills.forEach(b => {
+          if (b.classList.contains('active')) {
+            const bz = b.getAttribute('data-zone');
+            curList.push(bz);
+            if (bz === 'ru') curList.push('рф');
+          }
+        });
+        zonesHidden.value = curList.join(',');
+      });
     });
   }
 
-  if (btnRu) {
-    btnRu.addEventListener('click', () => {
-      const cur = textarea.value.trim();
-      const ruRules = '*.ru\n*.рф\n*.su';
-      if (!cur.includes('*.ru')) {
-        textarea.value = cur ? cur + '\n' + ruRules : ruRules;
-        showToast('✓ Добавлены правила *.ru, *.рф в список');
-      }
-    });
-  }
-
-  if (btnClear) {
-    btnClear.addEventListener('click', () => {
-      textarea.value = '';
-      showToast('Список очищен (нажмите «Сохранить»)');
-    });
+  function updatePillUI(btn, active) {
+    const statusSpan = btn.querySelector('.zone-status');
+    if (active) {
+      btn.classList.add('active');
+      btn.style.borderColor = 'rgba(52, 211, 153, 0.4)';
+      btn.style.color = '#34d399';
+      btn.style.background = 'rgba(16, 185, 129, 0.15)';
+      if (statusSpan) statusSpan.textContent = '✓';
+    } else {
+      btn.classList.remove('active');
+      btn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+      btn.style.color = 'var(--text-dim)';
+      btn.style.background = 'transparent';
+      if (statusSpan) statusSpan.textContent = '✗';
+    }
   }
 
   saveBtn.addEventListener('click', async () => {
-    const domains = textarea.value;
+    const domains = directTextarea.value;
+    const proxyDomains = proxyTextarea ? proxyTextarea.value : '';
+    const directZones = zonesHidden ? zonesHidden.value : 'ru,by,su,рф';
+
     saveBtn.disabled = true;
     const oldText = saveBtn.textContent;
     saveBtn.textContent = 'Сохранение...';
@@ -733,13 +750,17 @@ function initCustomWhitelist() {
           'X-CSRFToken': getCookie('csrftoken')
         },
         credentials: 'same-origin',
-        body: JSON.stringify({ domains: domains })
+        body: JSON.stringify({
+          domains: domains,
+          proxy_domains: proxyDomains,
+          direct_zones: directZones
+        })
       });
       const data = await res.json();
       if (data.success) {
-        showToast('✓ Список исключений обновлен!');
+        showToast('✓ Сохранено! Нажмите «Обновить» в приложении Incy');
         const countSpan = document.getElementById('custom-whitelist-count');
-        if (countSpan) {
+        if (countSpan && data.custom_domains) {
           countSpan.textContent = `${data.custom_domains.length} сайтов`;
         }
         const modal = document.getElementById('custom-whitelist-modal');

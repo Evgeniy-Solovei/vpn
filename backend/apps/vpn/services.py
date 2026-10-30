@@ -290,15 +290,24 @@ def get_incy_routing_dict(key=None) -> dict:
         direct_sites = [
             "domain:local",
             "domain:localhost",
-            "domain:ru",
-            "domain:by",
-            "domain:su",
-            "domain:xn--p1ai",
-            "domain:com.ru",
-            "domain:net.ru",
-            "domain:org.ru",
-            "domain:msk.ru",
-            "domain:spb.ru",
+        ]
+
+        # Active direct zones configured for this key (default: ru, by, su, рф)
+        active_zones = key.get_direct_zones() if (key and hasattr(key, 'get_direct_zones')) else ['ru', 'by', 'su', 'рф', 'xn--p1ai']
+        for z in active_zones:
+            if z in ('ru',):
+                direct_sites.extend(["domain:ru", "domain:com.ru", "domain:net.ru", "domain:org.ru", "domain:msk.ru", "domain:spb.ru"])
+            elif z in ('by',):
+                direct_sites.extend(["domain:by", "domain:gov.by", "domain:mil.by"])
+            elif z in ('su',):
+                direct_sites.append("domain:su")
+            elif z in ('рф', 'xn--p1ai'):
+                direct_sites.append("domain:xn--p1ai")
+            else:
+                direct_sites.append(f"domain:{z}")
+
+        # Core Russian & Belarusian government and service ecosystem (always direct when whitelist_enabled)
+        direct_sites.extend([
             "domain:gov.ru",
             "domain:kremlin.ru",
             "domain:duma.gov.ru",
@@ -446,7 +455,7 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:premier.one",
             "domain:kion.ru",
             "domain:more.tv",
-        ]
+        ])
         # Dedicated domestic IP CIDR blocks (AS47541, AS34700, AS197695, AS47764, AS13238, etc.)
         # Direct routing guarantees raw socket connections bypass the VPN tunnel
         direct_ips = [
@@ -499,7 +508,7 @@ def get_incy_routing_dict(key=None) -> dict:
             # Alfa-Bank (AS15944)
             "217.12.96.0/20",
         ]
-        route_order = "block-direct-proxy"
+        route_order = "block-proxy-direct" if (key and hasattr(key, 'get_custom_proxy_domains') and key.get_custom_proxy_domains()) else "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
         global_proxy = True
     else:
@@ -521,6 +530,60 @@ def get_incy_routing_dict(key=None) -> dict:
             if clean and f"domain:{clean}" not in direct_sites:
                 direct_sites.append(f"domain:{clean}")
 
+    proxy_sites = [
+        "domain:youtube.com",
+        "domain:youtu.be",
+        "domain:googlevideo.com",
+        "domain:ytimg.com",
+        "domain:ggpht.com",
+        "domain:telegram.org",
+        "domain:t.me",
+        "domain:telegram.me",
+        "domain:telesco.pe",
+        "domain:google.com",
+        "domain:play.google.com",
+        "domain:googleusercontent.com",
+        "domain:android.com",
+        "domain:github.com",
+        "domain:githubassets.com",
+        "domain:githubusercontent.com",
+        "domain:instagram.com",
+        "domain:cdninstagram.com",
+        "domain:threads.net",
+        "domain:twitter.com",
+        "domain:x.com",
+        "domain:t.co",
+        "domain:twimg.com",
+        "domain:openai.com",
+        "domain:chatgpt.com",
+        "domain:oaistatic.com",
+        "domain:oaiusercontent.com",
+        "domain:anthropic.com",
+        "domain:claude.ai",
+        "domain:perplexity.ai",
+        "domain:facebook.com",
+        "domain:fb.com",
+        "domain:fbcdn.net",
+        "domain:meta.com",
+        "domain:discord.com",
+        "domain:discord.gg",
+        "domain:discordapp.com",
+        "domain:discordapp.net",
+        "domain:notion.so",
+        "domain:spotify.com",
+        "domain:medium.com",
+        "domain:canva.com",
+        "domain:flaticon.com",
+        "domain:freepik.com",
+        "domain:rutracker.org",
+        "domain:nnmclub.to",
+    ]
+    if key and hasattr(key, 'get_custom_proxy_domains'):
+        for d in key.get_custom_proxy_domains():
+            clean = d.strip().lower()
+            if clean and f"domain:{clean}" not in proxy_sites:
+                proxy_sites.insert(0, f"domain:{clean}")
+
     result = {
         "Name": profile_name,
         "GlobalProxy": global_proxy,
@@ -539,54 +602,7 @@ def get_incy_routing_dict(key=None) -> dict:
         "DnsHosts": {},
         "DirectSites": direct_sites,
         "DirectIp": direct_ips,
-        "ProxySites": [
-            "domain:youtube.com",
-            "domain:youtu.be",
-            "domain:googlevideo.com",
-            "domain:ytimg.com",
-            "domain:ggpht.com",
-            "domain:telegram.org",
-            "domain:t.me",
-            "domain:telegram.me",
-            "domain:telesco.pe",
-            "domain:google.com",
-            "domain:play.google.com",
-            "domain:googleusercontent.com",
-            "domain:android.com",
-            "domain:github.com",
-            "domain:githubassets.com",
-            "domain:githubusercontent.com",
-            "domain:instagram.com",
-            "domain:cdninstagram.com",
-            "domain:threads.net",
-            "domain:twitter.com",
-            "domain:x.com",
-            "domain:t.co",
-            "domain:twimg.com",
-            "domain:openai.com",
-            "domain:chatgpt.com",
-            "domain:oaistatic.com",
-            "domain:oaiusercontent.com",
-            "domain:anthropic.com",
-            "domain:claude.ai",
-            "domain:perplexity.ai",
-            "domain:facebook.com",
-            "domain:fb.com",
-            "domain:fbcdn.net",
-            "domain:meta.com",
-            "domain:discord.com",
-            "domain:discord.gg",
-            "domain:discordapp.com",
-            "domain:discordapp.net",
-            "domain:notion.so",
-            "domain:spotify.com",
-            "domain:medium.com",
-            "domain:canva.com",
-            "domain:flaticon.com",
-            "domain:freepik.com",
-            "domain:rutracker.org",
-            "domain:nnmclub.to",
-        ],
+        "ProxySites": proxy_sites,
         "ProxyIp": [
             # Meta / Instagram / Facebook
             "31.13.24.0/21", "31.13.64.0/18", "45.64.40.0/22", "66.220.144.0/20",

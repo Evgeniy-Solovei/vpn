@@ -154,7 +154,9 @@ class VPNKey(models.Model):
     traffic_limit_gb = models.PositiveIntegerField(default=150, verbose_name="Лимит скоростного трафика (ГБ)")
     traffic_reset_date = models.DateField(default=get_default_reset_date, verbose_name="Дата следующего сброса квоты")
     is_throttled = models.BooleanField(default=False, verbose_name="Скорость ограничена (FUP)")
-    custom_whitelist = models.TextField(blank=True, default="", verbose_name="Пользовательские домены-исключения")
+    custom_whitelist = models.TextField(blank=True, default="", verbose_name="Пользовательские домены-исключения (напрямую)")
+    custom_proxy_list = models.TextField(blank=True, default="", verbose_name="Пользовательские домены строго через VPN")
+    direct_zones = models.CharField(max_length=100, default="ru,by,su,рф", blank=True, verbose_name="Зоны прямого доступа")
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлен")
@@ -241,10 +243,40 @@ class VPNKey(models.Model):
                     d = d[7:]
                 elif d.startswith('https://'):
                     d = d[8:]
-                d = d.split('/')[0].strip()
+                d = d.split('/')[0].strip().lstrip('*.')
                 if d and d not in domains:
                     domains.append(d)
         return domains
+
+    def get_custom_proxy_domains(self) -> list:
+        if not self.custom_proxy_list:
+            return []
+        domains = []
+        for line in self.custom_proxy_list.replace(',', '\n').split('\n'):
+            d = line.strip().lower()
+            if d:
+                if d.startswith('http://'):
+                    d = d[7:]
+                elif d.startswith('https://'):
+                    d = d[8:]
+                d = d.split('/')[0].strip().lstrip('*.')
+                if d and d not in domains:
+                    domains.append(d)
+        return domains
+
+    def get_direct_zones(self) -> list:
+        val = self.direct_zones
+        if val is None or val == "":
+            return []
+        zones = []
+        for z in val.replace(',', ' ').split():
+            clean = z.strip().lower().lstrip('.')
+            if clean and clean not in zones:
+                zones.append(clean)
+                if clean in ('рф', 'xn--p1ai'):
+                    if 'xn--p1ai' not in zones:
+                        zones.append('xn--p1ai')
+        return zones
 
     def __str__(self):
         return f"Ключ {self.user.username} @ {self.server.name} ({self.used_traffic_gb}/{self.traffic_limit_gb} GB)"

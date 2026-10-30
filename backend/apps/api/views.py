@@ -538,26 +538,59 @@ def update_custom_whitelist_api(request):
         if action == 'toggle_ru_by':
             key.whitelist_enabled = not key.whitelist_enabled
             key.save(update_fields=['whitelist_enabled', 'updated_at'])
-            msg = 'Обход сайтов РФ и РБ (.ru, .by) ' + ('ВКЛЮЧЕН' if key.whitelist_enabled else 'ВЫКЛЮЧЕН')
+            msg = 'Обход сайтов РФ и РБ ' + ('ВКЛЮЧЕН' if key.whitelist_enabled else 'ВЫКЛЮЧЕН')
+        elif action == 'toggle_zone':
+            target_zone = str(data.get('zone', '')).strip().lower().lstrip('.')
+            current_zones = key.get_direct_zones()
+            if target_zone in current_zones:
+                current_zones = [z for z in current_zones if z != target_zone and not (target_zone == 'ru' and z in ('рф', 'xn--p1ai'))]
+                msg = f'Зона .{target_zone} исключена из прямого доступа (пойдёт через VPN)'
+            else:
+                current_zones.append(target_zone)
+                msg = f'Зона .{target_zone} возвращена в прямой доступ (мимо VPN)'
+            key.direct_zones = ",".join(current_zones)
+            key.save(update_fields=['direct_zones', 'updated_at'])
         elif action == 'clear':
             key.custom_whitelist = ""
             key.save(update_fields=['custom_whitelist', 'updated_at'])
             msg = 'Список персональных сайтов очищен'
+        elif action == 'clear_proxy':
+            key.custom_proxy_list = ""
+            key.save(update_fields=['custom_proxy_list', 'updated_at'])
+            msg = 'Список сайтов через VPN очищен'
         elif action == 'append':
             raw_new = str(data.get('domain', '')).strip().lower()
             current_domains = key.get_custom_domains()
             for part in raw_new.replace(',', '\n').split('\n'):
-                d = part.strip()
+                d = part.strip().lstrip('*.')
                 if d and d not in current_domains:
                     current_domains.append(d)
             key.custom_whitelist = "\n".join(current_domains)
             key.save(update_fields=['custom_whitelist', 'updated_at'])
-            msg = f'Сайт {raw_new} успешно добавлен в белый список!'
+            msg = f'Сайт {raw_new} добавлен в прямой доступ (без VPN)!'
+        elif action == 'append_proxy':
+            raw_new = str(data.get('domain', '')).strip().lower()
+            current_proxy = key.get_custom_proxy_domains()
+            for part in raw_new.replace(',', '\n').split('\n'):
+                d = part.strip().lstrip('*.')
+                if d and d not in current_proxy:
+                    current_proxy.append(d)
+            key.custom_proxy_list = "\n".join(current_proxy)
+            key.save(update_fields=['custom_proxy_list', 'updated_at'])
+            msg = f'Сайт {raw_new} добавлен в список строго через VPN!'
         else:
-            domains_text = data.get('domains', '')
-            key.custom_whitelist = domains_text.strip()
-            key.save(update_fields=['custom_whitelist', 'updated_at'])
-            msg = 'Список сайтов-исключений сохранен!'
+            updated_fields = ['updated_at']
+            if 'domains' in data:
+                key.custom_whitelist = str(data.get('domains', '')).strip()
+                updated_fields.append('custom_whitelist')
+            if 'proxy_domains' in data:
+                key.custom_proxy_list = str(data.get('proxy_domains', '')).strip()
+                updated_fields.append('custom_proxy_list')
+            if 'direct_zones' in data:
+                key.direct_zones = str(data.get('direct_zones', '')).strip()
+                updated_fields.append('direct_zones')
+            key.save(update_fields=updated_fields)
+            msg = 'Настройки маршрутизации сохранены! Нажмите «Обновить» в Incy'
 
         return JsonResponse({
             'success': True,
@@ -565,6 +598,9 @@ def update_custom_whitelist_api(request):
             'whitelist_enabled': key.whitelist_enabled,
             'custom_whitelist': key.custom_whitelist,
             'custom_domains': key.get_custom_domains(),
+            'custom_proxy_list': key.custom_proxy_list,
+            'custom_proxy_domains': key.get_custom_proxy_domains(),
+            'direct_zones': key.get_direct_zones(),
             **build_user_response(user)
         })
     except Exception as e:
