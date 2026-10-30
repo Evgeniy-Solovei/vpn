@@ -488,9 +488,9 @@ def get_incy_routing_dict(key=None) -> dict:
             # Alfa-Bank (AS15944)
             "217.12.96.0/20",
         ]
-        route_order = "block-direct-proxy"
+        route_order = "block-proxy-direct"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
-        global_proxy = True
+        global_proxy = False
     else:
         direct_sites = ["geosite:private"]
         direct_ips = ["geoip:private"]
@@ -527,8 +527,14 @@ def get_incy_routing_dict(key=None) -> dict:
             "geosite:telegram",
             "geosite:google-play",
             "geosite:github",
+            "domain:youtube.com",
+            "domain:youtu.be",
+            "domain:googlevideo.com",
+            "domain:ytimg.com",
+            "domain:ggpht.com",
             "domain:instagram.com",
             "domain:cdninstagram.com",
+            "domain:threads.net",
             "domain:twitter.com",
             "domain:x.com",
             "domain:t.co",
@@ -537,6 +543,9 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:chatgpt.com",
             "domain:oaistatic.com",
             "domain:oaiusercontent.com",
+            "domain:anthropic.com",
+            "domain:claude.ai",
+            "domain:perplexity.ai",
             "domain:facebook.com",
             "domain:fb.com",
             "domain:fbcdn.net",
@@ -549,8 +558,29 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:spotify.com",
             "domain:medium.com",
             "domain:canva.com",
+            "domain:flaticon.com",
+            "domain:freepik.com",
+            "domain:rutracker.org",
+            "domain:nnmclub.to",
         ],
-        "ProxyIp": [],
+        "ProxyIp": [
+            # Meta / Instagram / Facebook
+            "31.13.24.0/21", "31.13.64.0/18", "45.64.40.0/22", "66.220.144.0/20",
+            "69.63.176.0/20", "69.171.224.0/19", "74.119.76.0/22", "103.4.96.0/22",
+            "129.134.0.0/16", "157.240.0.0/16", "173.252.64.0/18", "179.60.192.0/22",
+            "185.60.216.0/22", "204.15.20.0/22",
+            # Twitter / X
+            "104.244.42.0/21", "192.133.76.0/22", "199.16.156.0/22", "199.59.148.0/22",
+            "199.96.56.0/21", "209.237.192.0/19",
+            # OpenAI / ChatGPT
+            "104.18.0.0/15", "172.64.0.0/13", "23.96.0.0/13", "20.0.0.0/11",
+            # Discord
+            "162.158.0.0/15", "66.22.196.0/22", "66.22.200.0/22", "66.22.204.0/22", "66.22.208.0/20",
+            # YouTube / Google Video
+            "142.250.0.0/15", "172.217.0.0/16", "216.58.192.0/19", "74.125.0.0/16",
+            "173.194.0.0/16", "209.85.128.0/17", "64.233.160.0/19", "66.102.0.0/20",
+            "66.249.64.0/19", "108.177.0.0/17"
+        ],
         "BlockSites": [
             "geosite:win-spy",
             "geosite:category-ads"
