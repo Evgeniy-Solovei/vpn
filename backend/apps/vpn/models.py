@@ -329,23 +329,22 @@ class VPNKey(models.Model):
         return f"{site_url}/vpn/wg/{self.sub_token}/"
 
     def get_wireguard_config(self) -> str:
-        """Deterministic WireGuard client config for Stockholm node."""
+        """Deterministic WireGuard client config for active node."""
         import hashlib
         import base64
-        from cryptography.hazmat.primitives.asymmetric import x25519
 
         seed = hashlib.sha256(f"livedev-wg-{self.sub_token}".encode('utf-8')).digest()
         priv_b64 = base64.b64encode(seed).decode('utf-8')
-        stockholm = VPNServer.objects.filter(is_active=True, country_code='SE').first()
-        server_ip = stockholm.ip if stockholm else "89.169.33.88"
-        server_pub = "vQC1T1ob6D27nDRVIzag1AZxDfm1GAVSMlWwmaIkeFU="
+        server = VPNServer.objects.filter(is_active=True).first()
+        server_ip = getattr(settings, 'WIREGUARD_PUBLIC_IP', '') or (server.ip if server else '81.19.137.255')
+        server_pub = getattr(settings, 'WIREGUARD_SERVER_PUBKEY', '')
         client_ip = f"10.66.66.{(self.id % 240) + 2}"
 
         return (
             f"[Interface]\n"
             f"PrivateKey = {priv_b64}\n"
             f"Address = {client_ip}/32\n"
-            f"DNS = 1.1.1.1, 8.8.8.8\n\n"
+            f"DNS = 1.1.1.1, 77.88.8.8\n\n"
             f"[Peer]\n"
             f"PublicKey = {server_pub}\n"
             f"Endpoint = {server_ip}:51820\n"
