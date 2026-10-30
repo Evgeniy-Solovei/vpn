@@ -499,9 +499,9 @@ def get_incy_routing_dict(key=None) -> dict:
             # Alfa-Bank (AS15944)
             "217.12.96.0/20",
         ]
-        route_order = "block-proxy-direct"
+        route_order = "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
-        global_proxy = False
+        global_proxy = True
     else:
         direct_sites = ["domain:local", "domain:localhost"]
         direct_ips = [
