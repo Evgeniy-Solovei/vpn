@@ -73,7 +73,7 @@ class ThreeXUIService:
     def __init__(self, server: VPNServer):
         self.server = server
         self.base_url = (server.panel_url or "").rstrip('/')
-        self.client = httpx.Client(timeout=10.0, verify=False, follow_redirects=True)
+        self.client = httpx.Client(timeout=httpx.Timeout(2.5, connect=1.0), verify=False, follow_redirects=True)
         self.cookies = {}
         self.csrf_token = ""
 
@@ -323,6 +323,14 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:vkclips.ru",
             "domain:vk-apps.com",
             "domain:vkcalls.ru",
+            "domain:vkontakte.ru",
+            "domain:vk.company",
+            "domain:vkgo.ru",
+            "domain:vkusercdn.net",
+            "domain:vkuserlive.net",
+            "domain:vkuserphoto.net",
+            "domain:vkuservideo.net",
+            "domain:vk-analytics.com",
             # Mail.ru Ecosystem (Mail app, Cloud, Auth, Imap/Smtp)
             "domain:mail.ru",
             "domain:e.mail.ru",
@@ -338,6 +346,11 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:octavius.mail.ru",
             "domain:target.my.com",
             "domain:my.games",
+            "domain:mycdn.me",
+            "domain:touch.mail.ru",
+            "domain:ok.ru",
+            "domain:odnoklassniki.ru",
+            "domain:tam-tam.me",
             # Bitrix24 Ecosystem (Bitrix24 cloud portals, CRM, mobile app)
             "domain:bitrix24.ru",
             "domain:bitrix24.by",
@@ -477,7 +490,7 @@ def get_incy_routing_dict(key=None) -> dict:
         ]
         route_order = "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
-        global_proxy = False
+        global_proxy = True
     else:
         direct_sites = ["geosite:private"]
         direct_ips = ["geoip:private"]
@@ -495,18 +508,18 @@ def get_incy_routing_dict(key=None) -> dict:
         "Name": profile_name,
         "GlobalProxy": global_proxy,
         "RouteOrder": route_order,
-        "RemoteDNSType": "DoH",
-        "RemoteDNSDomain": "https://cloudflare-dns.com/dns-query",
+        "RemoteDNSType": "DoU",
+        "RemoteDNSDomain": "",
         "RemoteDNSIP": "1.1.1.1",
+        "RemoteDns": "1.1.1.1",
         "DomesticDNSType": "DoU",
         "DomesticDNSDomain": "",
         "DomesticDNSIP": "77.88.8.8",
+        "DomesticDns": "77.88.8.8",
         "Geoipurl": "",
         "Geositeurl": "",
         "LastUpdated": str(int(time.time())),
-        "DnsHosts": {
-            "cloudflare-dns.com": "1.1.1.1"
-        },
+        "DnsHosts": {},
         "DirectSites": direct_sites,
         "DirectIp": direct_ips,
         "ProxySites": [

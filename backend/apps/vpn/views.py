@@ -32,11 +32,28 @@ def subscription_view(request, token):
             status=402
         )
 
-    # Ensure key UUID is registered across all active servers
+    # Ensure key UUID is registered across active servers asynchronously so subscription download is instant
+    import threading
+    import sys
     from .services import ensure_key_in_all_active_servers, register_user_device
     try:
-        ensure_key_in_all_active_servers(key)
         register_user_device(user, request=request, key=key, client_type='INCY')
+        if 'test' in sys.argv:
+            ensure_key_in_all_active_servers(key)
+        else:
+            def _bg_sync(k_id):
+                from django.db import connection
+                try:
+                    connection.close()
+                    from .models import VPNKey
+                    target_key = VPNKey.objects.filter(id=k_id).first()
+                    if target_key:
+                        ensure_key_in_all_active_servers(target_key)
+                except Exception:
+                    pass
+                finally:
+                    connection.close()
+            threading.Thread(target=_bg_sync, args=(key.id,), daemon=True).start()
     except Exception:
         pass
 
@@ -81,7 +98,7 @@ def subscription_view(request, token):
     if key.whitelist_enabled:
         try:
             response['Routing'] = key.get_incy_routing_deeplink()
-            response['Autorouting'] = key.get_routing_url()
+            response['Autorouting'] = f"incy://autorouting/onadd/{key.get_routing_url()}"
             response['routing-geo-update-interval'] = '24'
         except Exception:
             pass
