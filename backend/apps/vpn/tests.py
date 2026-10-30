@@ -66,6 +66,25 @@ class VPNTestCase(TestCase):
         self.assertEqual(resp.status_code, 402)
         self.assertIn("Subscription expired", resp.content.decode('utf-8'))
 
+    def test_routing_endpoint_both_slash_and_noslash(self):
+        """Incy routing endpoint responds with 200 JSON both with and without trailing slash."""
+        # With trailing slash
+        resp1 = self.client.get(f"/vpn/routing/{self.key.sub_token}/")
+        self.assertEqual(resp1.status_code, 200)
+        self.assertEqual(resp1['Content-Type'], 'application/json')
+        data1 = resp1.json()
+        self.assertFalse(data1['GlobalProxy'])
+        self.assertEqual(data1['RouteOrder'], 'block-proxy-direct')
+        self.assertIn('domain:vk.com', data1['DirectSites'])
+
+        # Without trailing slash (crucial for Incy iOS)
+        resp2 = self.client.get(f"/vpn/routing/{self.key.sub_token}")
+        self.assertEqual(resp2.status_code, 200)
+        self.assertEqual(resp2['Content-Type'], 'application/json')
+        data2 = resp2.json()
+        self.assertFalse(data2['GlobalProxy'])
+        self.assertEqual(data2['RouteOrder'], 'block-proxy-direct')
+
     def test_pac_endpoint_routing_rules(self):
         """PAC endpoint contains Russian whitelist rules when whitelist is enabled."""
         url = reverse('pac_script', kwargs={'token': self.key.sub_token})
