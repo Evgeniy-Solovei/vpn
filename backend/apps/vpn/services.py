@@ -288,12 +288,17 @@ def get_incy_routing_dict(key=None) -> dict:
 
     if whitelist_enabled:
         direct_sites = [
-            "geosite:private",
-            "geosite:category-ru",
+            "domain:local",
+            "domain:localhost",
             "domain:ru",
             "domain:by",
             "domain:su",
             "domain:xn--p1ai",
+            "domain:com.ru",
+            "domain:net.ru",
+            "domain:org.ru",
+            "domain:msk.ru",
+            "domain:spb.ru",
             "domain:gov.ru",
             "domain:kremlin.ru",
             "domain:duma.gov.ru",
@@ -445,9 +450,15 @@ def get_incy_routing_dict(key=None) -> dict:
         # Dedicated domestic IP CIDR blocks (AS47541, AS34700, AS197695, AS47764, AS13238, etc.)
         # Direct routing guarantees raw socket connections bypass the VPN tunnel
         direct_ips = [
-            "geoip:private",
-            "geoip:ru",
-            "geoip:by",
+            # Standard private RFC1918 subnets (guarantees local LAN never enters VPN)
+            "10.0.0.0/8",
+            "172.16.0.0/12",
+            "192.168.0.0/16",
+            "127.0.0.0/8",
+            "169.254.0.0/16",
+            "::1/128",
+            "fc00::/7",
+            "fe80::/10",
             # VK (AS47541 & edge nodes)
             "87.240.128.0/18",
             "93.186.224.0/20",
@@ -492,8 +503,14 @@ def get_incy_routing_dict(key=None) -> dict:
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
         global_proxy = False
     else:
-        direct_sites = ["geosite:private"]
-        direct_ips = ["geoip:private"]
+        direct_sites = ["domain:local", "domain:localhost"]
+        direct_ips = [
+            "10.0.0.0/8",
+            "172.16.0.0/12",
+            "192.168.0.0/16",
+            "127.0.0.0/8",
+            "169.254.0.0/16",
+        ]
         route_order = "block-proxy-direct"
         profile_name = "VPN live-dev (Весь трафик)"
         global_proxy = True
@@ -516,22 +533,29 @@ def get_incy_routing_dict(key=None) -> dict:
         "DomesticDNSDomain": "",
         "DomesticDNSIP": "77.88.8.8",
         "DomesticDns": "77.88.8.8",
-        "Geoipurl": "",
-        "Geositeurl": "",
+        "Geoipurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat",
+        "Geositeurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat",
         "LastUpdated": str(int(time.time())),
         "DnsHosts": {},
         "DirectSites": direct_sites,
         "DirectIp": direct_ips,
         "ProxySites": [
-            "geosite:youtube",
-            "geosite:telegram",
-            "geosite:google-play",
-            "geosite:github",
             "domain:youtube.com",
             "domain:youtu.be",
             "domain:googlevideo.com",
             "domain:ytimg.com",
             "domain:ggpht.com",
+            "domain:telegram.org",
+            "domain:t.me",
+            "domain:telegram.me",
+            "domain:telesco.pe",
+            "domain:google.com",
+            "domain:play.google.com",
+            "domain:googleusercontent.com",
+            "domain:android.com",
+            "domain:github.com",
+            "domain:githubassets.com",
+            "domain:githubusercontent.com",
             "domain:instagram.com",
             "domain:cdninstagram.com",
             "domain:threads.net",
@@ -581,14 +605,11 @@ def get_incy_routing_dict(key=None) -> dict:
             "173.194.0.0/16", "209.85.128.0/17", "64.233.160.0/19", "66.102.0.0/20",
             "66.249.64.0/19", "108.177.0.0/17"
         ],
-        "BlockSites": [
-            "geosite:win-spy",
-            "geosite:category-ads"
-        ],
+        "BlockSites": [],
         "BlockIp": [],
         "DomainStrategy": "IPIfNonMatch",
         "FakeDNS": False,
-        "UseChunkFiles": True
+        "UseChunkFiles": False
     }
 
     return result
