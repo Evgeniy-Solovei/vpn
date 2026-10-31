@@ -106,9 +106,11 @@ def subscription_view(request, token):
             pass
 
     # Subscription info header: upload=0; download=bytes; total=bytes; expire=timestamp
+    import time
     days_seconds = user.days_left * 86400
     total_bytes = (key.traffic_limit_gb * (1024 ** 3)) if key.traffic_limit_gb else 0
-    response['subscription-userinfo'] = f"upload=0; download={key.used_traffic_bytes}; total={total_bytes}; expire={days_seconds}"
+    expire_timestamp = int(time.time() + days_seconds) if user.days_left > 0 else int(time.time() + 86400 * 30)
+    response['subscription-userinfo'] = f"upload=0; download={key.used_traffic_bytes}; total={total_bytes}; expire={expire_timestamp}"
     return response
 
 
