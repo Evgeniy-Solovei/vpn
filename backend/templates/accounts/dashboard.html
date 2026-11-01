@@ -817,11 +817,14 @@
         <button type="button" class="zone-pill-btn btn btn-secondary active" data-zone="by" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; border-color: rgba(52, 211, 153, 0.4); color: #34d399;">
           🇧🇾 .by <span class="zone-status">✓</span>
         </button>
+        <button type="button" class="zone-pill-btn btn btn-secondary active" data-zone="kz" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; border-color: rgba(52, 211, 153, 0.4); color: #34d399;">
+          🇰🇿 .kz <span class="zone-status">✓</span>
+        </button>
         <button type="button" class="zone-pill-btn btn btn-secondary active" data-zone="su" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; border-color: rgba(52, 211, 153, 0.4); color: #34d399;">
           🌐 .su <span class="zone-status">✓</span>
         </button>
       </div>
-      <input type="hidden" id="direct-zones-hidden" value="{{ vpn_key.direct_zones|default:'ru,by,su,рф' }}">
+      <input type="hidden" id="direct-zones-hidden" value="{{ vpn_key.direct_zones|default:'ru,by,kz,su,рф' }}">
     </div>
 
     <!-- Direct Domains Input -->

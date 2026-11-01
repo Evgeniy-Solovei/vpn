@@ -163,17 +163,20 @@ def get_traffic_menu() -> InlineKeyboardMarkup:
 
 
 def get_whitelist_menu(whitelist_enabled: bool, custom_domains_count: int, routing_deeplink: str = None, direct_zones: list = None, custom_proxy_count: int = 0) -> InlineKeyboardMarkup:
-    zones = direct_zones if direct_zones is not None else ['ru', 'by', 'su', 'рф']
+    zones = direct_zones if direct_zones is not None else ['ru', 'by', 'kz', 'su', 'рф']
     ru_active = 'ru' in zones
     by_active = 'by' in zones
+    kz_active = 'kz' in zones
 
     ru_btn = f"🇷🇺 .ru: {'🟢 ПРЯМО' if ru_active else '⚪ В VPN'}"
     by_btn = f"🇧🇾 .by: {'🟢 ПРЯМО' if by_active else '⚪ В VPN'}"
+    kz_btn = f"🇰🇿 .kz: {'🟢 ПРЯМО' if kz_active else '⚪ В VPN'}"
 
     buttons = [
         [
             InlineKeyboardButton(text=ru_btn, callback_data="toggle_zone_ru"),
             InlineKeyboardButton(text=by_btn, callback_data="toggle_zone_by"),
+            InlineKeyboardButton(text=kz_btn, callback_data="toggle_zone_kz"),
         ],
         [
             InlineKeyboardButton(text="🟢 Добавить сайт БЕЗ VPN", callback_data="add_wl_site"),

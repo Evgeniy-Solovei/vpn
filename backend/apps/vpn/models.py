@@ -156,7 +156,7 @@ class VPNKey(models.Model):
     is_throttled = models.BooleanField(default=False, verbose_name="Скорость ограничена (FUP)")
     custom_whitelist = models.TextField(blank=True, default="", verbose_name="Пользовательские домены-исключения (напрямую)")
     custom_proxy_list = models.TextField(blank=True, default="", verbose_name="Пользовательские домены строго через VPN")
-    direct_zones = models.CharField(max_length=100, default="ru,by,su,рф", blank=True, verbose_name="Зоны прямого доступа")
+    direct_zones = models.CharField(max_length=100, default="ru,by,kz,su,рф", blank=True, verbose_name="Зоны прямого доступа")
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлен")

@@ -399,13 +399,15 @@ async def cb_view_whitelist(call: CallbackQuery):
     whitelist_active = vpn_info.get('whitelist_enabled', True)
     custom_domains = vpn_info.get('custom_domains', [])
     custom_proxy = vpn_info.get('custom_proxy_domains', [])
-    direct_zones = vpn_info.get('direct_zones', ['ru', 'by', 'su', 'рф'])
+    direct_zones = vpn_info.get('direct_zones', ['ru', 'by', 'kz', 'su', 'рф'])
 
     ru_active = 'ru' in direct_zones
     by_active = 'by' in direct_zones
+    kz_active = 'kz' in direct_zones
 
     ru_str = "🟢 <b>.ru, .рф:</b> НАПРЯМУЮ" if ru_active else "⚪ <b>.ru, .рф:</b> ЧЕРЕЗ VPN"
     by_str = "🟢 <b>.by:</b> НАПРЯМУЮ" if by_active else "⚪ <b>.by:</b> ЧЕРЕЗ VPN"
+    kz_str = "🟢 <b>.kz:</b> НАПРЯМУЮ" if kz_active else "⚪ <b>.kz:</b> ЧЕРЕЗ VPN"
 
     dom_lines = []
     if custom_domains:
@@ -423,9 +425,10 @@ async def cb_view_whitelist(call: CallbackQuery):
         f"🛡️ <b>Настройка маршрутизации и исключений</b>\n\n"
         f"Сайты напрямую открываются с вашего домашнего IP (без расхода квоты и блокировок ВК/банков):\n\n"
         f"• {ru_str}\n"
-        f"• {by_str}\n\n"
+        f"• {by_str}\n"
+        f"• {kz_str}\n\n"
         f"{custom_str}\n\n"
-        f"💡 <i>ВК, Mail.ru, банки, Госуслуги, Ozon, WB работают напрямую!</i>\n\n"
+        f"💡 <i>ВК, Mail.ru, Битрикс24, банки, Госуслуги, Ozon, WB работают напрямую!</i>\n\n"
         f"ℹ️ <i>После изменения настроек просто нажмите «Обновить» (стрелочки) в приложении Incy.</i>"
     )
     await call.message.edit_text(
@@ -442,9 +445,14 @@ async def cb_view_whitelist(call: CallbackQuery):
     await call.answer()
 
 
-@dp.callback_query(F.data.in_(["toggle_zone_ru", "toggle_zone_by"]))
+@dp.callback_query(F.data.in_(["toggle_zone_ru", "toggle_zone_by", "toggle_zone_kz"]))
 async def cb_toggle_zone(call: CallbackQuery):
-    zone = "ru" if call.data == "toggle_zone_ru" else "by"
+    if call.data == "toggle_zone_ru":
+        zone = "ru"
+    elif call.data == "toggle_zone_by":
+        zone = "by"
+    else:
+        zone = "kz"
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
             resp = await client.post(

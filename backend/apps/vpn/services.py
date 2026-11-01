@@ -292,13 +292,15 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:localhost",
         ]
 
-        # Active direct zones configured for this key (default: ru, by, su, рф)
-        active_zones = key.get_direct_zones() if (key and hasattr(key, 'get_direct_zones')) else ['ru', 'by', 'su', 'рф', 'xn--p1ai']
+        # Active direct zones configured for this key (default: ru, by, kz, su, рф)
+        active_zones = key.get_direct_zones() if (key and hasattr(key, 'get_direct_zones')) else ['ru', 'by', 'kz', 'su', 'рф', 'xn--p1ai']
         for z in active_zones:
             if z in ('ru',):
                 direct_sites.extend(["domain:ru", "domain:com.ru", "domain:net.ru", "domain:org.ru", "domain:msk.ru", "domain:spb.ru"])
             elif z in ('by',):
                 direct_sites.extend(["domain:by", "domain:gov.by", "domain:mil.by"])
+            elif z in ('kz',):
+                direct_sites.extend(["domain:kz", "domain:com.kz", "domain:org.kz", "domain:gov.kz"])
             elif z in ('su',):
                 direct_sites.append("domain:su")
             elif z in ('рф', 'xn--p1ai'):
@@ -378,23 +380,35 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:bitrix24.de",
             "domain:bitrix24.in",
             "domain:bitrix24.pl",
+            "domain:bitrix24.to",
             "domain:bitrix.com",
             "domain:bitrix.ru",
+            "domain:bitrix.kz",
             "domain:bitrix.info",
             "domain:bitrix.cloud",
             "domain:bitrix-cloud.com",
             "domain:bitrix-cloud.ru",
             "domain:bitrix-cloud.net",
             "domain:1c-bitrix.ru",
+            "domain:1c-bitrix.by",
+            "domain:1c-bitrix.kz",
             "domain:1c.ru",
             "domain:b24.by",
             "domain:b24.ru",
+            "domain:b24.kz",
+            "domain:b24.to",
             "domain:b24-am.com",
             "domain:b24.site",
             "domain:b24.help",
             "domain:b24.market",
             "domain:b24.top",
+            "domain:b24.network",
+            "domain:bitrix24.network",
             "domain:bx.vc",
+            # Kazakhstan top-level domain & cloud
+            "domain:kz",
+            "domain:com.kz",
+            "domain:org.kz",
             # Anti-DDoS & Protection Proxies used by Russian services (Bitrix, Banks)
             "domain:qrator.net",
             "domain:qrator.com",
@@ -540,6 +554,11 @@ def get_incy_routing_dict(key=None) -> dict:
             "78.155.198.0/24",
             # VK Cloud / Bitrix Hosting (AS47764)
             "217.16.16.0/20",
+            # Kazakhstan Bitrix Cloud & VK Cloud KZ (AS48716, AS201817)
+            "195.49.210.0/23",
+            "194.31.159.0/24",
+            "185.22.64.0/22",
+            "91.201.214.0/23",
         ]
         route_order = "block-proxy-direct" if (key and hasattr(key, 'get_custom_proxy_domains') and key.get_custom_proxy_domains()) else "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
