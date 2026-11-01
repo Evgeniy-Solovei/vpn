@@ -407,7 +407,7 @@ class VPNKey(models.Model):
             f"[Interface]\n"
             f"PrivateKey = {priv_b64}\n"
             f"Address = {client_ip}/32\n"
-            f"DNS = 1.1.1.1, 77.88.8.8\n\n"
+            f"DNS = 8.8.8.8, 77.88.8.8\n\n"
             f"[Peer]\n"
             f"PublicKey = {server_pub}\n"
             f"Endpoint = {server_ip}:51820\n"

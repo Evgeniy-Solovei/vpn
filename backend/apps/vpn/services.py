@@ -279,7 +279,7 @@ function FindProxyForURL(url, host) {{
 def get_incy_routing_dict(key=None) -> dict:
     """
     Generates dynamic routing JSON profile for INCY application.
-    Uses reliable UDP DNS (77.88.8.8 and 1.1.1.1) to eliminate DoH handshake failures.
+    Uses reliable UDP DNS (77.88.8.8 and 8.8.8.8) to eliminate DoH handshake failures.
     When whitelist_enabled=True: routes VK, banks, Gosuslugi, domestic media & marketplaces
     directly (bypassing VPN to eliminate 'VPN detected' banners), while proxying blocked sites.
     When whitelist_enabled=False: routes all traffic through the active VPN node.
