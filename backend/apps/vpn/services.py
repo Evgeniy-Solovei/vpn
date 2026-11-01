@@ -560,7 +560,7 @@ def get_incy_routing_dict(key=None) -> dict:
             "185.22.64.0/22",
             "91.201.214.0/23",
         ]
-        route_order = "block-proxy-direct" if (key and hasattr(key, 'get_custom_proxy_domains') and key.get_custom_proxy_domains()) else "block-direct-proxy"
+        route_order = "block-proxy-direct"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
         global_proxy = True
     else:
@@ -642,8 +642,8 @@ def get_incy_routing_dict(key=None) -> dict:
         "RouteOrder": route_order,
         "RemoteDNSType": "DoU",
         "RemoteDNSDomain": "",
-        "RemoteDNSIP": "1.1.1.1",
-        "RemoteDns": "1.1.1.1",
+        "RemoteDNSIP": "8.8.8.8",
+        "RemoteDns": "8.8.8.8",
         "DomesticDNSType": "DoU",
         "DomesticDNSDomain": "",
         "DomesticDNSIP": "77.88.8.8",

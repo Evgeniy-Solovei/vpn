@@ -107,7 +107,7 @@
         <!-- Amount input -->
         <div class="form-group" style="margin-bottom: 1.25rem;">
           <label class="form-label" for="amount">Сумма к пополнению (₽)</label>
-          <input type="number" name="amount" id="amount" value="{% for p in packages %}{% if p.is_featured %}{{ p.price_rub }}{% endif %}{% empty %}105{% endfor %}" min="10" step="1" class="form-input" style="font-size: 1.25rem; font-weight: 700;">
+          <input type="number" name="amount" id="amount" value="{% for p in packages %}{% if p.is_featured %}{{ p.price_rub }}{% endif %}{% empty %}190{% endfor %}" min="10" step="1" class="form-input" style="font-size: 1.25rem; font-weight: 700;">
         </div>
 
         <!-- Russian Payment Methods -->

@@ -63,7 +63,7 @@ def register_view(request):
         
         if form.is_valid():
             user = form.save(commit=False)
-            user.balance = Decimal('3.50')  # 1-day free trial on web registration
+            user.balance = Decimal('6.33')  # 1-day free trial on web registration
             user.telegram_bonus_claimed = False
             if ref_code:
                 try:
@@ -597,7 +597,7 @@ def google_callback_view(request):
             first_name=name,
             google_id=google_sub,
             balance=Decimal('10.50'),  # 3 days free trial
-            daily_deduction=Decimal('3.50'),
+            daily_deduction=Decimal('6.33'),
         )
         user.set_unusable_password()
         user.save()

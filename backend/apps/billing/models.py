@@ -77,10 +77,10 @@ class SubscriptionPackage(models.Model):
         pkgs = cls.objects.filter(is_active=True).order_by('order', 'days')
         if not pkgs.exists():
             cls.objects.bulk_create([
-                cls(name="7 дней", days=7, price_rub=Decimal('25.00'), price_byn=Decimal('1.00'), order=1),
-                cls(name="30 дней", days=30, price_rub=Decimal('105.00'), price_byn=Decimal('5.00'), badge="Хит", is_featured=True, order=2),
-                cls(name="60 дней", days=60, price_rub=Decimal('200.00'), price_byn=Decimal('9.00'), badge="Выгодно", order=3),
-                cls(name="90 дней", days=90, price_rub=Decimal('280.00'), price_byn=Decimal('12.00'), badge="Максимум", order=4),
+                cls(name="7 дней", days=7, price_rub=Decimal('49.00'), price_byn=Decimal('2.00'), order=1),
+                cls(name="30 дней", days=30, price_rub=Decimal('190.00'), price_byn=Decimal('7.00'), badge="Хит", is_featured=True, order=2),
+                cls(name="60 дней", days=60, price_rub=Decimal('350.00'), price_byn=Decimal('13.00'), badge="Выгодно", order=3),
+                cls(name="90 дней", days=90, price_rub=Decimal('490.00'), price_byn=Decimal('18.00'), badge="Максимум", order=4),
             ])
             pkgs = cls.objects.filter(is_active=True).order_by('order', 'days')
         return pkgs
@@ -128,13 +128,13 @@ class Transaction(models.Model):
             except Exception:
                 pass
 
-            # Referral reward: 5 days free to referrer upon first real payment
+            # Referral reward: 7 days free to referrer upon first real payment
             if self.user.referred_by:
                 completed_count = Transaction.objects.filter(user=self.user, status='completed').count()
                 if completed_count == 1:
                     referrer = self.user.referred_by
-                    bonus_days = Decimal('5')
-                    daily_price = referrer.daily_deduction or Decimal('3.50')
+                    bonus_days = Decimal('7')
+                    daily_price = referrer.daily_deduction or Decimal('6.33')
                     bonus_rub = bonus_days * daily_price
                     referrer.balance += bonus_rub
                     referrer.save(update_fields=['balance'])
@@ -234,20 +234,20 @@ class PaymentOrder(models.Model):
                 external_id=self.order_id,
                 description=f"Оплата подписки через bePaid ({self.amount_byn} BYN / {self.days} дн.)"
             )
-            # Check referral reward (5 days)
+            # Check referral reward (7 days)
             if self.user.referred_by:
                 completed_count = Transaction.objects.filter(user=self.user, status='completed').count()
                 if completed_count == 1:
                     referrer = self.user.referred_by
-                    bonus_days = Decimal('5')
-                    daily_price = referrer.daily_deduction or Decimal('3.50')
+                    bonus_days = Decimal('7')
+                    daily_price = referrer.daily_deduction or Decimal('6.33')
                     referrer.balance += bonus_days * daily_price
                     referrer.save(update_fields=['balance'])
                     notify_telegram_user(
                         referrer,
                         f"🎁 <b>Реферальный бонус!</b>\n\n"
                         f"Ваш друг <b>{self.user.username}</b> пополнил баланс.\n"
-                        f"Вам начислено <b>+5 дней</b> бесплатного VPN (+{bonus_days * daily_price} ₽)!"
+                        f"Вам начислено <b>+7 дней</b> бесплатного VPN (+{bonus_days * daily_price} ₽)!"
                     )
 
             # Send telegram notification to paying user
@@ -313,20 +313,20 @@ class YooKassaOrder(models.Model):
                 description=f"Оплата через ЮKassa ({self.amount_rub} ₽ / {self.days} дн. • {self.payment_method_type.upper()})"
             )
 
-            # Referral reward (5 days)
+            # Referral reward (7 days)
             if self.user.referred_by:
                 completed_count = Transaction.objects.filter(user=self.user, status='completed').count()
                 if completed_count == 1:
                     referrer = self.user.referred_by
-                    bonus_days = Decimal('5')
-                    daily_price = referrer.daily_deduction or Decimal('3.50')
+                    bonus_days = Decimal('7')
+                    daily_price = referrer.daily_deduction or Decimal('6.33')
                     referrer.balance += bonus_days * daily_price
                     referrer.save(update_fields=['balance'])
                     notify_telegram_user(
                         referrer,
                         f"🎁 <b>Реферальный бонус!</b>\n\n"
                         f"Ваш друг <b>{self.user.username}</b> пополнил баланс через ЮKassa.\n"
-                        f"Вам начислено <b>+5 дней</b> бесплатного VPN (+{bonus_days * daily_price} ₽)!"
+                        f"Вам начислено <b>+7 дней</b> бесплатного VPN (+{bonus_days * daily_price} ₽)!"
                     )
 
             # Send telegram notification to paying user

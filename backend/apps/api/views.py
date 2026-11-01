@@ -138,7 +138,7 @@ def demo_login_api(request):
             email='demo@live-dev.by',
             password='demo123',
             balance=Decimal('105.00'),
-            daily_deduction=Decimal('3.50')
+            daily_deduction=Decimal('6.33')
         )
         VPNKey.objects.get_or_create(user=demo_user, server=server)
 
@@ -190,7 +190,7 @@ def tg_sync_view(request):
                 telegram_id=telegram_id,
                 telegram_username=telegram_username,
                 balance=Decimal('15.00'), # 3-day trial balance
-                daily_deduction=Decimal('3.50')
+                daily_deduction=Decimal('6.33')
             )
             created = True
 

@@ -143,7 +143,7 @@ async def cmd_start(message: Message, command: CommandObject):
         f"• Устройства: <b>{conn_count} из {max_dev} онлайн</b> 📱 (iOS, Android, ПК, ТВ)\n"
         f"• Белый список РФ: <b>{'ВКЛ (банки напрямую)' if vpn_info.get('whitelist_enabled') else 'ВЫКЛ'}</b>\n\n"
         f"💰 Ваш баланс: <b>{user_info.get('balance', 15.0)} ₽</b> (хватит на {user_info.get('days_left', 3)} дн.)\n"
-        f"👥 Приглашено друзей: <b>{user_info.get('referrals_count', 0)}</b> (+3 дня за друга)\n\n"
+        f"👥 Приглашено друзей: <b>{user_info.get('referrals_count', 0)}</b> (+7 дней за друга)\n\n"
         f"👇 <i>Нажмите «Подключить в 1 клик» для моментальной настройки приложения INCY:</i>"
     )
 
@@ -229,7 +229,7 @@ async def cb_main_menu(call: CallbackQuery):
         f"• Скорость: <b>1 Gbps • Безлимит</b>\n"
         f"{traffic_line}\n"
         f"• Устройства: <b>{conn_count} из {max_dev} онлайн</b> 📱\n"
-        f"• Рефералы: <b>{user_info.get('referrals_count', 0)} друзей</b> (+3 дня за друга)\n"
+        f"• Рефералы: <b>{user_info.get('referrals_count', 0)} друзей</b> (+7 дней за друга)\n"
         f"• Белый список РФ: {'<b>ВКЛ (банки напрямую)</b>' if vpn_info.get('whitelist_enabled') else '<b>ВЫКЛ (весь трафик в VPN)</b>'}"
     )
     await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_main_menu(vpn_info, user_info, devices_info, traffic_info))
@@ -663,7 +663,7 @@ async def cb_view_referrals(call: CallbackQuery):
         f"Приглашайте друзей и пользуйтесь быстрым VPN <b>абсолютно бесплатно!</b>\n\n"
         f"🎁 <b>Условия бонусов:</b>\n"
         f"• <b>+10.00 ₽ (+3 дня теста)</b> начисляются вам мгновенно, когда друг запускает бота!\n"
-        f"• <b>+5 дней бесплатно</b> начисляются вам при первой оплате друга!\n"
+        f"• <b>+7 дней бесплатно</b> начисляются вам при первой оплате друга!\n"
         f"• Ваш друг сразу получает <b>3 дня бесплатного доступа</b>!\n\n"
         f"📊 <b>Ваша статистика:</b>\n"
         f"• Приглашено друзей: <b>{refs_count}</b>\n\n"

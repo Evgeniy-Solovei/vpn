@@ -12,7 +12,7 @@ def get_main_menu(vpn_data: dict, user_data: dict, devices_data: dict = None, tr
     dev_btn_text = f"📱 Устройства: {conn_count}/{max_dev}"
 
     ref_count = user_data.get('referrals_count', 0)
-    ref_btn_text = f"👥 Друзья ({ref_count}) • +3 дн."
+    ref_btn_text = f"👥 Друзья ({ref_count}) • +7 дн."
 
     flag = vpn_data.get('flag', '🇫🇷')
     loc_name = vpn_data.get('city') or vpn_data.get('country_name') or 'Франция'
@@ -249,9 +249,9 @@ def get_yookassa_tariffs_menu(packages: list = None) -> InlineKeyboardMarkup:
             ])
     else:
         buttons = [
-            [InlineKeyboardButton(text="30 дн. — 105 ₽ (хит)", callback_data="yoo_pay_30_105")],
-            [InlineKeyboardButton(text="60 дн. — 200 ₽ (выгодно)", callback_data="yoo_pay_60_200")],
-            [InlineKeyboardButton(text="90 дн. — 280 ₽ (максимум)", callback_data="yoo_pay_90_280")],
+            [InlineKeyboardButton(text="30 дн. — 190 ₽ (хит)", callback_data="yoo_pay_30_190")],
+            [InlineKeyboardButton(text="60 дн. — 350 ₽ (выгодно)", callback_data="yoo_pay_60_350")],
+            [InlineKeyboardButton(text="90 дн. — 490 ₽ (максимум)", callback_data="yoo_pay_90_490")],
         ]
     buttons.append([InlineKeyboardButton(text="◀️ Назад к балансу", callback_data="view_balance")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)

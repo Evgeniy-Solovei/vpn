@@ -860,8 +860,8 @@ function initPaymentModal() {
 
   let selectedPkgId = null;
   let selectedMethod = 'yookassa';
-  let priceRub = '105';
-  let priceByn = '5.00';
+  let priceRub = '190';
+  let priceByn = '7.00';
 
   const updateSubmitButton = () => {
     const btn = document.getElementById('btn-submit-pay');
@@ -878,8 +878,8 @@ function initPaymentModal() {
   if (firstPkg) {
     firstPkg.classList.add('selected');
     selectedPkgId = firstPkg.getAttribute('data-pkg-id');
-    priceRub = firstPkg.getAttribute('data-price-rub') || '105';
-    priceByn = firstPkg.getAttribute('data-price-byn') || '5.00';
+    priceRub = firstPkg.getAttribute('data-price-rub') || '190';
+    priceByn = firstPkg.getAttribute('data-price-byn') || '7.00';
     updateSubmitButton();
   }
 
@@ -889,8 +889,8 @@ function initPaymentModal() {
       payModal.querySelectorAll('.package-select-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
       selectedPkgId = card.getAttribute('data-pkg-id');
-      priceRub = card.getAttribute('data-price-rub') || '105';
-      priceByn = card.getAttribute('data-price-byn') || '5.00';
+      priceRub = card.getAttribute('data-price-rub') || '190';
+      priceByn = card.getAttribute('data-price-byn') || '7.00';
       updateSubmitButton();
     });
   });

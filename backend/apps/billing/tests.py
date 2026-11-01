@@ -54,8 +54,8 @@ class BillingTestCase(TestCase):
         self.user.refresh_from_db()
         self.assertTrue(self.user.autopay)
 
-    def test_referral_reward_5_days_on_first_payment(self):
-        """When referred user makes their first payment, referrer gets 5 days free (17.50 ₽)."""
+    def test_referral_reward_7_days_on_first_payment(self):
+        """When referred user makes their first payment, referrer gets 7 days free."""
         referrer = User.objects.create_user(
             username='referrer',
             email='referrer@test.com',
@@ -76,14 +76,14 @@ class BillingTestCase(TestCase):
         self.client.post(reverse('deposit'), {'amount': '100', 'payment_method': 'mir'})
 
         referrer.refresh_from_db()
-        # Referrer should have received +17.50 ₽ (5 days * 3.50 ₽)
-        self.assertEqual(referrer.balance, Decimal('37.50'))
+        # Referrer should have received +24.50 ₽ (7 days * 3.50 ₽)
+        self.assertEqual(referrer.balance, Decimal('44.50'))
 
         # Second deposit of 50 ₽ by friend
         self.client.post(reverse('deposit'), {'amount': '50', 'payment_method': 'mir'})
         referrer.refresh_from_db()
         # Referrer should NOT receive another bonus for the second deposit
-        self.assertEqual(referrer.balance, Decimal('37.50'))
+        self.assertEqual(referrer.balance, Decimal('44.50'))
 
     def test_promo_code_activation(self):
         """User can activate promo code once and receives bonus days."""
@@ -101,8 +101,8 @@ class BillingTestCase(TestCase):
         self.assertEqual(data['bonus_days'], 5)
 
         self.user.refresh_from_db()
-        # 5 days * 3.50 ₽ = 17.50 ₽
-        self.assertEqual(self.user.balance, initial_balance + Decimal('17.50'))
+        # 5 days * daily_deduction
+        self.assertEqual(self.user.balance, initial_balance + (Decimal('5') * self.user.daily_deduction))
 
         # Attempt to activate again
         resp2 = self.client.post(

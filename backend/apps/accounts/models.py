@@ -16,8 +16,8 @@ class CustomUser(AbstractUser):
     telegram_bonus_claimed = models.BooleanField(default=False, verbose_name="Бонус за привязку Telegram начислен")
     google_id = models.CharField(max_length=128, blank=True, null=True, unique=True, verbose_name="Google ID")
     
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('3.50'), verbose_name="Баланс (₽) [1 день теста]")
-    daily_deduction = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('3.50'), verbose_name="Ежедневное списание (₽)")
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('6.33'), verbose_name="Баланс (₽) [1 день теста]")
+    daily_deduction = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('6.33'), verbose_name="Ежедневное списание (₽)")
     autopay = models.BooleanField(default=True, verbose_name="Автоплатеж (автоматическое списание)")
     last_billed_date = models.DateField(null=True, blank=True, verbose_name="Дата последнего списания")
     
@@ -63,9 +63,9 @@ class CustomUser(AbstractUser):
         If balance reaches 0, deactivates VPN keys and disconnects from 3X-UI.
         Returns number of days charged.
         """
-        from datetime import date
-        today = date.today()
-        last_date = self.last_billed_date or (self.created_at.date() if self.created_at else today)
+        from django.utils import timezone
+        today = timezone.localdate()
+        last_date = self.last_billed_date or (timezone.localtime(self.created_at).date() if self.created_at else today)
 
         days_passed = (today - last_date).days
         if days_passed <= 0:
@@ -76,7 +76,7 @@ class CustomUser(AbstractUser):
                 self.sync_vpn_access()
             return 0
 
-        total_charge = Decimal(days_passed) * (self.daily_deduction or Decimal('3.50'))
+        total_charge = Decimal(days_passed) * (self.daily_deduction or Decimal('6.33'))
         old_balance = self.balance
         new_balance = max(Decimal('0.00'), old_balance - total_charge)
         self.balance = new_balance
