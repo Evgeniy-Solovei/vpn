@@ -97,7 +97,7 @@
           <label class="form-label">Срок подписки</label>
           <div class="days-selector-grid" style="gap: 0.5rem; margin-top: 0.4rem;">
             {% for pkg in packages %}
-              <button type="button" class="btn {% if pkg.is_featured %}btn-primary{% else %}btn-secondary{% endif %} period-btn" onclick="setPeriod({{ pkg.days }}, {{ pkg.price_rub }});">
+              <button type="button" class="btn {% if pkg.is_featured %}btn-primary{% else %}btn-secondary{% endif %} period-btn" onclick="setPeriod({{ pkg.days }}, {{ pkg.price_rub }}, this);">
                 {{ pkg.days }} дн ({{ pkg.price_rub }} ₽){% if pkg.badge %} • {{ pkg.badge }}{% endif %}
               </button>
             {% endfor %}
@@ -232,14 +232,18 @@
     if (amountInput) amountInput.value = Math.round(parseFloat(dailyPrice) * 30);
   }
 
-  function setPeriod(days, amount) {
+  function setPeriod(days, amount, targetBtn) {
     const amountInput = document.getElementById('amount');
     if (amountInput) amountInput.value = amount;
     document.querySelectorAll('.period-btn').forEach(btn => {
       btn.className = 'btn btn-secondary period-btn';
     });
-    if (event && event.target) {
-      event.target.className = 'btn btn-primary period-btn';
+    const active = targetBtn || (window.event && window.event.target);
+    if (active) {
+      const b = (active.closest && active.closest('.period-btn')) || active;
+      if (b && b.classList) {
+        b.className = 'btn btn-primary period-btn';
+      }
     }
   }
 </script>

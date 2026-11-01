@@ -4,14 +4,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#090d16">
+  <meta name="color-scheme" content="dark">
   <title>{% block title %}VPN live-dev — Быстрый и надежный VPN для РФ и РБ{% endblock %}</title>
   
+  <!-- Critical Instant Paint to Prevent Page Transition Flicker / FOUC -->
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    html, body {
+      background-color: #090d16 !important;
+      color: #f8fafc;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+
   <!-- Premium Fonts: Space Grotesk (Brand), Outfit (Headings), Inter (Body), JetBrains Mono (Tech) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=2.2">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=3.0">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V18a1 1 0 0 1-2 0v-1.07A6 6 0 0 1 6.07 12H7a1 1 0 0 1 0-2h-.93A6 6 0 0 1 11 6.07V7a1 1 0 0 1 2 0v-.93A6 6 0 0 1 17.93 11H17a1 1 0 0 1 0 2h.93A6 6 0 0 1 13 16.93z'/></svg>">
 
   <!-- Telegram WebApp SDK & Native Adaptations -->
@@ -114,7 +131,7 @@
     </main>
 
     <!-- Footer -->
-    <footer style="border-top: 1px solid var(--border-subtle); padding: 2rem 0; margin-top: 3.5rem; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(12px);">
+    <footer style="border-top: 1px solid var(--border-subtle); padding: 2rem 0; margin-top: 3.5rem; background: #090d16;">
       <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem;">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
