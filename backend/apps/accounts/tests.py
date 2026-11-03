@@ -390,17 +390,17 @@ class AccountsTestCase(TestCase):
         })
         self.assertEqual(resp.status_code, 302)
         user = User.objects.get(username='onedayuser')
-        self.assertEqual(user.balance, Decimal('3.50'))
+        self.assertEqual(user.balance, Decimal('6.33'))
         self.assertEqual(user.days_left, 1)
         self.assertFalse(user.telegram_bonus_claimed)
 
     def test_telegram_link_code_and_claiming_bonus(self):
-        """Linking Telegram awards +2 free days (total 3 days = 10.50 ₽)."""
+        """Linking Telegram awards +2 free days (total 3 days = 18.99 ₽)."""
         user = User.objects.create_user(
             username='webuser1',
             email='webuser1@test.com',
             password='password123',
-            balance=Decimal('3.50')
+            balance=Decimal('6.33')
         )
         self.client.force_login(user)
 
@@ -426,7 +426,7 @@ class AccountsTestCase(TestCase):
         link_data = link_resp.json()
         self.assertTrue(link_data['success'])
         self.assertTrue(link_data['bonus_awarded'])
-        self.assertEqual(link_data['new_balance'], 10.50)
+        self.assertEqual(link_data['new_balance'], 18.99)
         self.assertEqual(link_data['days_left'], 3)
 
         user.refresh_from_db()
@@ -602,8 +602,8 @@ class AccountsTestCase(TestCase):
         target.refresh_from_db()
         self.assertEqual(target.telegram_id, '99887711')
         self.assertEqual(target.telegram_username, 'telebotter')
-        # 5.00 + 20.00 + 7.00 (bonus) = 32.00
-        self.assertEqual(target.balance, Decimal('32.00'))
+        # 5.00 + 20.00 + 12.66 (bonus 2 days at 6.33) = 37.66
+        self.assertEqual(target.balance, Decimal('37.66'))
         self.assertFalse(User.objects.filter(username='tg_99887711').exists())
 
     def test_expired_balance_deactivates_vpn_access(self):

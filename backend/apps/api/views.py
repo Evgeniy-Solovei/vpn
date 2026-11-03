@@ -263,7 +263,7 @@ def tg_link_account_view(request):
 
         bonus_awarded = False
         if not user.telegram_bonus_claimed:
-            user.balance += Decimal('7.00')  # +2 full days bonus!
+            user.balance += (Decimal('2') * user.daily_deduction)  # +2 full days bonus!
             user.telegram_bonus_claimed = True
             bonus_awarded = True
 

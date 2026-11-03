@@ -279,7 +279,7 @@ function FindProxyForURL(url, host) {{
 def get_incy_routing_dict(key=None) -> dict:
     """
     Generates dynamic routing JSON profile for INCY application.
-    Uses reliable UDP DNS (77.88.8.8 and 8.8.8.8) to eliminate DoH handshake failures.
+    Uses reliable UDP DNS (8.8.8.8 and 8.8.4.4) to eliminate DoH handshake failures and timeouts.
     When whitelist_enabled=True: routes VK, banks, Gosuslugi, domestic media & marketplaces
     directly (bypassing VPN to eliminate 'VPN detected' banners), while proxying blocked sites.
     When whitelist_enabled=False: routes all traffic through the active VPN node.
@@ -540,6 +540,8 @@ def get_incy_routing_dict(key=None) -> dict:
             "93.158.128.0/18",
             "213.180.192.0/19",
             "5.255.255.0/24",
+            "77.88.8.0/24",
+            "77.88.0.0/18",
             # T-Bank (AS41994)
             "91.194.226.0/23",
             "185.148.80.0/22",
@@ -560,7 +562,7 @@ def get_incy_routing_dict(key=None) -> dict:
             "185.22.64.0/22",
             "91.201.214.0/23",
         ]
-        route_order = "block-proxy-direct"
+        route_order = "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
         global_proxy = True
     else:
@@ -572,7 +574,7 @@ def get_incy_routing_dict(key=None) -> dict:
             "127.0.0.0/8",
             "169.254.0.0/16",
         ]
-        route_order = "block-proxy-direct"
+        route_order = "block-direct-proxy"
         profile_name = "VPN live-dev (Весь трафик)"
         global_proxy = True
 
@@ -646,8 +648,8 @@ def get_incy_routing_dict(key=None) -> dict:
         "RemoteDns": "8.8.8.8",
         "DomesticDNSType": "DoU",
         "DomesticDNSDomain": "",
-        "DomesticDNSIP": "77.88.8.8",
-        "DomesticDns": "77.88.8.8",
+        "DomesticDNSIP": "8.8.4.4",
+        "DomesticDns": "8.8.4.4",
         "Geoipurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat",
         "Geositeurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat",
         "LastUpdated": str(int(time.time())),
