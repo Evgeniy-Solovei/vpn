@@ -61,8 +61,11 @@ class CustomUser(AbstractUser):
         """
         Calculates elapsed calendar days since last_billed_date and deducts daily fee.
         If balance reaches 0, deactivates VPN keys and disconnects from 3X-UI.
-        Returns number of days charged.
+        Returns number of days charged. Staff/superusers are exempt.
         """
+        if self.is_staff or self.is_superuser:
+            return 0
+
         from django.utils import timezone
         today = timezone.localdate()
         last_date = self.last_billed_date or (timezone.localtime(self.created_at).date() if self.created_at else today)
@@ -103,6 +106,8 @@ class CustomUser(AbstractUser):
 
     @property
     def days_left(self) -> int:
+        if self.is_staff or self.is_superuser:
+            return 9999
         if self.daily_deduction <= 0:
             return 999
         if self.balance <= 0:
@@ -111,6 +116,8 @@ class CustomUser(AbstractUser):
 
     @property
     def has_active_subscription(self) -> bool:
+        if self.is_staff or self.is_superuser:
+            return True
         return self.balance > 0
 
     def __str__(self):
