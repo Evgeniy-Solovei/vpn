@@ -60,12 +60,9 @@ class CustomUser(AbstractUser):
     def apply_daily_deductions(self) -> int:
         """
         Calculates elapsed calendar days since last_billed_date and deducts daily fee.
-        If balance reaches 0, deactivates VPN keys and disconnects from 3X-UI.
-        Returns number of days charged. Staff/superusers are exempt.
+        If balance reaches 0, deactivates VPN keys and disconnects from 3X-UI for regular users.
+        Returns number of days charged.
         """
-        if self.is_staff or self.is_superuser:
-            return 0
-
         from django.utils import timezone
         today = timezone.localdate()
         last_date = self.last_billed_date or (timezone.localtime(self.created_at).date() if self.created_at else today)
@@ -75,7 +72,7 @@ class CustomUser(AbstractUser):
             if not self.last_billed_date:
                 self.last_billed_date = last_date
                 self.save(update_fields=['last_billed_date'])
-            if self.balance <= Decimal('0.00'):
+            if self.balance <= Decimal('0.00') and not (self.is_staff or self.is_superuser):
                 self.sync_vpn_access()
             return 0
 
@@ -99,18 +96,23 @@ class CustomUser(AbstractUser):
         except Exception:
             pass
 
-        # Sync VPN access across all panels (cuts off if balance <= 0, updates expiryTime if balance > 0)
-        self.sync_vpn_access()
+        # Sync VPN access across all panels
+        # If regular user runs out of balance, cuts off access. Staff/superusers stay connected.
+        if self.balance <= Decimal('0.00') and (self.is_staff or self.is_superuser):
+            # Staff balance reached 0, but access is preserved
+            pass
+        else:
+            self.sync_vpn_access()
 
         return days_passed
 
     @property
     def days_left(self) -> int:
-        if self.is_staff or self.is_superuser:
-            return 9999
         if self.daily_deduction <= 0:
             return 999
         if self.balance <= 0:
+            if self.is_staff or self.is_superuser:
+                return 9999
             return 0
         return int(self.balance // self.daily_deduction)
 

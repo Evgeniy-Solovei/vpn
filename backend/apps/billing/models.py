@@ -4,27 +4,39 @@ from django.conf import settings
 from apps.accounts.models import CustomUser
 
 
-def notify_telegram_user(user: CustomUser, text: str):
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def notify_telegram_user(user: CustomUser, text: str, reply_markup: dict = None) -> bool:
     """Safely notifies the user via Telegram bot if they have a linked Telegram account."""
-    if not user or not user.telegram_id:
-        return
+    if not user or not getattr(user, 'telegram_id', None):
+        return False
     bot_token = getattr(settings, 'BOT_TOKEN', '')
     if not bot_token:
-        return
+        return False
     try:
         import httpx
-        with httpx.Client(timeout=4.0) as client:
-            client.post(
+        payload = {
+            "chat_id": str(user.telegram_id),
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": True
+        }
+        if reply_markup:
+            payload["reply_markup"] = reply_markup
+        with httpx.Client(timeout=5.0) as client:
+            resp = client.post(
                 f"https://api.telegram.org/bot{bot_token}/sendMessage",
-                json={
-                    "chat_id": str(user.telegram_id),
-                    "text": text,
-                    "parse_mode": "HTML",
-                    "disable_web_page_preview": True
-                }
+                json=payload
             )
-    except Exception:
-        pass
+            if resp.status_code == 200:
+                return True
+            logger.warning("Telegram notification failed (%s): %s", resp.status_code, resp.text)
+    except Exception as e:
+        logger.error("Error sending Telegram notification to %s: %s", getattr(user, 'telegram_id', None), e)
+    return False
 
 class TariffPlan(models.Model):
     name = models.CharField(max_length=64, verbose_name="Название тарифа")
@@ -138,6 +150,28 @@ class Transaction(models.Model):
                     bonus_rub = bonus_days * daily_price
                     referrer.balance += bonus_rub
                     referrer.save(update_fields=['balance'])
+                    notify_telegram_user(
+                        referrer,
+                        f"🎁 <b>Реферальный бонус!</b>\n\n"
+                        f"Ваш друг <b>{self.user.username}</b> пополнил баланс.\n"
+                        f"Вам начислено <b>+7 дней</b> бесплатного VPN (+{bonus_rub} ₽)!"
+                    )
+
+            # Send Telegram notification for top-up
+            if self.amount > Decimal('0.00'):
+                notify_telegram_user(
+                    self.user,
+                    f"🎉 <b>Баланс успешно пополнен!</b>\n\n"
+                    f"• Сумма: <b>+{self.amount} ₽</b>\n"
+                    f"• Текущий баланс: <b>{self.user.balance} ₽</b> (хватит на {self.user.days_left} дн.)\n"
+                    f"• Доступ к VPN: <b>Активен 🚀</b>",
+                    reply_markup={
+                        "inline_keyboard": [
+                            [{"text": "🔑 Мой VLESS Ключ", "callback_data": "view_key"}],
+                            [{"text": "🏠 Главное меню", "callback_data": "main_menu"}]
+                        ]
+                    }
+                )
 
     def __str__(self):
         return f"Платёж #{self.id} — {self.user.username} ({self.amount} ₽, {self.status})"
@@ -181,6 +215,19 @@ class PromoCode(models.Model):
         self.users.add(user)
         self.used_count += 1
         self.save(update_fields=['used_count'])
+        notify_telegram_user(
+            user,
+            f"🎁 <b>Промокод «{self.code}» успешно активирован!</b>\n\n"
+            f"• Начислено: <b>+{self.days} дн.</b> (+{bonus_rub} ₽)\n"
+            f"• Текущий баланс: <b>{user.balance} ₽</b> (хватит на {user.days_left} дн.)\n"
+            f"• Доступ к VPN: <b>Активен ⚡</b>",
+            reply_markup={
+                "inline_keyboard": [
+                    [{"text": "🔑 Мой VLESS Ключ", "callback_data": "view_key"}],
+                    [{"text": "🏠 Главное меню", "callback_data": "main_menu"}]
+                ]
+            }
+        )
         return bonus_rub
 
     def __str__(self):
