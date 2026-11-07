@@ -282,4 +282,40 @@ class MagicLoginToken(models.Model):
         return f"MagicToken {self.token[:8]}... -> {self.user.username}"
 
 
+class TelegramLoginSession(models.Model):
+    """
+    Temporary session token for seamless 1-click and QR-code login via Telegram Bot.
+    Avoids oauth.telegram.org phone number bugs and carrier blocks in Russia/Belarus.
+    """
+    token = models.CharField(max_length=64, unique=True, db_index=True, verbose_name="Токен сессии")
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='tg_login_sessions', verbose_name="Пользователь")
+    is_confirmed = models.BooleanField(default=False, verbose_name="Подтвержден")
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(verbose_name="Истекает")
+
+    class Meta:
+        verbose_name = "Сессия входа Telegram"
+        verbose_name_plural = "Сессии входа Telegram"
+        ordering = ['-created_at']
+
+    def is_valid(self) -> bool:
+        from django.utils import timezone
+        return not self.is_confirmed and timezone.now() < self.expires_at
+
+    @classmethod
+    def create_session(cls, minutes=10):
+        from django.utils import timezone
+        from datetime import timedelta
+        import secrets
+        return cls.objects.create(
+            token=secrets.token_urlsafe(32),
+            expires_at=timezone.now() + timedelta(minutes=minutes)
+        )
+
+    def __str__(self):
+        status = "CONFIRMED" if self.is_confirmed else "PENDING"
+        return f"TGSession {self.token[:8]}... [{status}]"
+
+
+
 

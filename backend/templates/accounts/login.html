@@ -74,8 +74,22 @@
       <div style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08);"></div>
     </div>
 
-    <!-- Social Login Options (Google & Telegram) -->
+    <!-- Social Login Options (Telegram & Google) -->
     <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem;">
+      <!-- Native 1-Click Telegram Login Button -->
+      <a href="https://t.me/{{ BOT_USERNAME }}?start=auth_{{ tg_session_token }}" 
+         target="_blank" 
+         class="btn-telegram-direct" 
+         style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.85rem 1rem; font-size: 0.95rem; font-weight: 700; text-decoration: none; border: 1px solid rgba(56, 189, 248, 0.4); background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; border-radius: 0.75rem; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.35); transition: all 0.2s ease;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M21.5 2.5L2 10.5L9.5 13.5L12 21.5L15 16.5L19.5 19.5L21.5 2.5Z" fill="#fff"/>
+        </svg>
+        <span>Войти через Telegram (в 1 клик)</span>
+      </a>
+      <div style="font-size: 0.76rem; color: var(--text-dim); text-align: center; margin-top: -0.25rem; margin-bottom: 0.25rem; line-height: 1.4;">
+        ⚡ <b>Без ввода номера телефона и СМС.</b> Нажмите кнопку — откроется бот @{{ BOT_USERNAME }} и мгновенно подтвердит вход.
+      </div>
+
       <!-- Google Sign-In -->
       <a href="{% url 'google_login' %}" class="btn btn-secondary btn-block" style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.7rem; font-size: 0.88rem; font-weight: 600; text-decoration: none; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.04); border-radius: 0.75rem;">
         <svg width="18" height="18" viewBox="0 0 24 24">
@@ -87,18 +101,20 @@
         <span style="color: #fff;">Войти через Google</span>
       </a>
 
-      <!-- Telegram Sign-In (Official Widget) -->
-      <div style="text-align: center; margin-top: 0.25rem;">
-        <script async src="https://telegram.org/js/telegram-widget.js?22" 
-                data-telegram-login="{{ BOT_USERNAME }}" 
-                data-size="large" 
-                data-radius="10" 
-                data-auth-url="{{ SITE_URL }}{% url 'telegram_auth_callback' %}" 
-                data-request-access="write"></script>
-        <div style="font-size: 0.76rem; color: var(--text-dim); margin-top: 0.45rem;">
-          Или в боте <a href="https://t.me/{{ BOT_USERNAME }}?start=login" target="_blank" style="color: #38bdf8; text-decoration: underline;">@{{ BOT_USERNAME }}</a> нажмите <strong>«Войти на сайте»</strong>
+      <!-- Telegram Official Widget (Alternative for foreign users) -->
+      <details style="text-align: center; margin-top: 0.25rem;">
+        <summary style="font-size: 0.76rem; color: var(--text-dim); cursor: pointer; user-select: none;">
+          Другой способ: авторизация по номеру телефона
+        </summary>
+        <div style="margin-top: 0.75rem;">
+          <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                  data-telegram-login="{{ BOT_USERNAME }}" 
+                  data-size="large" 
+                  data-radius="10" 
+                  data-auth-url="{{ SITE_URL }}{% url 'telegram_auth_callback' %}" 
+                  data-request-access="write"></script>
         </div>
-      </div>
+      </details>
     </div>
 
     <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
@@ -108,6 +124,25 @@
 </div>
 
 <script>
+  // Automatic Real-Time Telegram 1-Click Login Polling
+  (function() {
+    var token = '{{ tg_session_token }}';
+    if (!token) return;
+    var attempts = 0;
+    var pollInterval = setInterval(async function() {
+      attempts++;
+      if (attempts > 150) { clearInterval(pollInterval); return; }
+      try {
+        var resp = await fetch('/api/tg/check-login-session/?token=' + encodeURIComponent(token));
+        var data = await resp.json();
+        if (data && data.authenticated && data.redirect_url) {
+          clearInterval(pollInterval);
+          window.location.replace(data.redirect_url);
+        }
+      } catch (err) {}
+    }, 2000);
+  })();
+
   // Automatic Telegram WebApp Seamless Login
   document.addEventListener('DOMContentLoaded', async function() {
     var tg = window.Telegram && window.Telegram.WebApp;

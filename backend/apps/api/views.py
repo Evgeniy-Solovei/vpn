@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.contrib.auth import login as auth_login
-from apps.accounts.models import CustomUser, TelegramLinkCode, MagicLoginToken
+from apps.accounts.models import CustomUser, TelegramLinkCode, MagicLoginToken, TelegramLoginSession
 from apps.vpn.models import VPNServer, VPNKey
 from apps.vpn.services import get_or_create_default_server
 from apps.billing.models import TariffPlan, Transaction, SubscriptionPackage
@@ -321,6 +321,118 @@ def tg_generate_magic_link_view(request):
     except Exception as e:
         logger.error(f"Error in tg_generate_magic_link_view: {e}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def tg_confirm_login_session_view(request):
+    """
+    Called by Telegram Bot when user opens /start auth_<session_token>.
+    Confirms the session and links/creates user account in 1-click.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        token = str(data.get('token', '')).strip()
+        telegram_id = str(data.get('telegram_id', '')).strip()
+        telegram_username = data.get('telegram_username', '')
+        ref_code = data.get('ref_code')
+
+        if not token or not telegram_id:
+            return JsonResponse({'success': False, 'error': 'token and telegram_id are required'}, status=400)
+
+        session = TelegramLoginSession.objects.filter(token=token).first()
+        if not session or not session.is_valid():
+            return JsonResponse({'success': False, 'error': 'Сессия авторизации истекла или уже использована. Обновите страницу.'}, status=400)
+
+        # Find or create user
+        user = CustomUser.objects.filter(telegram_id=telegram_id).first()
+        is_new = False
+        if not user:
+            username = telegram_username or f"tg_{telegram_id}"
+            base_username = username
+            counter = 1
+            while CustomUser.objects.filter(username=username).exists():
+                username = f"{base_username}_{counter}"
+                counter += 1
+
+            email = f"tg_{telegram_id}@live-dev.by"
+            user = CustomUser.objects.create(
+                username=username,
+                email=email,
+                telegram_id=telegram_id,
+                telegram_username=telegram_username,
+                balance=Decimal('6.33'),
+                daily_deduction=Decimal('6.33')
+            )
+            is_new = True
+
+            try:
+                server = get_or_create_default_server()
+                VPNKey.objects.get_or_create(user=user, server=server)
+            except Exception as e:
+                logger.error(f"Error creating initial key: {e}")
+
+            if ref_code:
+                try:
+                    clean_ref = ref_code[4:].strip() if ref_code.startswith('ref_') else ref_code.strip()
+                    referrer = CustomUser.objects.get(referral_code=clean_ref)
+                    user.referred_by = referrer
+                    referrer.balance += Decimal('10.00')
+                    referrer.save(update_fields=['balance'])
+                    user.save(update_fields=['referred_by'])
+                except Exception:
+                    pass
+        else:
+            if telegram_username and user.telegram_username != telegram_username:
+                user.telegram_username = telegram_username
+                user.save(update_fields=['telegram_username'])
+
+        session.user = user
+        session.is_confirmed = True
+        session.save(update_fields=['user', 'is_confirmed'])
+
+        return JsonResponse({
+            'success': True,
+            'is_new': is_new,
+            'username': user.username,
+            'user_id': user.id
+        })
+    except Exception as e:
+        logger.error(f"Error in tg_confirm_login_session_view: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def tg_check_login_session_view(request):
+    """
+    Polled by the browser (login/register page) every 2 seconds.
+    Once Telegram bot confirms the session, logs the user in and returns redirect.
+    """
+    token = request.GET.get('token', '').strip()
+    if not token:
+        return JsonResponse({'authenticated': False, 'error': 'token is required'}, status=400)
+
+    session = TelegramLoginSession.objects.select_related('user').filter(token=token).first()
+    if not session:
+        return JsonResponse({'authenticated': False, 'error': 'Session not found'}, status=404)
+
+    from django.utils import timezone
+    if session.is_confirmed and session.user:
+        # User confirmed in Telegram! Log them into web session
+        auth_login(request, session.user, backend='django.contrib.auth.backends.ModelBackend')
+        response = JsonResponse({
+            'authenticated': True,
+            'redirect_url': '/dashboard/',
+            'username': session.user.username
+        })
+        from apps.accounts.views import apply_persistent_auth
+        return apply_persistent_auth(request, response, session.user, remember=True, days=90)
+
+    if timezone.now() >= session.expires_at:
+        return JsonResponse({'authenticated': False, 'expired': True})
+
+    return JsonResponse({'authenticated': False, 'pending': True})
 
 
 @csrf_exempt

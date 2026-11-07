@@ -87,6 +87,42 @@ async def cmd_start(message: Message, command: CommandObject):
                 logger.error(f"Error linking account: {e}")
                 await message.answer("⚠️ Ошибка соединения с сервером при привязке аккаунта.", parse_mode="HTML")
 
+    # Handle Native 1-Click Browser Login / Registration Session
+    if raw_arg and raw_arg.startswith('auth_'):
+        session_token = raw_arg[5:].strip()
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                resp = await client.post(
+                    f"{WEB_API_URL}/tg/confirm-login-session/",
+                    json={
+                        "token": session_token,
+                        "telegram_id": str(telegram_id),
+                        "telegram_username": username or ""
+                    }
+                )
+                res_data = resp.json()
+                if res_data.get('success'):
+                    uname = res_data.get('username')
+                    data = await sync_user_with_backend(telegram_id, username)
+                    user_info = data.get('user', {})
+                    vpn_info = data.get('vpn', {})
+                    msg_text = (
+                        f"🎉 <b>Авторизация на сайте подтверждена!</b>\n\n"
+                        f"Вы успешно вошли в аккаунт <b>{uname}</b> на сайте https://vpn.live-dev.by.\n"
+                        f"Страница в вашем браузере уже открыла Личный кабинет! 🚀\n\n"
+                        f"💡 <i>Также вы можете управлять ключами прямо здесь, в Telegram.</i>"
+                    )
+                    await message.answer(msg_text, parse_mode="HTML", reply_markup=get_main_menu(vpn_info, user_info))
+                    return
+                else:
+                    err_msg = res_data.get('error', 'Сессия входа устарела')
+                    await message.answer(f"⚠️ <b>Ошибка авторизации:</b> {err_msg}. Обновите страницу на сайте.", parse_mode="HTML")
+                    return
+            except Exception as e:
+                logger.error(f"Error confirming login session: {e}")
+                await message.answer("⚠️ Ошибка соединения с сервером при подтверждении входа.", parse_mode="HTML")
+                return
+
     # Handle One-Click Web Login Deep Link
     if raw_arg == 'login':
         await sync_user_with_backend(telegram_id, username)

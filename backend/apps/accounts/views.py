@@ -19,7 +19,7 @@ from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 
 from decimal import Decimal
-from .models import CustomUser, DeviceAuthKey, TelegramLinkCode, MagicLoginToken
+from .models import CustomUser, DeviceAuthKey, TelegramLinkCode, MagicLoginToken, TelegramLoginSession
 from .forms import RegisterForm, LoginForm, PasswordResetRequestForm, SetNewPasswordForm
 from apps.vpn.models import VPNServer, VPNKey
 from apps.vpn.services import get_or_create_default_server
@@ -96,10 +96,12 @@ def register_view(request):
     else:
         form = RegisterForm()
 
+    tg_session = TelegramLoginSession.create_session()
     return render(request, 'accounts/register.html', {
         'form': form,
         'email_already_exists': email_already_exists,
-        'existing_email': existing_email
+        'existing_email': existing_email,
+        'tg_session_token': tg_session.token,
     })
 
 
@@ -122,7 +124,11 @@ def login_view(request):
     else:
         form = LoginForm(initial={'remember_me': True})
 
-    return render(request, 'accounts/login.html', {'form': form})
+    tg_session = TelegramLoginSession.create_session()
+    return render(request, 'accounts/login.html', {
+        'form': form,
+        'tg_session_token': tg_session.token,
+    })
 
 
 def logout_view(request):
