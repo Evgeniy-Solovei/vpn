@@ -602,7 +602,7 @@ def google_callback_view(request):
             email=email,
             first_name=name,
             google_id=google_sub,
-            balance=Decimal('10.50'),  # 3 days free trial
+            balance=Decimal('19.00'),  # 3 days free trial (3 * 6.33)
             daily_deduction=Decimal('6.33'),
         )
         user.set_unusable_password()

@@ -65,6 +65,11 @@ class CustomUser(AbstractUser):
         """
         from django.utils import timezone
         today = timezone.localdate()
+
+        # Protect brand new users: do not bill on calendar day crossing if user registered recently and has never been billed
+        if not self.last_billed_date and self.created_at and (timezone.now() - self.created_at).total_seconds() < 24 * 3600:
+            return 0
+
         last_date = self.last_billed_date or (timezone.localtime(self.created_at).date() if self.created_at else today)
 
         days_passed = (today - last_date).days

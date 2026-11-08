@@ -189,7 +189,7 @@ def tg_sync_view(request):
                 email=email,
                 telegram_id=telegram_id,
                 telegram_username=telegram_username,
-                balance=Decimal('15.00'), # 3-day trial balance
+                balance=Decimal('19.00'), # 3-day trial balance (3 * 6.33)
                 daily_deduction=Decimal('6.33')
             )
             created = True
@@ -363,7 +363,7 @@ def tg_confirm_login_session_view(request):
                 email=email,
                 telegram_id=telegram_id,
                 telegram_username=telegram_username,
-                balance=Decimal('6.33'),
+                balance=Decimal('19.00'),  # 3 days free trial (3 * 6.33)
                 daily_deduction=Decimal('6.33')
             )
             is_new = True
