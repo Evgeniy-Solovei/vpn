@@ -55,11 +55,6 @@
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
-  background-image: 
-    radial-gradient(circle at 12% 15%, rgba(16, 185, 129, 0.07) 0%, transparent 40%),
-    radial-gradient(circle at 88% 22%, rgba(139, 92, 246, 0.07) 0%, transparent 45%),
-    radial-gradient(circle at 50% 88%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
-  background-attachment: fixed;
   color: var(--text-main);
   min-height: 100vh;
   overflow-x: hidden;
@@ -69,66 +64,28 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(circle at 12% 15%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 88% 22%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 88%, rgba(6, 182, 212, 0.06) 0%, transparent 55%);
+  transform: translateZ(0);
+}
+
 /* ==========================================
    AMBIENT AURORA BLOBS & BACKGROUND CANVAS
    ========================================== */
 .aurora-blobs {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-  contain: strict;
-  transform: translateZ(0);
+  display: none !important; /* Disabled for instant 120fps scrolling with zero GPU repaint overhead */
 }
 
 .aurora-blob {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.28;
-  contain: strict;
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  animation: aurora-float 32s ease-in-out infinite alternate;
-}
-
-.blob-1 {
-  top: -15%;
-  left: -10%;
-  width: 650px;
-  height: 650px;
-  background: radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.28) 0%, rgba(6, 182, 212, 0.1) 40%, transparent 70%);
-  animation-duration: 28s;
-}
-
-.blob-2 {
-  top: 8%;
-  right: -10%;
-  width: 720px;
-  height: 720px;
-  background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.24) 0%, rgba(236, 72, 153, 0.08) 45%, transparent 70%);
-  animation-duration: 36s;
-  animation-delay: -6s;
-}
-
-.blob-3 {
-  bottom: -20%;
-  left: 15%;
-  width: 800px;
-  height: 800px;
-  background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.18) 0%, rgba(16, 185, 129, 0.06) 45%, transparent 70%);
-  animation-duration: 32s;
-  animation-delay: -12s;
-}
-
-@keyframes aurora-float {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(25px, 18px, 0) scale(1.03); }
-  100% { transform: translate3d(-18px, 28px, 0) scale(0.97); }
+  display: none !important;
 }
 
 #bg-canvas {
@@ -139,7 +96,7 @@ body {
   height: 100vh;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.8;
+  opacity: 0.6;
   contain: strict;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -167,9 +124,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 50;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  background: rgba(9, 13, 22, 0.88);
+  background: rgba(9, 13, 22, 0.96);
   border-bottom: 1px solid var(--border-subtle);
   padding: 0.8rem 0;
   transform: translateZ(0);
@@ -383,12 +338,11 @@ body {
 
 .power-btn-ring {
   position: absolute;
-  inset: -6px;
+  inset: -4px;
   border-radius: 50%;
   background: conic-gradient(from 180deg at 50% 50%, #10b981 0deg, #06b6d4 90deg, #8b5cf6 180deg, #f43f5e 270deg, #10b981 360deg);
-  opacity: 0.85;
-  filter: blur(6px);
-  animation: rotate-conic 10s linear infinite;
+  opacity: 0.75;
+  animation: rotate-conic 14s linear infinite;
   will-change: transform;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -407,7 +361,7 @@ body {
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #18233a 0%, #0d121e 80%);
   border: 2px solid rgba(16, 185, 129, 0.65);
-  box-shadow: 0 0 32px var(--accent-emerald-glow), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 24px var(--accent-emerald-glow);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -423,7 +377,7 @@ body {
   transform: scale(1.03);
   border-color: #38bdf8;
   color: #38bdf8;
-  box-shadow: 0 0 42px rgba(6, 182, 212, 0.5), inset 0 2px 6px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 32px rgba(6, 182, 212, 0.4);
 }
 
 .power-btn:active {
@@ -433,12 +387,11 @@ body {
 .power-btn.disconnected {
   border-color: rgba(244, 63, 94, 0.6);
   color: #fb7185;
-  box-shadow: 0 0 30px rgba(244, 63, 94, 0.35);
+  box-shadow: 0 0 24px rgba(244, 63, 94, 0.35);
 }
 
 .power-btn.disconnected + .power-btn-ring {
   background: #f43f5e;
-  filter: blur(10px);
   opacity: 0.4;
 }
 
@@ -735,26 +688,26 @@ input:checked + .toggle-switch::after {
 }
 
 /* ==========================================
-   MODAL WINDOWS
+   MODAL WINDOWS (ZERO CPU/GPU COST WHEN HIDDEN)
    ========================================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(5, 8, 14, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(5, 8, 14, 0.88);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity var(--tr-smooth);
+  transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .modal-overlay.active {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
 }
 

@@ -29,24 +29,43 @@ function initBackgroundCanvas() {
   const canvas = document.getElementById('bg-canvas');
   if (!canvas) return;
 
+  // Ultra-smooth optimization: disable canvas on mobile / touch devices for maximum 120fps scrolling
+  if (window.innerWidth < 860 || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
+    canvas.style.display = 'none';
+    return;
+  }
+
   const ctx = canvas.getContext('2d', { alpha: true });
   let width, height;
   let particles = [];
-  const particleCount = 36; // Perfectly tuned for 60-120fps with 0ms scroll lag
+  const particleCount = 18; // Featherlight particle count
 
-  let isScrolling = false;
-  let scrollTimeout = null;
+  let animId = null;
+  let isRunning = true;
+  let scrollTimer = null;
 
-  // Passive scroll listener: instantly frees 100% GPU/CPU for compositor scrolling
+  function stopAnimation() {
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
+  }
+
+  function startAnimation() {
+    if (!isRunning || animId) return;
+    animId = requestAnimationFrame(loop);
+  }
+
+  // During scrolling: completely cancel animation frame so compositor has 100% thread
   window.addEventListener('scroll', () => {
-    isScrolling = true;
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-      isScrolling = false;
-    }, 80);
+    stopAnimation();
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      startAnimation();
+    }, 150);
   }, { passive: true });
 
-  const mouse = { x: -1000, y: -1000, radius: 140 };
+  const mouse = { x: -1000, y: -1000, radius: 120 };
 
   window.addEventListener('mousemove', (e) => {
     mouse.x = e.clientX;
@@ -65,7 +84,6 @@ function initBackgroundCanvas() {
   window.addEventListener('resize', resize, { passive: true });
   resize();
 
-  // Crisp snowflake / cyber aurora palette: Pure Diamond, Icy Cyan, Emerald Neon, Soft Lavender
   const colorPalette = [
     '255, 255, 255',
     '224, 242, 254',
@@ -81,16 +99,16 @@ function initBackgroundCanvas() {
 
     reset(initial = false) {
       this.x = Math.random() * width;
-      this.y = initial ? Math.random() * height : -12;
-      this.vy = Math.random() * 0.45 + 0.3; // gentle serene descent
-      this.vx = (Math.random() - 0.5) * 0.25;
+      this.y = initial ? Math.random() * height : -10;
+      this.vy = Math.random() * 0.35 + 0.2;
+      this.vx = (Math.random() - 0.5) * 0.2;
       this.swayAngle = Math.random() * Math.PI * 2;
-      this.swaySpeed = Math.random() * 0.018 + 0.008;
-      this.swayRadius = Math.random() * 0.55 + 0.25;
-      this.radius = Math.random() * 2.0 + 1.2;
-      this.baseAlpha = Math.random() * 0.3 + 0.35;
+      this.swaySpeed = Math.random() * 0.015 + 0.005;
+      this.swayRadius = Math.random() * 0.4 + 0.2;
+      this.radius = Math.random() * 1.6 + 1.0;
+      this.baseAlpha = Math.random() * 0.25 + 0.25;
       this.alpha = this.baseAlpha;
-      this.twinkleSpeed = Math.random() * 0.025 + 0.01;
+      this.twinkleSpeed = Math.random() * 0.02 + 0.01;
       this.twinkleAngle = Math.random() * Math.PI * 2;
       this.color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
     }
@@ -100,25 +118,23 @@ function initBackgroundCanvas() {
       this.twinkleAngle += this.twinkleSpeed;
       this.x += this.vx + Math.sin(this.swayAngle) * this.swayRadius;
       this.y += this.vy;
-      this.alpha = Math.max(0.2, Math.min(0.85, this.baseAlpha + Math.sin(this.twinkleAngle) * 0.2));
+      this.alpha = Math.max(0.15, Math.min(0.7, this.baseAlpha + Math.sin(this.twinkleAngle) * 0.15));
 
-      // Gentle interactive mouse deflection
       const dx = mouse.x - this.x;
       const dy = mouse.y - this.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < mouse.radius) {
         const force = (mouse.radius - dist) / mouse.radius;
-        this.x -= (dx / dist) * force * 1.8;
-        this.y -= (dy / dist) * force * 1.8;
+        this.x -= (dx / dist) * force * 1.5;
+        this.y -= (dy / dist) * force * 1.5;
       }
 
-      // Screen wrapping
-      if (this.y > height + 15) {
+      if (this.y > height + 10) {
         this.reset(false);
-      } else if (this.x < -15) {
-        this.x = width + 10;
-      } else if (this.x > width + 15) {
-        this.x = -10;
+      } else if (this.x < -10) {
+        this.x = width + 5;
+      } else if (this.x > width + 10) {
+        this.x = -5;
       }
     }
 
@@ -134,21 +150,12 @@ function initBackgroundCanvas() {
     particles.push(new Particle(true));
   }
 
-  let animId = null;
-  let isRunning = true;
-
-  function animate() {
+  function loop() {
+    if (!isRunning) return;
     ctx.clearRect(0, 0, width, height);
     for (let i = 0; i < particles.length; i++) {
       particles[i].update();
       particles[i].draw();
-    }
-  }
-
-  function loop() {
-    if (!isRunning) return;
-    if (!isScrolling) {
-      animate();
     }
     animId = requestAnimationFrame(loop);
   }
@@ -156,14 +163,14 @@ function initBackgroundCanvas() {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       isRunning = false;
-      if (animId) cancelAnimationFrame(animId);
+      stopAnimation();
     } else {
       isRunning = true;
-      animId = requestAnimationFrame(loop);
+      startAnimation();
     }
   });
 
-  loop();
+  startAnimation();
 }
 
 // ==========================================
