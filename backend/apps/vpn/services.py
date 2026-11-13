@@ -163,7 +163,17 @@ class ThreeXUIService:
             "subId": key.sub_token
         }
 
-        # 1. Try modern 3X-UI add endpoint
+        # 1. Try modern 3X-UI update endpoint first if client already exists
+        try:
+            resp = self.client.post(f"{self.base_url}/panel/api/clients/update/{email}", json=client_settings, cookies=self.cookies, headers=headers)
+            if resp.status_code == 200 and resp.json().get('success'):
+                logger.info(f"Successfully updated client {email} in 3X-UI with new expiry")
+                self.restart_xray()
+                return True
+        except Exception as e:
+            logger.debug(f"Modern 3X-UI clients/update failed: {e}")
+
+        # 2. Try modern 3X-UI add endpoint for new clients
         modern_payload = {
             "client": client_settings,
             "inboundIds": [self.server.panel_inbound_id]
@@ -177,7 +187,7 @@ class ThreeXUIService:
         except Exception as e:
             logger.debug(f"Modern 3X-UI clients/add failed, attempting refresh: {e}")
 
-        # 2. If client exists, delete and re-add to ensure fresh expiryTime and enable: True
+        # 3. Fallback to delete and re-add to ensure fresh expiryTime and enable: True
         try:
             self.delete_client(key, reload_xray=False)
             resp = self.client.post(f"{self.base_url}/panel/api/clients/add", json=modern_payload, cookies=self.cookies, headers=headers)
@@ -188,7 +198,7 @@ class ThreeXUIService:
         except Exception as e:
             logger.debug(f"Re-add client failed: {e}")
 
-        # 3. Fallback to legacy inbounds/addClient
+        # 4. Fallback to legacy inbounds/addClient
         legacy_payload = {
             "id": self.server.panel_inbound_id,
             "settings": json.dumps({"clients": [client_settings]})
