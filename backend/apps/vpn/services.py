@@ -172,16 +172,18 @@ class ThreeXUIService:
             resp = self.client.post(f"{self.base_url}/panel/api/clients/add", json=modern_payload, cookies=self.cookies, headers=headers)
             if resp.status_code == 200 and resp.json().get('success'):
                 logger.info(f"Successfully added client {key.user.username} to 3X-UI")
+                self.restart_xray()
                 return True
         except Exception as e:
             logger.debug(f"Modern 3X-UI clients/add failed, attempting refresh: {e}")
 
         # 2. If client exists, delete and re-add to ensure fresh expiryTime and enable: True
         try:
-            self.delete_client(key)
+            self.delete_client(key, reload_xray=False)
             resp = self.client.post(f"{self.base_url}/panel/api/clients/add", json=modern_payload, cookies=self.cookies, headers=headers)
             if resp.status_code == 200 and resp.json().get('success'):
                 logger.info(f"Successfully refreshed client {email} in 3X-UI with new expiry")
+                self.restart_xray()
                 return True
         except Exception as e:
             logger.debug(f"Re-add client failed: {e}")
@@ -195,6 +197,7 @@ class ThreeXUIService:
             resp = self.client.post(f"{self.base_url}/panel/api/inbounds/addClient", json=legacy_payload, cookies=self.cookies, headers=headers)
             if resp.status_code == 200 and resp.json().get('success'):
                 logger.info(f"Successfully added client {key.user.username} to 3X-UI (legacy API)")
+                self.restart_xray()
                 return True
             logger.warning(f"3X-UI addClient response: {resp.text}")
             return False
@@ -202,10 +205,24 @@ class ThreeXUIService:
             logger.error(f"Error calling addClient on 3X-UI: {e}")
             return False
 
+    def restart_xray(self) -> bool:
+        """Triggers 3X-UI to regenerate config.json and reload active Xray process."""
+        if not self.login():
+            return False
+        headers = {}
+        if self.csrf_token:
+            headers['X-Csrf-Token'] = self.csrf_token
+        try:
+            resp = self.client.post(f"{self.base_url}/panel/api/server/restartXrayService", cookies=self.cookies, headers=headers)
+            return resp.status_code == 200 and resp.json().get('success', False)
+        except Exception as e:
+            logger.debug(f"Restart Xray failed: {e}")
+            return False
+
     def add_client(self, key: VPNKey) -> bool:
         return self.add_or_update_client(key)
 
-    def delete_client(self, key: VPNKey) -> bool:
+    def delete_client(self, key: VPNKey, reload_xray: bool = True) -> bool:
         if not self.login():
             return True
         headers = {}
@@ -213,23 +230,29 @@ class ThreeXUIService:
             headers['X-Csrf-Token'] = self.csrf_token
 
         email = f"{key.user.username}_{key.user.id}"
+        success = False
         # 1. Try modern 3X-UI API
         try:
             resp = self.client.post(f"{self.base_url}/panel/api/clients/del/{email}", cookies=self.cookies, headers=headers)
             if resp.status_code == 200 and resp.json().get('success'):
                 logger.info(f"Successfully deleted client {email} from 3X-UI")
-                return True
+                success = True
         except Exception:
             pass
 
         # 2. Fallback to legacy
-        del_url = f"{self.base_url}/panel/api/inbounds/{self.server.panel_inbound_id}/delClient/{key.key_uuid}"
-        try:
-            resp = self.client.post(del_url, cookies=self.cookies, headers=headers)
-            return resp.status_code == 200
-        except Exception as e:
-            logger.error(f"Error deleting client on 3X-UI: {e}")
-            return False
+        if not success:
+            del_url = f"{self.base_url}/panel/api/inbounds/{self.server.panel_inbound_id}/delClient/{key.key_uuid}"
+            try:
+                resp = self.client.post(del_url, cookies=self.cookies, headers=headers)
+                success = resp.status_code == 200
+            except Exception as e:
+                logger.error(f"Error deleting client on 3X-UI: {e}")
+                success = False
+
+        if success and reload_xray:
+            self.restart_xray()
+        return success
 
 
 def generate_pac_script(server: VPNServer, whitelist_enabled: bool, custom_domains: list = None) -> str:
