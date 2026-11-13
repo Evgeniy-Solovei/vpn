@@ -94,7 +94,7 @@ def subscription_view(request, token):
     response['profile-web-page-url'] = 'https://vpn.live-dev.by'
     response['content-disposition'] = f'attachment; filename="vpn-livedev-{user.username}.txt"'
     response['tunnel-dns'] = '8.8.8.8, 8.8.4.4'
-    response['tunnel-mtu'] = '1420'
+    response['tunnel-mtu'] = '1360'
     
     # Auto-apply Smart Bypass routing directly inside INCY subscription response if enabled
     if key.whitelist_enabled:
