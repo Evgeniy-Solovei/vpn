@@ -17,8 +17,13 @@ DIRECT_DOMAINS = [
     # Top Level Domains
     "*.ru", "*.рф", "*.su", "*.by",
     # Government & Municipal
-    "gosuslugi.ru", "*.gosuslugi.ru", "nalog.ru", "*.nalog.ru",
+    "gosuslugi.ru", "*.gosuslugi.ru", "gu-st.ru", "*.gu-st.ru", "nalog.ru", "*.nalog.ru",
     "mos.ru", "*.mos.ru", "pbr.ru", "cbr.ru",
+    # Bitrix24 Ecosystem
+    "bitrix24.ru", "*.bitrix24.ru", "bitrix24.by", "*.bitrix24.by", "bitrix24.kz", "*.bitrix24.kz",
+    "bitrix24.com", "*.bitrix24.com", "bitrix24.net", "*.bitrix24.net", "bitrix24.site", "*.bitrix24.site",
+    "b24.ru", "*.b24.ru", "b24.by", "*.b24.by", "1c-bitrix.ru", "*.1c-bitrix.ru", "1c.ru", "*.1c.ru",
+    "bitrix.info", "*.bitrix.info", "bitrix.cloud", "*.bitrix.cloud", "bx.vc", "*.bx.vc",
     # Russian Banks & Payments
     "sberbank.ru", "*.sberbank.ru", "sber.ru", "*.sber.ru",
     "tbank.ru", "*.tbank.ru", "tinkoff.ru", "*.tinkoff.ru",
@@ -437,16 +442,27 @@ def get_incy_routing_dict(key=None) -> dict:
             # Russian Government & Public Services
             "domain:gosuslugi.ru",
             "domain:gosuslugi.by",
+            "domain:gu-st.ru",
             "domain:esia.gosuslugi.ru",
+            "domain:epgu.gosuslugi.ru",
+            "domain:partners.gosuslugi.ru",
+            "domain:pos.gosuslugi.ru",
+            "domain:gosuslugi-online.ru",
+            "domain:gosuslugi-cdn.ru",
+            "domain:smev.gosuslugi.ru",
             "domain:pgu.mos.ru",
             "domain:nalog.ru",
             "domain:nalog.gov.ru",
             "domain:mos.ru",
+            "domain:sfr.gov.ru",
+            "domain:fss.ru",
+            "domain:pfr.gov.ru",
             "domain:pbr.ru",
             "domain:cbr.ru",
             "domain:customs.gov.ru",
             "domain:fssp.gov.ru",
             "domain:mvd.ru",
+            "domain:digital.gov.ru",
             # Banks & Payment Systems (RU & BY)
             "domain:tbank.ru",
             "domain:tinkoff.ru",
@@ -498,6 +514,7 @@ def get_incy_routing_dict(key=None) -> dict:
         # Direct routing guarantees raw socket connections bypass the VPN tunnel
         direct_ips = [
             # Standard private RFC1918 subnets (guarantees local LAN never enters VPN)
+            "geoip:private",
             "10.0.0.0/8",
             "172.16.0.0/12",
             "192.168.0.0/16",
@@ -506,6 +523,22 @@ def get_incy_routing_dict(key=None) -> dict:
             "::1/128",
             "fc00::/7",
             "fe80::/10",
+            # GeoIP rules: route entire Russian and Belarusian IP space DIRECT
+            "geoip:ru",
+            "geoip:by",
+            # Rostelecom / Gosuslugi / State Infrastructure subnets
+            "213.59.0.0/16",
+            "109.207.0.0/16",
+            "93.93.88.0/21",
+            "95.173.136.0/21",
+            "195.82.128.0/19",
+            "212.164.0.0/16",
+            "62.76.0.0/16",
+            "80.82.0.0/16",
+            "188.254.0.0/16",
+            "217.107.0.0/16",
+            "94.25.0.0/16",
+            "178.62.192.0/18",
             # VK (AS47541 & edge nodes)
             "87.240.128.0/18",
             "93.186.224.0/20",
@@ -547,10 +580,10 @@ def get_incy_routing_dict(key=None) -> dict:
             "185.148.80.0/22",
             # Alfa-Bank (AS15944)
             "217.12.96.0/20",
-            # Qrator / Bitrix Cloud (AS51115, AS209671)
-            "178.248.232.0/21",
-            "185.104.208.0/22",
-            "46.174.140.0/22",
+            # Qrator / Anti-DDoS / Bitrix Cloud clusters (AS51115, AS209671)
+            "178.248.224.0/19",
+            "185.104.208.0/21",
+            "46.174.140.0/21",
             "81.161.98.0/23",
             "132.243.176.0/22",
             "78.155.198.0/24",
@@ -648,8 +681,8 @@ def get_incy_routing_dict(key=None) -> dict:
         "RemoteDns": "8.8.8.8",
         "DomesticDNSType": "DoU",
         "DomesticDNSDomain": "",
-        "DomesticDNSIP": "8.8.4.4",
-        "DomesticDns": "8.8.4.4",
+        "DomesticDNSIP": "77.88.8.8",
+        "DomesticDns": "77.88.8.8",
         "Geoipurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat",
         "Geositeurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat",
         "LastUpdated": str(int(time.time())),
