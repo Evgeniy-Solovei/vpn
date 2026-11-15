@@ -61,7 +61,7 @@ def get_or_create_default_server() -> VPNServer:
             city="Париж",
             ip=getattr(settings, 'XRAY_PUBLIC_IP', '81.19.137.255') or '81.19.137.255',
             port=int(getattr(settings, 'XRAY_PUBLIC_PORT', 443) or 443),
-            reality_sni=getattr(settings, 'XRAY_SNI', 'dl.google.com') or 'dl.google.com',
+            reality_sni=getattr(settings, 'XRAY_SNI', 'gateway.icloud.com') or 'gateway.icloud.com',
             reality_pbk=getattr(settings, 'XRAY_PBK', 'TPcr_j2aEjarE-AvBM1DU894voxhBIKhOZhK-R6XVX8') or 'TPcr_j2aEjarE-AvBM1DU894voxhBIKhOZhK-R6XVX8',
             reality_short_id=getattr(settings, 'XRAY_SHORT_ID', '4b3e34eb63605933') or '4b3e34eb63605933',
             ping_ms=38,
@@ -754,11 +754,63 @@ def get_incy_routing_dict(key=None) -> dict:
     return result
 
 
+def check_server_health_from_russia(ip: str, port: int, timeout: float = 4.0) -> dict:
+    """
+    Checks TCP port connectivity to server from inside Russia (Moscow monitoring node).
+    Detects TSPU / RKN blocking by verifying handshake from Russian AS210644 node.
+    """
+    try:
+        url = f"https://check-host.net/check-tcp?host={ip}:{port}&node=ru2.node.check-host.net"
+        headers = {'Accept': 'application/json', 'User-Agent': 'VPNLiveDevMonitor/1.0'}
+        with httpx.Client(timeout=timeout, verify=False) as client:
+            resp = client.get(url, headers=headers)
+            if resp.status_code != 200:
+                return {'success': None, 'error': f"check-host status {resp.status_code}"}
+            data = resp.json()
+            req_id = data.get('request_id')
+            if not req_id:
+                return {'success': None, 'error': 'no_request_id'}
+
+            time.sleep(2.5)
+            res_url = f"https://check-host.net/check-result/{req_id}"
+            res_resp = client.get(res_url, headers=headers)
+            if res_resp.status_code != 200:
+                return {'success': None, 'error': f"check-host result status {res_resp.status_code}"}
+            res_data = res_resp.json()
+            node_res = res_data.get('ru2.node.check-host.net')
+            if node_res and isinstance(node_res, list) and len(node_res) > 0 and node_res[0]:
+                first = node_res[0]
+                if isinstance(first, dict):
+                    if 'time' in first:
+                        ping_ms = max(5, int(first['time'] * 1000))
+                        return {'success': True, 'status': 'online', 'ping_ms': ping_ms}
+                    elif 'error' in first:
+                        return {'success': False, 'status': 'blocked_rkn', 'error': first['error']}
+            return {'success': None, 'error': 'no node data returned'}
+    except Exception as e:
+        return {'success': None, 'error': str(e)}
+
+
 def check_server_health(server: VPNServer, timeout: float = 2.5) -> dict:
     """
-    Measures TCP ping/latency to VPNServer and detects network drops / RKN blocking.
+    Measures latency to VPNServer and detects network drops / RKN blocking from inside Russia.
     """
     from django.utils import timezone
+
+    # 1. First attempt: Real check from inside Russia (Moscow node)
+    russia_check = check_server_health_from_russia(server.ip, server.port)
+    if russia_check.get('success') is True:
+        ping_ms = russia_check['ping_ms']
+        server.mark_online(ping=ping_ms)
+        logger.info(f"Server {server.clean_name} ({server.ip}:{server.port}) verified ONLINE from Moscow, ping: {ping_ms}ms")
+        return {'success': True, 'status': 'online', 'ping_ms': ping_ms}
+    elif russia_check.get('success') is False:
+        err = russia_check.get('error', 'Blocked in Russia')
+        server.mark_blocked_rkn(reason=f"TSPU / RKN blocked in Moscow: {err}")
+        logger.warning(f"Server {server.clean_name} ({server.ip}:{server.port}) BLOCKED_RKN from Moscow: {err}")
+        return {'success': False, 'status': 'blocked_rkn', 'error': err}
+
+    # 2. Fallback: Direct TCP socket ping (if external check-host API is degraded)
     t_start = time.perf_counter()
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(timeout)
@@ -767,7 +819,7 @@ def check_server_health(server: VPNServer, timeout: float = 2.5) -> dict:
         sock.close()
         elapsed_ms = max(5, int((time.perf_counter() - t_start) * 1000))
         server.mark_online(ping=elapsed_ms)
-        logger.info(f"Server {server.clean_name} ({server.ip}:{server.port}) is ONLINE, ping: {elapsed_ms}ms")
+        logger.info(f"Server {server.clean_name} ({server.ip}:{server.port}) is ONLINE (fallback ping: {elapsed_ms}ms)")
         return {'success': True, 'status': 'online', 'ping_ms': elapsed_ms}
     except socket.timeout:
         # Typical TSPU / RKN behavior: packet drop resulting in timeout
