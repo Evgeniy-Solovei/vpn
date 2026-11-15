@@ -700,12 +700,6 @@ def get_incy_routing_dict(key=None) -> dict:
         "domain:freepik.com",
         "domain:rutracker.org",
         "domain:nnmclub.to",
-        # IP Verification & Speed Check
-        "domain:2ip.io",
-        "domain:whoer.net",
-        "domain:browserleaks.com",
-        "domain:speedtest.net",
-        "domain:fast.com",
     ]
     if key and hasattr(key, 'get_custom_proxy_domains'):
         for d in key.get_custom_proxy_domains():
@@ -717,30 +711,22 @@ def get_incy_routing_dict(key=None) -> dict:
         "Name": profile_name,
         "GlobalProxy": global_proxy,
         "RouteOrder": route_order,
-        "RemoteDNSType": "DoH",
-        "RemoteDNSDomain": "https://cloudflare-dns.com/dns-query",
-        "RemoteDNSIP": "1.1.1.1",
-        "RemoteDns": "1.1.1.1",
-        "DomesticDNSType": "DoH",
-        "DomesticDNSDomain": "https://77.88.8.8/dns-query",
+        "RemoteDNSType": "DoU",
+        "RemoteDNSDomain": "",
+        "RemoteDNSIP": "8.8.8.8",
+        "RemoteDns": "8.8.8.8",
+        "DomesticDNSType": "DoU",
+        "DomesticDNSDomain": "",
         "DomesticDNSIP": "77.88.8.8",
         "DomesticDns": "77.88.8.8",
         "Geoipurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat",
         "Geositeurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat",
         "LastUpdated": str(int(time.time())),
-        "DnsHosts": {
-            "cloudflare-dns.com": "1.1.1.1",
-            "dns.google": "8.8.8.8"
-        },
+        "DnsHosts": {},
         "DirectSites": direct_sites,
         "DirectIp": direct_ips,
         "ProxySites": proxy_sites,
         "ProxyIp": [
-            # Encrypted DNS Nameservers through VPN tunnel
-            "1.1.1.1/32", "1.0.0.1/32", "8.8.8.8/32", "8.8.4.4/32",
-            # Telegram Datacenters & CDNs (Direct IP socket connections)
-            "149.154.160.0/20", "91.108.4.0/22", "91.108.8.0/21", "91.108.12.0/22",
-            "91.108.16.0/22", "91.108.20.0/22", "91.108.56.0/22",
             # Meta / Instagram / Facebook
             "31.13.24.0/21", "31.13.64.0/18", "45.64.40.0/22", "66.220.144.0/20",
             "69.63.176.0/20", "69.171.224.0/19", "74.119.76.0/22", "103.4.96.0/22",
