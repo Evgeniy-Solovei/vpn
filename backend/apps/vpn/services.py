@@ -119,13 +119,13 @@ class ThreeXUIService:
             logger.error(f"Error connecting to 3X-UI at {self.base_url}: {e}")
             return False
 
-    def add_or_update_client(self, key: VPNKey) -> bool:
+    def add_or_update_client(self, key: VPNKey, reload_xray: bool = True) -> bool:
         """
         Adds or updates client in 3X-UI inbound with dynamic expiryTime.
         If user has NO active subscription or key is inactive, purges client from 3X-UI!
         """
         if not key or not key.user or not key.user.has_active_subscription or not key.is_active:
-            self.delete_client(key)
+            self.delete_client(key, reload_xray=reload_xray)
             return False
 
         if not self.login():
@@ -163,12 +163,12 @@ class ThreeXUIService:
             "subId": key.sub_token
         }
 
-        # 1. Try modern 3X-UI update endpoint first if client already exists
+        # 1. Try modern 3X-UI update endpoint first if client already exists.
+        # Dynamic update in 3X-UI does NOT require restarting Xray (preserves active connections).
         try:
             resp = self.client.post(f"{self.base_url}/panel/api/clients/update/{email}", json=client_settings, cookies=self.cookies, headers=headers)
             if resp.status_code == 200 and resp.json().get('success'):
                 logger.info(f"Successfully updated client {email} in 3X-UI with new expiry")
-                self.restart_xray()
                 return True
         except Exception as e:
             logger.debug(f"Modern 3X-UI clients/update failed: {e}")
@@ -182,7 +182,8 @@ class ThreeXUIService:
             resp = self.client.post(f"{self.base_url}/panel/api/clients/add", json=modern_payload, cookies=self.cookies, headers=headers)
             if resp.status_code == 200 and resp.json().get('success'):
                 logger.info(f"Successfully added client {key.user.username} to 3X-UI")
-                self.restart_xray()
+                if reload_xray:
+                    self.restart_xray()
                 return True
         except Exception as e:
             logger.debug(f"Modern 3X-UI clients/add failed, attempting refresh: {e}")
@@ -193,7 +194,8 @@ class ThreeXUIService:
             resp = self.client.post(f"{self.base_url}/panel/api/clients/add", json=modern_payload, cookies=self.cookies, headers=headers)
             if resp.status_code == 200 and resp.json().get('success'):
                 logger.info(f"Successfully refreshed client {email} in 3X-UI with new expiry")
-                self.restart_xray()
+                if reload_xray:
+                    self.restart_xray()
                 return True
         except Exception as e:
             logger.debug(f"Re-add client failed: {e}")
@@ -207,7 +209,8 @@ class ThreeXUIService:
             resp = self.client.post(f"{self.base_url}/panel/api/inbounds/addClient", json=legacy_payload, cookies=self.cookies, headers=headers)
             if resp.status_code == 200 and resp.json().get('success'):
                 logger.info(f"Successfully added client {key.user.username} to 3X-UI (legacy API)")
-                self.restart_xray()
+                if reload_xray:
+                    self.restart_xray()
                 return True
             logger.warning(f"3X-UI addClient response: {resp.text}")
             return False
@@ -229,8 +232,8 @@ class ThreeXUIService:
             logger.debug(f"Restart Xray failed: {e}")
             return False
 
-    def add_client(self, key: VPNKey) -> bool:
-        return self.add_or_update_client(key)
+    def add_client(self, key: VPNKey, reload_xray: bool = True) -> bool:
+        return self.add_or_update_client(key, reload_xray=reload_xray)
 
     def delete_client(self, key: VPNKey, reload_xray: bool = True) -> bool:
         if not self.login():
@@ -935,7 +938,7 @@ def sync_all_keys_to_panel() -> int:
         for srv in active_servers:
             try:
                 svc = ThreeXUIService(srv)
-                if svc.add_client(key):
+                if svc.add_client(key, reload_xray=False):
                     synced += 1
             except Exception:
                 pass

@@ -60,7 +60,10 @@ def subscription_view(request, token):
     # Collect active servers
     from urllib.parse import quote
     from .models import COUNTRY_FLAGS
-    servers = VPNServer.objects.filter(is_active=True).order_by('order', 'id')
+    # Collect active servers with functioning panels (prevents broken connections on unconfigured nodes)
+    servers = VPNServer.objects.filter(is_active=True).exclude(panel_url__isnull=True).exclude(panel_url='').order_by('order', 'id')
+    if not servers.exists():
+        servers = VPNServer.objects.filter(is_active=True).order_by('order', 'id')[:1]
     vless_links = []
     for s in servers:
         flag = COUNTRY_FLAGS.get(s.country_code, '🌐')
