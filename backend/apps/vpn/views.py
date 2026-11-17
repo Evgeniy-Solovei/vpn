@@ -99,8 +99,11 @@ def subscription_view(request, token):
     # Auto-apply Smart Bypass routing directly inside INCY subscription response if enabled
     if key.whitelist_enabled:
         try:
-            response['Routing'] = key.get_incy_routing_deeplink()
-            response['Autorouting'] = f"incy://autorouting/onadd/{key.get_routing_url()}"
+            routing_url = key.get_routing_url()
+            response['Routing'] = routing_url
+            response['Routing-Url'] = routing_url
+            response['X-Incy-Routing'] = routing_url
+            response['Autorouting'] = f"incy://autorouting/onadd/{routing_url}"
             response['routing-geo-update-interval'] = '24'
         except Exception:
             pass

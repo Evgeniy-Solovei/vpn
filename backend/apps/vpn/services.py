@@ -15,15 +15,18 @@ logger = logging.getLogger(__name__)
 # List of domains for direct routing in Russia/Belarus
 DIRECT_DOMAINS = [
     # Top Level Domains
-    "*.ru", "*.рф", "*.su", "*.by",
+    "*.ru", "*.рф", "*.su", "*.by", "*.kz", "*.gov.kz", "*.com.kz", "*.org.kz",
     # Government & Municipal
     "gosuslugi.ru", "*.gosuslugi.ru", "gu-st.ru", "*.gu-st.ru", "nalog.ru", "*.nalog.ru",
+    "lknpd.nalog.ru", "api-npd.nalog.ru", "npd.nalog.ru", "gnivc.ru", "*.gnivc.ru", "tax.gov.ru",
     "mos.ru", "*.mos.ru", "pbr.ru", "cbr.ru",
     # Bitrix24 Ecosystem
     "bitrix24.ru", "*.bitrix24.ru", "bitrix24.by", "*.bitrix24.by", "bitrix24.kz", "*.bitrix24.kz",
     "bitrix24.com", "*.bitrix24.com", "bitrix24.net", "*.bitrix24.net", "bitrix24.site", "*.bitrix24.site",
-    "b24.ru", "*.b24.ru", "b24.by", "*.b24.by", "1c-bitrix.ru", "*.1c-bitrix.ru", "1c.ru", "*.1c.ru",
+    "b24.ru", "*.b24.ru", "b24.by", "*.b24.by", "b24.kz", "*.b24.kz", "1c-bitrix.ru", "*.1c-bitrix.ru", "1c.ru", "*.1c.ru",
     "bitrix.info", "*.bitrix.info", "bitrix.cloud", "*.bitrix.cloud", "bx.vc", "*.bx.vc",
+    "push.bitrix24.com", "pull.bitrix24.com", "rtc.bitrix24.com", "mobile.bitrix24.com",
+    "kaifusushi.bitrix24.kz", "*.kaifusushi.bitrix24.kz",
     # Russian Banks & Payments
     "sberbank.ru", "*.sberbank.ru", "sber.ru", "*.sber.ru",
     "tbank.ru", "*.tbank.ru", "tinkoff.ru", "*.tinkoff.ru",
@@ -337,17 +340,27 @@ def get_incy_routing_dict(key=None) -> dict:
         active_zones = key.get_direct_zones() if (key and hasattr(key, 'get_direct_zones')) else ['ru', 'by', 'kz', 'su', 'рф', 'xn--p1ai']
         for z in active_zones:
             if z in ('ru',):
-                direct_sites.extend(["domain:ru", "domain:com.ru", "domain:net.ru", "domain:org.ru", "domain:msk.ru", "domain:spb.ru"])
+                direct_sites.extend([
+                    "regexp:.*\\.ru$",
+                    "domain:ru", "domain:com.ru", "domain:net.ru", "domain:org.ru", "domain:msk.ru", "domain:spb.ru"
+                ])
             elif z in ('by',):
-                direct_sites.extend(["domain:by", "domain:gov.by", "domain:mil.by"])
+                direct_sites.extend([
+                    "regexp:.*\\.by$",
+                    "domain:by", "domain:gov.by", "domain:mil.by"
+                ])
             elif z in ('kz',):
-                direct_sites.extend(["domain:kz", "domain:com.kz", "domain:org.kz", "domain:gov.kz"])
+                direct_sites.extend([
+                    "regexp:.*\\.kz$",
+                    "domain:kz", "domain:com.kz", "domain:org.kz", "domain:gov.kz"
+                ])
             elif z in ('su',):
-                direct_sites.append("domain:su")
+                direct_sites.extend(["regexp:.*\\.su$", "domain:su"])
             elif z in ('рф', 'xn--p1ai'):
-                direct_sites.append("domain:xn--p1ai")
+                if "regexp:.*\\.xn--p1ai$" not in direct_sites:
+                    direct_sites.extend(["regexp:.*\\.xn--p1ai$", "domain:xn--p1ai"])
             else:
-                direct_sites.append(f"domain:{z}")
+                direct_sites.extend([f"regexp:.*\\.{z}$", f"domain:{z}"])
 
         # Core Russian & Belarusian government and service ecosystem (always direct when whitelist_enabled)
         direct_sites.extend([
@@ -489,6 +502,30 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:pgu.mos.ru",
             "domain:nalog.ru",
             "domain:nalog.gov.ru",
+            "domain:lknpd.nalog.ru",
+            "domain:api-npd.nalog.ru",
+            "domain:npd.nalog.ru",
+            "domain:npd-app.nalog.ru",
+            "domain:auth-npd.nalog.ru",
+            "domain:lkfl.nalog.ru",
+            "domain:lkfl2.nalog.ru",
+            "domain:lkul.nalog.ru",
+            "domain:lkip.nalog.ru",
+            "domain:gnivc.ru",
+            "domain:tax.gov.ru",
+            # Bitrix24 Global Push & Kazakh cloud
+            "domain:push.bitrix24.com",
+            "domain:push.bitrix24.ru",
+            "domain:push.bitrix24.kz",
+            "domain:pull.bitrix24.com",
+            "domain:pull.bitrix24.ru",
+            "domain:pull.bitrix24.kz",
+            "domain:rtc.bitrix24.com",
+            "domain:mobile.bitrix24.com",
+            "domain:mobile.bitrix24.ru",
+            "domain:mobile.bitrix24.kz",
+            "domain:cloud-push.bitrix24.com",
+            "domain:kaifusushi.bitrix24.kz",
             "domain:mos.ru",
             "domain:sfr.gov.ru",
             "domain:fss.ru",
@@ -559,11 +596,22 @@ def get_incy_routing_dict(key=None) -> dict:
             "::1/128",
             "fc00::/7",
             "fe80::/10",
-            # GeoIP rules: route entire Russian and Belarusian IP space DIRECT
+            # GeoIP rules: route entire Russian, Belarusian and Kazakh IP space DIRECT
             "geoip:ru",
             "geoip:by",
-            # Rostelecom / Gosuslugi / State Infrastructure subnets
+            "geoip:kz",
+            # Rostelecom / FNS / Gosuslugi / NGENIX CDN & GNIVC subnets
+            "213.24.0.0/16",
             "213.59.0.0/16",
+            "195.208.0.0/16",
+            "195.209.0.0/16",
+            "178.208.0.0/16",
+            "212.193.144.0/20",
+            "46.235.184.0/21",
+            "37.220.160.0/21",
+            "78.41.104.0/21",
+            "80.85.240.0/20",
+            "185.17.168.0/22",
             "109.207.0.0/16",
             "93.93.88.0/21",
             "95.173.136.0/21",
@@ -626,10 +674,12 @@ def get_incy_routing_dict(key=None) -> dict:
             # VK Cloud / Bitrix Hosting (AS47764)
             "217.16.16.0/20",
             # Kazakhstan Bitrix Cloud & VK Cloud KZ (AS48716, AS201817)
+            "89.35.125.0/24",
             "195.49.210.0/23",
             "194.31.159.0/24",
             "185.22.64.0/22",
             "91.201.214.0/23",
+            "54.83.26.0/24",
         ]
         route_order = "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
