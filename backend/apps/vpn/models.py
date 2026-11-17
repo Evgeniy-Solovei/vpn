@@ -514,3 +514,50 @@ class VPNDevice(models.Model):
     def __str__(self):
         return f"{self.icon} {self.device_name} ({self.user.username})"
 
+
+class UserConnectionLog(models.Model):
+    """
+    Detailed per-user connection telemetry, diagnostic logs, and incident tracking.
+    Enables proactive monitoring and instant admin alerting in Telegram.
+    """
+    EVENT_TYPE_CHOICES = [
+        ('complaint', '⚠️ Жалоба пользователя («Не работает VPN»)'),
+        ('traffic_stall', '🔴 Зависание трафика (Дроп пакетов)'),
+        ('stale_config', '🟡 Устаревший конфиг в приложении'),
+        ('sub_fetch', '🟢 Скачивание / обновление подписки'),
+        ('server_failover', '🔄 Авто-перевод на резервный сервер'),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='connection_logs', verbose_name="Пользователь")
+    server = models.ForeignKey(VPNServer, on_delete=models.SET_NULL, null=True, blank=True, related_name='connection_logs', verbose_name="Сервер")
+    event_type = models.CharField(max_length=32, choices=EVENT_TYPE_CHOICES, db_index=True, verbose_name="Тип события")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP адрес абонента")
+    user_agent = models.CharField(max_length=256, blank=True, default="", verbose_name="User-Agent")
+    client_type = models.CharField(max_length=64, blank=True, default="INCY", verbose_name="Клиентское приложение")
+    up_bytes = models.BigIntegerField(default=0, verbose_name="Отправлено (байт)")
+    down_bytes = models.BigIntegerField(default=0, verbose_name="Получено (байт)")
+    details = models.TextField(blank=True, default="", verbose_name="Подробности / Диагноз")
+    admin_notified = models.BooleanField(default=False, verbose_name="Админ оповещен в Telegram")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name="Дата и время")
+
+    class Meta:
+        verbose_name = "Лог соединения пользователя"
+        verbose_name_plural = "Логи соединений и инциденты абонентов"
+        ordering = ['-created_at']
+
+    @property
+    def up_display(self) -> str:
+        if self.up_bytes < 1024 * 1024:
+            return f"{round(self.up_bytes / 1024, 1)} КБ"
+        return f"{round(self.up_bytes / (1024 ** 2), 1)} МБ"
+
+    @property
+    def down_display(self) -> str:
+        if self.down_bytes < 1024 * 1024:
+            return f"{round(self.down_bytes / 1024, 1)} КБ"
+        return f"{round(self.down_bytes / (1024 ** 2), 1)} МБ"
+
+    def __str__(self):
+        return f"[{self.get_event_type_display()}] {self.user.username} ({self.created_at.strftime('%Y-%m-%d %H:%M')})"
+
+

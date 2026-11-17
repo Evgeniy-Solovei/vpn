@@ -246,3 +246,35 @@ class VPNTestCase(TestCase):
         output = out.getvalue()
         self.assertIn("Серверов проверено", output)
 
+    def test_diagnose_user_vpn_and_creates_log(self):
+        """Diagnose user vpn generates diagnosis and records UserConnectionLog."""
+        from apps.vpn.services import diagnose_user_vpn
+        from apps.vpn.models import UserConnectionLog
+
+        diag = diagnose_user_vpn(self.user, client_ip="194.87.1.2", user_agent="Happ/1.2")
+        self.assertIn('status', diag)
+        self.assertIn('message', diag)
+        self.assertIn('server_name', diag)
+
+        log = UserConnectionLog.objects.filter(user=self.user).first()
+        self.assertIsNotNone(log)
+        self.assertEqual(log.ip_address, "194.87.1.2")
+        self.assertTrue(log.admin_notified)
+
+    def test_api_tg_diagnose_vpn(self):
+        """API endpoint /api/tg/diagnose-vpn/ returns diagnosis for telegram user."""
+        self.user.telegram_id = '777842796'
+        self.user.save()
+
+        resp = self.client.post(
+            reverse('api_tg_diagnose_vpn'),
+            data={'telegram_id': '777842796'},
+            content_type='application/json'
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data.get('success'))
+        self.assertIn('diagnosis', data)
+        self.assertIn('status', data['diagnosis'])
+
+

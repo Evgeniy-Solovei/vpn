@@ -8,7 +8,7 @@ import httpx
 from typing import Optional, Dict, Any
 from django.db import models
 from django.utils import timezone
-from .models import VPNServer, VPNKey, VPNDevice
+from .models import VPNServer, VPNKey, VPNDevice, UserConnectionLog
 
 logger = logging.getLogger(__name__)
 
@@ -1167,6 +1167,298 @@ def reset_user_devices(user) -> int:
         return 0
     count = VPNDevice.objects.filter(user=user).delete()[0]
     return count
+
+
+def notify_admin(text: str, reply_markup: dict = None) -> bool:
+    """
+    Safely dispatches high-priority system and user-incident notifications
+    to the administrator via Telegram Bot.
+    """
+    from django.conf import settings
+    bot_token = getattr(settings, 'BOT_TOKEN', '')
+    admin_id_str = str(getattr(settings, 'ADMIN_TELEGRAM_ID', '777842796')).strip()
+    if not bot_token or not admin_id_str:
+        return False
+
+    admin_ids = [aid.strip() for aid in admin_id_str.replace(';', ',').split(',') if aid.strip()]
+    success = False
+    for admin_id in admin_ids:
+        try:
+            payload = {
+                "chat_id": admin_id,
+                "text": text,
+                "parse_mode": "HTML",
+                "disable_web_page_preview": True
+            }
+            if reply_markup:
+                payload["reply_markup"] = reply_markup
+            with httpx.Client(timeout=4.0, trust_env=False) as client:
+                resp = client.post(
+                    f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                    json=payload
+                )
+                if resp.status_code == 200:
+                    success = True
+                else:
+                    logger.warning(f"Telegram admin notify failed to {admin_id}: {resp.status_code} {resp.text}")
+        except Exception as e:
+            logger.error(f"Error sending admin alert to {admin_id}: {e}")
+    return success
+
+
+def diagnose_user_vpn(user, client_ip: str = None, user_agent: str = None) -> dict:
+    """
+    Performs comprehensive per-user VPN connectivity diagnosis:
+    1. Checks subscription expiration and balance.
+    2. Inspects 3X-UI SQLite stats (up/down/last_online/last_sub_fetch).
+    3. Checks server health & RKN accessibility status.
+    4. Detects stale configuration vs server port/SNI changes.
+    5. Detects traffic stall (packets sent, zero received).
+    6. Logs event to UserConnectionLog and notifies admin via Telegram.
+    """
+    from django.utils import timezone
+    import sqlite3
+    import datetime
+
+    key = VPNKey.objects.filter(user=user, is_active=True).first()
+    if not key:
+        return {
+            'status': 'no_key',
+            'title': 'VPN Ключ не найден',
+            'message': 'У вас нет активного VPN-ключа. Перейдите в меню и создайте подключение.',
+            'recommendation': 'create_key'
+        }
+
+    server = key.server
+    dev = VPNDevice.objects.filter(user=user).order_by('-last_active_at').first()
+    device_name = f"{dev.icon} {dev.device_name}" if dev else "Мобильное устройство"
+
+    up = 0
+    down = 0
+    last_online_ms = 0
+    last_sub_fetch_ms = 0
+
+    # Query local 3X-UI SQLite if on server
+    db_path = '/etc/x-ui/x-ui.db'
+    if os.path.exists(db_path):
+        try:
+            email = f"{user.username}_{user.id}"
+            conn = sqlite3.connect(db_path, timeout=3)
+            cur = conn.cursor()
+            cur.execute("SELECT up, down, last_online, last_sub_fetch FROM client_traffics WHERE email=?", (email,))
+            row = cur.fetchone()
+            conn.close()
+            if row:
+                up = row[0] or 0
+                down = row[1] or 0
+                last_online_ms = row[2] or 0
+                last_sub_fetch_ms = row[3] or 0
+        except Exception as e:
+            logger.warning(f"Error querying 3X-UI SQLite for diagnosis: {e}")
+
+    # Fallback to key values if local DB didn't have it
+    if up == 0 and down == 0 and key.used_traffic_bytes > 0:
+        up = int(key.used_traffic_bytes * 0.1)
+        down = int(key.used_traffic_bytes * 0.9)
+
+    now = timezone.now()
+    now_ms = int(now.timestamp() * 1000)
+
+    # Check last sub fetch
+    hours_since_sub = 999
+    if last_sub_fetch_ms > 0:
+        hours_since_sub = round((now_ms - last_sub_fetch_ms) / (1000 * 3600), 1)
+    elif dev and dev.last_active_at:
+        hours_since_sub = round((now - dev.last_active_at).total_seconds() / 3600, 1)
+
+    # Determine diagnosis
+    status = 'healthy'
+    diagnosis_title = '🟢 Соединение в норме'
+    user_msg = (
+        f"🟢 <b>С сервером всё в порядке!</b>\n\n"
+        f"Узел <b>{server.clean_name}</b> доступен (порт {server.port}, пинг ~{server.ping_ms} мс).\n\n"
+        f"💡 <b>Если сайты не открываются:</b>\n"
+        f"1. Выключите и включите тумблер VPN в приложении (переподключение).\n"
+        f"2. Перезапустите приложение или браузер.\n"
+        f"3. Если не помогло — нажмите кнопку «Сменить сервер» ниже."
+    )
+
+    if not user.has_active_subscription:
+        status = 'expired'
+        diagnosis_title = '🔴 Подписка закончилась'
+        user_msg = (
+            f"🔴 <b>Ваша подписка или пробный период закончились</b>\n\n"
+            f"Баланс: {user.balance} ₽. Пополните баланс в меню бота, чтобы доступ активировался автоматически."
+        )
+    elif server.health_status == 'blocked_rkn' or not server.is_active:
+        status = 'server_blocked'
+        diagnosis_title = '🔴 Сервер заблокирован ТСПУ'
+        user_msg = (
+            f"⚠️ <b>Временная блокировка узла провайдерами РФ</b>\n\n"
+            f"Сервер {server.clean_name} испытывает фильтрацию в вашем регионе.\n"
+            f"Мы рекомендуем переключиться на резервный сервер (🇸🇪 Швеция или 🇧🇾 Беларусь)."
+        )
+    elif hours_since_sub > 48:
+        # Config is older than 2 days (potential mismatch with updated port 8443 or SNI)
+        status = 'stale_config'
+        diagnosis_title = '🟡 Устаревший конфиг в приложении'
+        user_msg = (
+            f"⚠️ <b>Конфигурация в приложении устарела!</b>\n\n"
+            f"Серверы были переведены на защищённый порт <b>{server.port}</b> для обхода блокировок. "
+            f"Ваше приложение не обновляло настройки более {int(hours_since_sub)} ч.\n\n"
+            f"👉 <b>Как исправить за 10 секунд:</b>\n"
+            f"1. Нажмите <b>«🔄 Обновить подписку»</b> ниже.\n"
+            f"2. В приложении нажмите значок круглой стрелочки (обновить список).\n"
+            f"3. Переподключите VPN."
+        )
+    elif up > 5000 and down < 1000:
+        # Traffic stall: user sent requests, 0 bytes returned
+        status = 'traffic_stall'
+        diagnosis_title = '🔴 Зависание трафика (Дроп пакетов)'
+        user_msg = (
+            f"⚠️ <b>Пакеты уходят, но ответ не возвращается</b>\n\n"
+            f"Зафиксирована отправка запросов ({round(up/1024, 1)} КБ), но сервер или провайдер не передаёт ответ.\n\n"
+            f"👉 <b>Решение:</b>\n"
+            f"1. Нажмите <b>«🔄 Обновить подписку»</b> ниже.\n"
+            f"2. Если не помогло — смените сервер на 🇸🇪 Швецию (порт 443)."
+        )
+
+    # Save to UserConnectionLog
+    log_event = 'complaint'
+    if status == 'traffic_stall':
+        log_event = 'traffic_stall'
+    elif status == 'stale_config':
+        log_event = 'stale_config'
+
+    details_str = (
+        f"Status: {status} | Diagnosis: {diagnosis_title} | "
+        f"Up: {up} B, Down: {down} B | Hours since sub: {hours_since_sub}h"
+    )
+
+    UserConnectionLog.objects.create(
+        user=user,
+        server=server,
+        event_type=log_event,
+        ip_address=client_ip,
+        user_agent=user_agent or "",
+        client_type=dev.client_type if dev else "INCY",
+        up_bytes=up,
+        down_bytes=down,
+        details=details_str,
+        admin_notified=True
+    )
+
+    # Send Instant Notification to Admin in Telegram
+    up_display = f"{round(up / 1024, 1)} КБ" if up < 1024*1024 else f"{round(up / (1024**2), 1)} МБ"
+    down_display = f"{round(down / 1024, 1)} КБ" if down < 1024*1024 else f"{round(down / (1024**2), 1)} МБ"
+    tg_handle = f"@{user.telegram_username}" if user.telegram_username else f"ID {user.telegram_id or '—'}"
+    sub_time_str = f"{hours_since_sub} ч назад" if hours_since_sub < 900 else "Никогда / Давно"
+
+    admin_text = (
+        f"🚨 <b>ЖАЛОБА / ДИАГНОСТИКА: Не работает VPN!</b>\n\n"
+        f"👤 <b>Пользователь:</b> {user.username} ({tg_handle}, User ID: {user.id})\n"
+        f"🌐 <b>Сервер:</b> {server.display_name} (<code>{server.ip}:{server.port}</code>)\n"
+        f"📡 <b>SNI:</b> <code>{server.reality_sni}</code>\n"
+        f"📊 <b>Трафик:</b> Up: {up_display} | Down: {down_display}\n"
+        f"🔄 <b>Конфиг в приложении:</b> {sub_time_str}\n"
+        f"📱 <b>Устройство:</b> {device_name}\n"
+        f"🛠️ <b>Диагноз:</b> {diagnosis_title}"
+    )
+    notify_admin(admin_text)
+
+    return {
+        'status': status,
+        'title': diagnosis_title,
+        'message': user_msg,
+        'server_name': server.clean_name,
+        'server_flag': server.flag,
+        'sub_url': key.get_sub_url(),
+        'happ_url': key.get_happ_url(),
+        'incy_url': key.get_incy_url(),
+        'vless_url': key.get_vless_url()
+    }
+
+
+def audit_users_connection_health() -> dict:
+    """
+    Automated background worker (called by check_servers cron every 5 min):
+    Inspects 3X-UI SQLite for stalled client sessions (packets sent, 0 received)
+    and notifies admin proactively BEFORE the user complains.
+    """
+    import sqlite3
+    db_path = '/etc/x-ui/x-ui.db'
+    if not os.path.exists(db_path):
+        return {'audited': 0, 'stalls_found': 0}
+
+    try:
+        conn = sqlite3.connect(db_path, timeout=4)
+        cur = conn.cursor()
+        cur.execute("SELECT email, up, down, last_online FROM client_traffics")
+        rows = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        logger.warning(f"Could not read client_traffics in audit: {e}")
+        return {'audited': 0, 'stalls_found': 0}
+
+    now_ms = int(time.time() * 1000)
+    twenty_min_ms = 20 * 60 * 1000
+    stalls = 0
+
+    for email, up, down, last_online in rows:
+        if not last_online or (now_ms - last_online) > twenty_min_ms:
+            continue
+
+        up_val = up or 0
+        down_val = down or 0
+
+        # Stall condition: Client sent > 5 KB (TLS handshake/requests), received < 1 KB
+        if up_val > 5000 and down_val < 1000:
+            parts = email.rsplit('_', 1)
+            user = None
+            if len(parts) == 2 and parts[1].isdigit():
+                user = CustomUser.objects.filter(id=int(parts[1])).first()
+            if not user:
+                user = CustomUser.objects.filter(username=email).first()
+
+            if not user:
+                continue
+
+            # Don't spam: check if we alerted for this user in last 60 min
+            recent_alert = UserConnectionLog.objects.filter(
+                user=user,
+                event_type='traffic_stall',
+                created_at__gte=timezone.now() - timezone.timedelta(minutes=60)
+            ).exists()
+
+            if recent_alert:
+                continue
+
+            key = VPNKey.objects.filter(user=user, is_active=True).first()
+            server = key.server if key else VPNServer.objects.filter(is_active=True).first()
+
+            UserConnectionLog.objects.create(
+                user=user,
+                server=server,
+                event_type='traffic_stall',
+                up_bytes=up_val,
+                down_bytes=down_val,
+                details=f"Auto-Audit detected stall: Up {up_val} B, Down {down_val} B within last 20 min",
+                admin_notified=True
+            )
+
+            stalls += 1
+            admin_msg = (
+                f"🔴 <b>АВТО-МОНИТОРИНГ: Зависание трафика у абонента!</b>\n\n"
+                f"👤 <b>Пользователь:</b> {user.username} (ID: {user.id})\n"
+                f"🌐 <b>Сервер:</b> {server.clean_name if server else '—'}\n"
+                f"📉 <b>Трафик:</b> Отправлено {round(up_val/1024, 1)} КБ | Получено 0 КБ\n"
+                f"⏱️ <b>Активность:</b> Только что (последние 20 минут)\n"
+                f"⚠️ <b>Проблема:</b> Пакеты не доходят до сайтов. Возможно, блокировка ТСПУ на порту или устаревший конфиг!"
+            )
+            notify_admin(admin_msg)
+
+    return {'audited': len(rows), 'stalls_found': stalls}
+
 
 
 

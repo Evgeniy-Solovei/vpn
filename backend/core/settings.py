@@ -165,6 +165,7 @@ XS_SHARING_ALLOWED_METHODS = ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE']
 BOT_TOKEN = os.getenv('BOT_TOKEN', '')
 BOT_USERNAME = os.getenv('BOT_USERNAME', 'live_vpn_bot')
 TELEGRAM_WEBAPP_URL = os.getenv('TELEGRAM_WEBAPP_URL', f'{SITE_URL}/dashboard/')
+ADMIN_TELEGRAM_ID = os.getenv('ADMIN_TELEGRAM_ID', '777842796')
 
 # Google OAuth 2.0 Settings
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')

@@ -862,6 +862,44 @@ def delete_device_api(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
+@csrf_exempt
+def tg_diagnose_vpn_view(request):
+    """
+    Performs on-demand connectivity diagnostic for a Telegram user or authenticated web user.
+    Records incident log and immediately alerts administrator in Telegram.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        user = None
+        if request.user.is_authenticated:
+            user = request.user
+        elif data.get('telegram_id'):
+            user = CustomUser.objects.filter(telegram_id=str(data.get('telegram_id'))).first()
+        elif data.get('user_id'):
+            user = CustomUser.objects.filter(id=data.get('user_id')).first()
+
+        if not user:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        client_ip = request.META.get('HTTP_X_FORWARDED_FOR')
+        if client_ip:
+            client_ip = client_ip.split(',')[0].strip()
+        else:
+            client_ip = request.META.get('REMOTE_ADDR')
+
+        ua = request.META.get('HTTP_USER_AGENT', '')
+
+        from apps.vpn.services import diagnose_user_vpn
+        diag = diagnose_user_vpn(user, client_ip=client_ip, user_agent=ua)
+        return JsonResponse({'success': True, 'diagnosis': diag})
+    except Exception as e:
+        logger.error(f"Error in tg_diagnose_vpn_view: {e}", exc_info=True)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+
 
 
 

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import VPNServer, VPNKey, UserServerTraffic
+from .models import VPNServer, VPNKey, UserServerTraffic, VPNDevice, UserConnectionLog
 from .services import check_server_health, failover_banned_servers
 
 @admin.register(VPNServer)
@@ -52,3 +52,19 @@ class UserServerTrafficAdmin(admin.ModelAdmin):
     list_display = ('user', 'server', 'used_gb', 'updated_at')
     list_filter = ('server',)
     search_fields = ('user__username', 'server__name')
+
+
+@admin.register(VPNDevice)
+class VPNDeviceAdmin(admin.ModelAdmin):
+    list_display = ('user', 'device_name', 'platform', 'client_type', 'masked_ip', 'last_active_at', 'is_active')
+    list_filter = ('platform', 'client_type', 'is_active')
+    search_fields = ('user__username', 'device_name', 'ip_address')
+
+
+@admin.register(UserConnectionLog)
+class UserConnectionLogAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'user', 'server', 'event_type', 'client_type', 'up_display', 'down_display', 'admin_notified')
+    list_filter = ('event_type', 'admin_notified', 'server', 'created_at')
+    search_fields = ('user__username', 'user__email', 'ip_address', 'details')
+    readonly_fields = ('created_at',)
+    date_hierarchy = 'created_at'

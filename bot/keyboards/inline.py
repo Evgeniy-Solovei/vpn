@@ -73,6 +73,12 @@ def get_main_menu(vpn_data: dict, user_data: dict, devices_data: dict = None, tr
         ],
         [
             InlineKeyboardButton(
+                text="🛠️ Не работает VPN / Проверить",
+                callback_data="check_connection"
+            )
+        ],
+        [
+            InlineKeyboardButton(
                 text="💻 Войти на сайте (ПК)",
                 callback_data="web_magic_login"
             ),
@@ -295,6 +301,35 @@ def get_download_menu(connect_url: str = None) -> InlineKeyboardMarkup:
         buttons.append([
             InlineKeyboardButton(text="⚡ Шаг 2: Подключить в 1 клик", url=connect_url)
         ])
+    buttons.append([
+        InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")
+    ])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_diagnosis_menu(diagnosis: dict) -> InlineKeyboardMarkup:
+    from bot.config import SUPPORT_TELEGRAM
+    buttons = []
+    
+    # 1-click update link
+    happ_url = diagnosis.get('happ_url')
+    incy_url = diagnosis.get('incy_url')
+    
+    if happ_url:
+        buttons.append([
+            InlineKeyboardButton(text="🔄 Обновить в Happ / Streisand", url=happ_url)
+        ])
+    if incy_url:
+        buttons.append([
+            InlineKeyboardButton(text="⚡ Обновить в INCY (1 клик)", url=incy_url)
+        ])
+    
+    buttons.append([
+        InlineKeyboardButton(text="🌍 Сменить локацию сервера", callback_data="view_servers")
+    ])
+    buttons.append([
+        InlineKeyboardButton(text="💬 Написать в поддержку", url=f"https://t.me/{SUPPORT_TELEGRAM}")
+    ])
     buttons.append([
         InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")
     ])

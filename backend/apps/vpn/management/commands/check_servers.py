@@ -1,6 +1,6 @@
 import logging
 from django.core.management.base import BaseCommand
-from apps.vpn.services import check_all_servers_health_and_failover
+from apps.vpn.services import check_all_servers_health_and_failover, audit_users_connection_health
 
 logger = logging.getLogger('apps.vpn')
 
@@ -32,6 +32,11 @@ class Command(BaseCommand):
         summary = check_all_servers_health_and_failover()
         checked = summary['servers_checked']
         migrated = summary['migrated_users_count']
+
+        audit_res = audit_users_connection_health()
+        stalls = audit_res.get('stalls_found', 0)
+        if stalls > 0 and not quiet:
+            self.stdout.write(self.style.WARNING(f"⚠️ Обнаружено зависших сессий пользователей: {stalls}. Администратор оповещен в Telegram."))
 
         if not quiet:
             for s_id, res in summary['results'].items():

@@ -807,16 +807,48 @@ async def cb_view_traffic(call: CallbackQuery):
 async def cb_support(call: CallbackQuery):
     text = (
         f"💬 <b>Служба поддержки VPN live-dev</b>\n\n"
-        f"Если у вас возникли сложности с подключением или оплатой, напишите нам в Telegram:\n\n"
+        f"Если у вас возникли сложности с подключением или оплатой, воспользуйтесь авто-диагностикой или напишите нам:\n\n"
         f"👉 <b>@{SUPPORT_TELEGRAM}</b>"
     )
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🛠️ Проверить мое подключение", callback_data="check_connection")],
         [InlineKeyboardButton(text="💬 Написать в поддержку", url=f"https://t.me/{SUPPORT_TELEGRAM}")],
         [InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")]
     ])
     await call.message.edit_text(text, parse_mode="HTML", reply_markup=kb)
     await call.answer()
+
+
+@dp.callback_query(F.data == "check_connection")
+async def cb_check_connection(call: CallbackQuery):
+    await call.answer("🔍 Запускаем диагностику...", show_alert=False)
+    from bot.keyboards.inline import get_diagnosis_menu
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.post(
+                f"{WEB_API_URL}/tg/diagnose-vpn/",
+                json={"telegram_id": str(call.from_user.id)}
+            )
+            res_data = resp.json()
+            if res_data.get('success'):
+                diag = res_data.get('diagnosis', {})
+                user_msg = diag.get('message', 'Диагностика завершена.')
+                await call.message.edit_text(user_msg, parse_mode="HTML", reply_markup=get_diagnosis_menu(diag))
+            else:
+                await call.message.edit_text(
+                    "⚠️ Не удалось выполнить диагностику. Напишите в поддержку.",
+                    parse_mode="HTML",
+                    reply_markup=get_diagnosis_menu({})
+                )
+        except Exception as e:
+            logger.error(f"Error in cb_check_connection: {e}")
+            await call.message.edit_text(
+                "⚠️ Ошибка связи с сервером диагностики. Пожалуйста, напишите в поддержку.",
+                parse_mode="HTML",
+                reply_markup=get_diagnosis_menu({})
+            )
+
 
 
 @dp.callback_query(F.data == "web_magic_login")
