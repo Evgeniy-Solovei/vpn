@@ -73,12 +73,6 @@ def get_main_menu(vpn_data: dict, user_data: dict, devices_data: dict = None, tr
         ],
         [
             InlineKeyboardButton(
-                text="🛠️ Не работает VPN / Проверить",
-                callback_data="check_connection"
-            )
-        ],
-        [
-            InlineKeyboardButton(
                 text="💻 Войти на сайте (ПК)",
                 callback_data="web_magic_login"
             ),

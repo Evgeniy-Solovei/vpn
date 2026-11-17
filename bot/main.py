@@ -807,12 +807,11 @@ async def cb_view_traffic(call: CallbackQuery):
 async def cb_support(call: CallbackQuery):
     text = (
         f"💬 <b>Служба поддержки VPN live-dev</b>\n\n"
-        f"Если у вас возникли сложности с подключением или оплатой, воспользуйтесь авто-диагностикой или напишите нам:\n\n"
+        f"Если у вас возникли сложности с подключением или оплатой, напишите нам в Telegram:\n\n"
         f"👉 <b>@{SUPPORT_TELEGRAM}</b>"
     )
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🛠️ Проверить мое подключение", callback_data="check_connection")],
         [InlineKeyboardButton(text="💬 Написать в поддержку", url=f"https://t.me/{SUPPORT_TELEGRAM}")],
         [InlineKeyboardButton(text="◀️ В главное меню", callback_data="main_menu")]
     ])

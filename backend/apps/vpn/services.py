@@ -863,6 +863,16 @@ def failover_banned_servers() -> int:
         count += 1
         logger.warning(f"AUTO-FAILOVER: Migrated user {key.user.username} from {old_server.clean_name} to {healthy_server.clean_name}")
 
+    if count > 0:
+        admin_text = (
+            f"🔄 <b>АВТО-СПАСЕНИЕ ПОЛЬЗОВАТЕЛЕЙ (Auto-Failover)</b>\n\n"
+            f"⚠️ Сервер был помечен как заблокированный или недоступный.\n"
+            f"👥 Переведено абонентов: <b>{count}</b>\n"
+            f"🟢 Новый рабочий сервер: <b>{healthy_server.display_name}</b> (порт {healthy_server.port}, пинг {healthy_server.ping_ms} мс)\n"
+            f"💡 Ключи абонентов уже перенаправлены на рабочий узел."
+        )
+        notify_admin(admin_text)
+
     return count
 
 
@@ -1401,18 +1411,21 @@ def audit_users_connection_health() -> dict:
         return {'audited': 0, 'stalls_found': 0}
 
     now_ms = int(time.time() * 1000)
-    twenty_min_ms = 20 * 60 * 1000
+    thirty_min_ms = 30 * 60 * 1000
     stalls = 0
+    present_emails = set()
 
     for email, up, down, last_online in rows:
-        if not last_online or (now_ms - last_online) > twenty_min_ms:
+        present_emails.add(email)
+        if not last_online or (now_ms - last_online) > thirty_min_ms:
             continue
 
         up_val = up or 0
         down_val = down or 0
 
-        # Stall condition: Client sent > 5 KB (TLS handshake/requests), received < 1 KB
-        if up_val > 5000 and down_val < 1000:
+        # Stall condition: Client sent requests/handshake, but received zero/almost zero data back
+        is_stall = (up_val > 1500 and down_val < 500) or (up_val > 5000 and (down_val / (up_val + 1)) < 0.1)
+        if is_stall:
             parts = email.rsplit('_', 1)
             user = None
             if len(parts) == 2 and parts[1].isdigit():
@@ -1423,11 +1436,11 @@ def audit_users_connection_health() -> dict:
             if not user:
                 continue
 
-            # Don't spam: check if we alerted for this user in last 60 min
+            # Don't spam: check if we alerted for this user in last 45 min
             recent_alert = UserConnectionLog.objects.filter(
                 user=user,
                 event_type='traffic_stall',
-                created_at__gte=timezone.now() - timezone.timedelta(minutes=60)
+                created_at__gte=timezone.now() - timezone.timedelta(minutes=45)
             ).exists()
 
             if recent_alert:
@@ -1436,26 +1449,39 @@ def audit_users_connection_health() -> dict:
             key = VPNKey.objects.filter(user=user, is_active=True).first()
             server = key.server if key else VPNServer.objects.filter(is_active=True).first()
 
+            mins_ago = max(1, int((now_ms - last_online) / 60000))
             UserConnectionLog.objects.create(
                 user=user,
                 server=server,
                 event_type='traffic_stall',
                 up_bytes=up_val,
                 down_bytes=down_val,
-                details=f"Auto-Audit detected stall: Up {up_val} B, Down {down_val} B within last 20 min",
+                details=f"Auto-Audit detected stall: Up {up_val} B, Down {down_val} B ({mins_ago} min ago)",
                 admin_notified=True
             )
 
             stalls += 1
             admin_msg = (
-                f"🔴 <b>АВТО-МОНИТОРИНГ: Зависание трафика у абонента!</b>\n\n"
+                f"🔴 <b>АВТО-СКАНЕР: Зависание трафика у пользователя!</b>\n\n"
                 f"👤 <b>Пользователь:</b> {user.username} (ID: {user.id})\n"
-                f"🌐 <b>Сервер:</b> {server.clean_name if server else '—'}\n"
-                f"📉 <b>Трафик:</b> Отправлено {round(up_val/1024, 1)} КБ | Получено 0 КБ\n"
-                f"⏱️ <b>Активность:</b> Только что (последние 20 минут)\n"
-                f"⚠️ <b>Проблема:</b> Пакеты не доходят до сайтов. Возможно, блокировка ТСПУ на порту или устаревший конфиг!"
+                f"🌐 <b>Сервер:</b> {server.clean_name if server else '—'} (порт {server.port if server else '—'})\n"
+                f"📡 <b>SNI:</b> <code>{server.reality_sni if server else '—'}</code>\n"
+                f"📉 <b>Трафик:</b> Up: {round(up_val/1024, 1)} КБ | Down: {round(down_val/1024, 1)} КБ\n"
+                f"⏱️ <b>Активность:</b> {mins_ago} мин назад\n"
+                f"⚠️ <b>Проблема:</b> Клиент отправляет пакеты, но сервер/провайдер не возвращает данные (дроп соединения)."
             )
             notify_admin(admin_msg)
+
+    # Check for active keys missing in panel inbound
+    active_keys = VPNKey.objects.filter(is_active=True, user__balance__gt=0).select_related('user', 'server')
+    for k in active_keys:
+        expected_email = f"{k.user.username}_{k.user.id}"
+        if expected_email not in present_emails and k.server and k.server.panel_url:
+            try:
+                ensure_key_in_panel(k)
+                logger.info(f"Auto-healed missing key for {k.user.username} in {k.server.name}")
+            except Exception as e:
+                logger.warning(f"Failed to auto-heal key for {k.user.username}: {e}")
 
     return {'audited': len(rows), 'stalls_found': stalls}
 
