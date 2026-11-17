@@ -84,6 +84,7 @@ def legal_view(request):
     packages = SubscriptionPackage.get_active_packages()
     return render(request, 'billing/legal.html', {
         'inn': '971305191960',
+        'unp': 'CB0827449',
         'fio': 'Соловей Евгений Викторович',
         'status': 'Плательщик налога на профессиональный доход (Самозанятый РФ)',
         'support_email': getattr(settings, 'EMAIL_HOST_USER', 'live-dev@mail.ru') or 'live-dev@mail.ru',

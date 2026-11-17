@@ -306,9 +306,10 @@ class BillingTestCase(TestCase):
         self.assertContains(resp, "успешно зачислена")
 
     def test_legal_page_renders_requisites(self):
-        """Legal and requisites page renders 54-FZ requisites and INN."""
+        """Legal and requisites page renders 54-FZ requisites, UNP, and INN."""
         resp = self.client.get(reverse('legal'))
         self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "CB0827449")
         self.assertContains(resp, "971305191960")
         self.assertContains(resp, "Соловей Евгений Викторович")
         self.assertContains(resp, "live-dev@mail.ru")
