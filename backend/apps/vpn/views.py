@@ -108,14 +108,11 @@ def subscription_view(request, token):
     if key.whitelist_enabled:
         try:
             routing_url = key.get_routing_url()
-            user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
-            if 'happ' in user_agent:
-                response['Routing'] = routing_url
-                response['Routing-Url'] = routing_url
-                response['Routing-Enable'] = '1'
-            else:
-                response['X-Incy-Routing'] = routing_url
-                response['Autorouting'] = f"incy://autorouting/onadd/{routing_url}"
+            response['Routing'] = routing_url
+            response['Routing-Url'] = routing_url
+            response['Routing-Enable'] = '1'
+            response['X-Incy-Routing'] = routing_url
+            response['Autorouting'] = f"incy://autorouting/onadd/{routing_url}"
             response['routing-geo-update-interval'] = '24'
         except Exception:
             pass
