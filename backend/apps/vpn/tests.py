@@ -1,4 +1,5 @@
 import base64
+import json
 from decimal import Decimal
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -55,6 +56,17 @@ class VPNTestCase(TestCase):
         decoded = base64.b64decode(resp.content).decode('utf-8')
         self.assertIn(str(self.key.key_uuid), decoded)
         self.assertIn(self.server.ip, decoded)
+        self.assertIn("incy://routing/onadd/", decoded)
+
+        # Ensure embedded routing deeplink contains valid, unquoted Base64
+        deeplink_line = [line for line in decoded.splitlines() if line.startswith("incy://routing/onadd/")][0]
+        raw_b64 = deeplink_line.split("incy://routing/onadd/")[1]
+        self.assertNotIn("%3D", raw_b64)
+        self.assertNotIn("%2F", raw_b64)
+        routing_json = json.loads(base64.b64decode(raw_b64).decode('utf-8'))
+        self.assertTrue(routing_json['GlobalProxy'])
+        self.assertEqual(routing_json['RouteOrder'], 'block-direct-proxy')
+        self.assertIn('domain:vk.com', routing_json['DirectSites'])
 
     def test_subscription_endpoint_expired_user(self):
         """Expired or zero-balance user receives HTTP 402."""
