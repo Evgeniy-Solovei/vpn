@@ -707,10 +707,18 @@ def get_incy_routing_dict(key=None) -> dict:
             "54.83.26.0/24",
             "185.137.235.0/24",
             "185.146.2.0/24",
+            # FNS / GNIVC (AS28682)
+            "185.49.0.0/22",
+            "145.14.48.0/21",
+            "193.243.140.0/23",
+            "145.14.8.0/21",
+            # NGENIX CDN full IPv4 coverage (AS34879)
+            "195.208.64.0/19",
+            "195.209.64.0/18",
         ]
-        route_order = "block-proxy-direct"
+        route_order = "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
-        global_proxy = False
+        global_proxy = True
     else:
         direct_sites = ["domain:local", "domain:localhost"]
         direct_ips = [
@@ -1282,6 +1290,10 @@ def notify_admin(text: str, reply_markup: dict = None) -> bool:
     Safely dispatches high-priority system and user-incident notifications
     to the administrator via Telegram Bot.
     """
+    import sys
+    if 'test' in sys.argv:
+        return False
+
     from django.conf import settings
     bot_token = getattr(settings, 'BOT_TOKEN', '')
     admin_id_str = str(getattr(settings, 'ADMIN_TELEGRAM_ID', '777842796')).strip()
