@@ -84,6 +84,14 @@ def subscription_view(request, token):
         )
         vless_links.append(vless_link)
 
+    # Embed INCY smart routing profile directly into subscription payload body
+    # INCY parses and activates incy://routing/onadd/ natively upon subscription refresh
+    if key.whitelist_enabled:
+        try:
+            vless_links.append(key.get_incy_routing_deeplink())
+        except Exception:
+            pass
+
     # Standard format is base64 encoded newline-separated links
     raw_content = "\n".join(vless_links)
     encoded_content = base64.b64encode(raw_content.encode('utf-8')).decode('utf-8')
@@ -96,14 +104,18 @@ def subscription_view(request, token):
     response['tunnel-dns'] = '8.8.8.8, 77.88.8.8'
     response['tunnel-mtu'] = '1360'
     
-    # Auto-apply Smart Bypass routing directly inside INCY subscription response if enabled
+    # Auto-apply routing headers without colliding between INCY and Happ
     if key.whitelist_enabled:
         try:
             routing_url = key.get_routing_url()
-            response['Routing'] = routing_url
-            response['Routing-Url'] = routing_url
-            response['X-Incy-Routing'] = routing_url
-            response['Autorouting'] = f"incy://autorouting/onadd/{routing_url}"
+            user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+            if 'happ' in user_agent:
+                response['Routing'] = routing_url
+                response['Routing-Url'] = routing_url
+                response['Routing-Enable'] = '1'
+            else:
+                response['X-Incy-Routing'] = routing_url
+                response['Autorouting'] = f"incy://autorouting/onadd/{routing_url}"
             response['routing-geo-update-interval'] = '24'
         except Exception:
             pass
