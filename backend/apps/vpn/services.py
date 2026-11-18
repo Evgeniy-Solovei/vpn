@@ -708,9 +708,9 @@ def get_incy_routing_dict(key=None) -> dict:
             "185.137.235.0/24",
             "185.146.2.0/24",
         ]
-        route_order = "block-direct-proxy"
+        route_order = "block-proxy-direct"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
-        global_proxy = True
+        global_proxy = False
     else:
         direct_sites = ["domain:local", "domain:localhost"]
         direct_ips = [
@@ -777,6 +777,29 @@ def get_incy_routing_dict(key=None) -> dict:
         "domain:freepik.com",
         "domain:rutracker.org",
         "domain:nnmclub.to",
+        "domain:rutor.info",
+        "domain:kinozal.tv",
+        "domain:hdrezka.ag",
+        "domain:rezka.ag",
+        "domain:filmix.ac",
+        "domain:flibusta.is",
+        "domain:flibusta.bwh.zone",
+        "domain:meduza.io",
+        "domain:bbc.com",
+        "domain:dw.com",
+        "domain:svoboda.org",
+        "domain:zona.media",
+        "domain:theins.ru",
+        "domain:holod.media",
+        "domain:novayagazeta.eu",
+        "domain:patreon.com",
+        "domain:linkedin.com",
+        "domain:licdn.com",
+        "domain:proton.me",
+        "domain:protonmail.com",
+        "domain:protonvpn.com",
+        "domain:midjourney.com",
+        "domain:ai.com",
     ]
     if key and hasattr(key, 'get_custom_proxy_domains'):
         for d in key.get_custom_proxy_domains():
