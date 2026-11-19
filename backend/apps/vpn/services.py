@@ -423,7 +423,7 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:ok.ru",
             "domain:odnoklassniki.ru",
             "domain:tam-tam.me",
-            # Bitrix24 Ecosystem (Bitrix24 cloud portals, CRM, mobile app)
+            # Bitrix24 Ecosystem (Bitrix24 cloud portals, CRM, mobile app, OAuth, Push, Pull)
             "regexp:.*\\.bitrix24\\..*$",
             "regexp:.*\\.b24\\..*$",
             "regexp:.*\\.bitrix\\..*$",
@@ -472,6 +472,17 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:b24.network",
             "domain:bitrix24.network",
             "domain:bx.vc",
+            # Bitrix OAuth & Auth (critical — mobile app authenticates here, NOT on .ru/.kz TLD!)
+            "domain:oauth.bitrix.info",
+            "domain:www.bitrix.info",
+            "domain:cp.bitrix.info",
+            # Bitrix24 Global CDN, IM, Push-Server (AWS US/CloudFront — not in geoip:ru!)
+            "domain:im-web.bitrix24.com",
+            "domain:push-server.bitrix24.com",
+            "domain:cdn.bitrix24.com",
+            "domain:dl.bitrix24.com",
+            "domain:dl.bitrix24.ru",
+            "domain:cdn.bitrix24.ru",
             # Kazakhstan top-level domain & cloud
             "domain:kz",
             "domain:com.kz",
@@ -527,6 +538,14 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:lkip.nalog.ru",
             "domain:gnivc.ru",
             "domain:tax.gov.ru",
+            # FNS additional infrastructure (mobile app auth, session, CNAME targets)
+            "domain:lknpd.gi.nalog.ru",
+            "domain:fns.ru",
+            "domain:data.nalog.ru",
+            "domain:service.nalog.ru",
+            "domain:old.nalog.ru",
+            "domain:login.nalog.ru",
+            "domain:cabinet.nalog.ru",
             # NGENIX CDN & state CDN infrastructure (powers npd.nalog.ru and FNS static assets)
             "domain:ngenix.net",
             "domain:cdn.ngenix.net",
@@ -715,6 +734,14 @@ def get_incy_routing_dict(key=None) -> dict:
             # NGENIX CDN full IPv4 coverage (AS34879)
             "195.208.64.0/19",
             "195.209.64.0/18",
+            # AWS subnets hosting Bitrix24 global services (push, pull, mobile, cdn, oauth)
+            # 54.83.26.42 — push/pull/mobile/rtc/cdn.bitrix24.com
+            "54.83.26.0/24",
+            # 18.201.1.1 — oauth.bitrix.info (AWS eu-west-1 Ireland)
+            "18.201.0.0/16",
+            # CloudFront CDN for dl.bitrix24.com (99.86.x.x, 13.x.x.x)
+            "99.86.0.0/16",
+            "99.84.0.0/16",
         ]
         route_order = "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
@@ -830,7 +857,11 @@ def get_incy_routing_dict(key=None) -> dict:
         "Geoipurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat",
         "Geositeurl": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat",
         "LastUpdated": str(int(time.time())),
-        "DnsHosts": {},
+        "DnsHosts": {
+            # Force oauth.bitrix.info to Qrator/1C-Bitrix Russia (not AWS Ireland 18.201.1.1)
+            # Google DNS returns Ireland IP; Yandex DNS returns correct Russian IP 178.248.237.41
+            "oauth.bitrix.info": "178.248.237.41"
+        },
         "DirectSites": direct_sites,
         "DirectIp": direct_ips,
         "ProxySites": proxy_sites,
