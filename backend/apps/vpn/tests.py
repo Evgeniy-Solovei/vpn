@@ -65,7 +65,7 @@ class VPNTestCase(TestCase):
         self.assertNotIn("%2F", raw_b64)
         routing_json = json.loads(base64.b64decode(raw_b64).decode('utf-8'))
         self.assertTrue(routing_json['GlobalProxy'])
-        self.assertEqual(routing_json['RouteOrder'], 'block-proxy-direct')
+        self.assertEqual(routing_json['RouteOrder'], 'block-direct-proxy')
         self.assertIn('domain:vk.com', routing_json['DirectSites'])
 
     def test_subscription_endpoint_expired_user(self):
@@ -86,7 +86,7 @@ class VPNTestCase(TestCase):
         self.assertEqual(resp1['Content-Type'], 'application/json')
         data1 = resp1.json()
         self.assertTrue(data1['GlobalProxy'])
-        self.assertEqual(data1['RouteOrder'], 'block-proxy-direct')
+        self.assertEqual(data1['RouteOrder'], 'block-direct-proxy')
         self.assertIn('domain:vk.com', data1['DirectSites'])
 
         # Without trailing slash (crucial for Incy iOS)
@@ -95,7 +95,7 @@ class VPNTestCase(TestCase):
         self.assertEqual(resp2['Content-Type'], 'application/json')
         data2 = resp2.json()
         self.assertTrue(data2['GlobalProxy'])
-        self.assertEqual(data2['RouteOrder'], 'block-proxy-direct')
+        self.assertEqual(data2['RouteOrder'], 'block-direct-proxy')
 
     def test_pac_endpoint_routing_rules(self):
         """PAC endpoint contains Russian whitelist rules when whitelist is enabled."""

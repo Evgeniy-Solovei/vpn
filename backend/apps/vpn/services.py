@@ -334,10 +334,6 @@ def get_incy_routing_dict(key=None) -> dict:
 
     if whitelist_enabled:
         direct_sites = [
-            "geosite:private",
-            "geosite:category-ru",
-            "geosite:category-gov-ru",
-            "geosite:direct",
             "domain:local",
             "domain:localhost",
         ]
@@ -746,7 +742,7 @@ def get_incy_routing_dict(key=None) -> dict:
             "99.86.0.0/16",
             "99.84.0.0/16",
         ]
-        route_order = "block-proxy-direct"
+        route_order = "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
         global_proxy = True
     else:
@@ -758,7 +754,7 @@ def get_incy_routing_dict(key=None) -> dict:
             "127.0.0.0/8",
             "169.254.0.0/16",
         ]
-        route_order = "block-proxy-direct"
+        route_order = "block-direct-proxy"
         profile_name = "VPN live-dev (Весь трафик)"
         global_proxy = True
 
@@ -906,7 +902,7 @@ def get_incy_routing_dict(key=None) -> dict:
         "BlockIp": [],
         "DomainStrategy": "IPIfNonMatch",
         "FakeDNS": False,
-        "UseChunkFiles": True
+        "UseChunkFiles": False
     }
 
     return result
