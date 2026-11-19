@@ -28,6 +28,7 @@ DIRECT_DOMAINS = [
     "b24.ru", "*.b24.ru", "b24.by", "*.b24.by", "b24.kz", "*.b24.kz", "1c-bitrix.ru", "*.1c-bitrix.ru", "1c.ru", "*.1c.ru",
     "bitrix.info", "*.bitrix.info", "bitrix.cloud", "*.bitrix.cloud", "bx.vc", "*.bx.vc",
     "push.bitrix24.com", "pull.bitrix24.com", "rtc.bitrix24.com", "mobile.bitrix24.com",
+    "b24-0jdw8s.bitrix24.kz", "*.b24-0jdw8s.bitrix24.kz",
     "kaifusushi.bitrix24.kz", "*.kaifusushi.bitrix24.kz",
     # Russian Banks & Payments
     "sberbank.ru", "*.sberbank.ru", "sber.ru", "*.sber.ru",
@@ -568,6 +569,8 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:mobile.bitrix24.ru",
             "domain:mobile.bitrix24.kz",
             "domain:cloud-push.bitrix24.com",
+            "domain:b24-0jdw8s.bitrix24.kz",
+            "full:b24-0jdw8s.bitrix24.kz",
             "domain:kaifusushi.bitrix24.kz",
             "domain:mos.ru",
             "domain:sfr.gov.ru",
