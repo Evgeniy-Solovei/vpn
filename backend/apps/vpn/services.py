@@ -603,6 +603,11 @@ def get_incy_routing_dict(key=None) -> dict:
             # Ecosystems, Search & Media
             "domain:yandex.ru",
             "domain:yandex.by",
+            "domain:yandex.net",
+            "domain:yandex.com",
+            "domain:appmetrica.yandex.net",
+            "domain:mobile.yandex.net",
+            "domain:csa.yandex.net",
             "domain:ya.ru",
             "domain:yastatic.net",
             "domain:dzen.ru",
