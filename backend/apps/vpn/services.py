@@ -334,6 +334,10 @@ def get_incy_routing_dict(key=None) -> dict:
 
     if whitelist_enabled:
         direct_sites = [
+            "geosite:private",
+            "geosite:category-ru",
+            "geosite:category-gov-ru",
+            "geosite:direct",
             "domain:local",
             "domain:localhost",
         ]
@@ -742,7 +746,7 @@ def get_incy_routing_dict(key=None) -> dict:
             "99.86.0.0/16",
             "99.84.0.0/16",
         ]
-        route_order = "block-direct-proxy"
+        route_order = "block-proxy-direct"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
         global_proxy = True
     else:
@@ -754,7 +758,7 @@ def get_incy_routing_dict(key=None) -> dict:
             "127.0.0.0/8",
             "169.254.0.0/16",
         ]
-        route_order = "block-direct-proxy"
+        route_order = "block-proxy-direct"
         profile_name = "VPN live-dev (Весь трафик)"
         global_proxy = True
 
@@ -834,6 +838,19 @@ def get_incy_routing_dict(key=None) -> dict:
         "domain:protonvpn.com",
         "domain:midjourney.com",
         "domain:ai.com",
+        # Developer & AI tools (Cursor, Anthropic, OpenAI, Antigravity)
+        "domain:cursor.com",
+        "domain:cursor.sh",
+        "domain:cursor-cdn.com",
+        "domain:anysphere.co",
+        "domain:anthropic.com",
+        "domain:claude.ai",
+        "domain:openai.com",
+        "domain:chatgpt.com",
+        "domain:oaistatic.com",
+        "domain:oaiusercontent.com",
+        "domain:googleapis.com",
+        "domain:cloudcode-pa.googleapis.com",
     ]
     if key and hasattr(key, 'get_custom_proxy_domains'):
         for d in key.get_custom_proxy_domains():
@@ -889,7 +906,7 @@ def get_incy_routing_dict(key=None) -> dict:
         "BlockIp": [],
         "DomainStrategy": "IPIfNonMatch",
         "FakeDNS": False,
-        "UseChunkFiles": False
+        "UseChunkFiles": True
     }
 
     return result
