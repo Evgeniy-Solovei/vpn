@@ -625,6 +625,21 @@ def get_incy_routing_dict(key=None) -> dict:
             "domain:premier.one",
             "domain:kion.ru",
             "domain:more.tv",
+            # IP Geolocation & Verification APIs (forces apps checking IP to see domestic ISP IP)
+            "domain:ip-api.com",
+            "domain:ipinfo.io",
+            "domain:ipwhois.io",
+            "domain:ipwhois.app",
+            "domain:ifconfig.me",
+            "domain:ifconfig.co",
+            "domain:icanhazip.com",
+            "domain:2ip.ru",
+            "domain:2ip.io",
+            "domain:whoer.net",
+            "domain:checkip.amazonaws.com",
+            "domain:api.ipify.org",
+            "domain:ipgeolocation.io",
+            "domain:db-ip.com",
         ])
         # Dedicated domestic IP CIDR blocks (AS47541, AS34700, AS197695, AS47764, AS13238, etc.)
         # Direct routing guarantees raw socket connections bypass the VPN tunnel
@@ -741,6 +756,8 @@ def get_incy_routing_dict(key=None) -> dict:
             # CloudFront CDN for dl.bitrix24.com (99.86.x.x, 13.x.x.x)
             "99.86.0.0/16",
             "99.84.0.0/16",
+            # Public IP lookup services (ip-api.com CIDR block)
+            "208.95.112.0/24",
         ]
         route_order = "block-direct-proxy"
         profile_name = "VPN live-dev Умный обход (ВК, Банки, Битрикс, Почта)"
